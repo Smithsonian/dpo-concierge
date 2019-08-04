@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+        "target": "ES6",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "lib": [ "dom", "es2016", "esnext.asynciterable" ],
+        "sourceMap": true,
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+
+        "outDir": "../../services/api/bin",
+        "baseUrl": "../../services/api/bin/node_modules"
+    },
+    "files": [
+        "index.ts"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

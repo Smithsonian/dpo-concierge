@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+  api:
+    image: concierge/api
+    container_name: concierge-api
+    restart: always
+    build:
+      context: ./services/api/setup
+      dockerfile: Dockerfile
+    env_file:
+      - services/config.env
+      - services/secrets.env
+    ports:
+      - "9060:8000"
+    volumes:
+      - .:/app
+    links:
+      - db
+    depends_on:
+      - db
+
+  db:
+    image: mariadb:latest
+    container_name: concierge-db
+    restart: always
+    env_file:
+      - services/config.env
+      - services/secrets.env
+
+  adminer:
+    image: adminer:latest
+    container_name: concierge-adminer
+    restart: always
+    env_file:
+      - services/config.env
+    ports:
+      - "9061:8080"
+    links:
+      - db
+    depends_on:
+      - db

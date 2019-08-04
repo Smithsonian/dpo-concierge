@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "target": "ES6",
+        "module": "commonjs",
+        "sourceMap": true,
+        "jsx": "react",
+        "resolveJsonModule": true,
+        "experimentalDecorators": true,
+
+        "baseUrl": ".",
+        "paths": {
+            "client/*": [ "./*" ]
+        }
+    }
+}
