@@ -19,18 +19,26 @@ import * as sourceMapSupport from "source-map-support";
 sourceMapSupport.install();
 
 import * as path from "path";
-import * as http from "http";
-
-import * as express from "express";
-import * as morgan from "morgan";
+import Server, { IServerConfiguration } from "./app/Server";
+import Database, { IDatabaseConfiguration } from "./app/Database";
 
 ////////////////////////////////////////////////////////////////////////////////
 // CONFIGURATION
 
-const port = parseInt(process.env["CONCIERGE_SERVER_PORT"]) || 8000;
-const devMode = process.env["NODE_ENV"] !== "production";
 const rootDir = process.env["CONCIERGE_PROJECT_ROOT"] || path.resolve(__dirname, "../../..");
-const staticDir = path.resolve(rootDir, "dist/");
+
+const serverConfig: IServerConfiguration = {
+    port: parseInt(process.env["CONCIERGE_SERVER_PORT"]) || 8000,
+    staticDir: path.resolve(rootDir, "dist/"),
+    isDevMode: process.env["NODE_ENV"] !== "production",
+};
+
+const databaseConfig: IDatabaseConfiguration = {
+    host: "db",
+    database: "concierge",
+    password: process.env["MYSQL_PASSWORD"],
+    user: "concierge",
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // GREETING
@@ -46,44 +54,21 @@ console.log(`
 --------------------------------------------------------------------
 Smithsonian 3D Foundation Project - Concierge Migration Workflow API
 --------------------------------------------------------------------
-Port:                    ${port}
-Development Mode:        ${devMode}
-Static File Directory:   ${staticDir}
+Port:                    ${serverConfig.port}
+Development Mode:        ${serverConfig.isDevMode}
+Static File Directory:   ${serverConfig.staticDir}
 ---------------------------------------------------------------------
 `);
 
 ////////////////////////////////////////////////////////////////////////////////
+// INIT AND START
 
-const app = express();
-app.disable('x-powered-by');
+const server = new Server(serverConfig);
+const database = new Database(databaseConfig);
 
-// logging
-if (devMode) {
-    app.use(morgan("tiny"));
-}
-
-// static file server
-app.use("/", express.static(staticDir));
-
-// error handling
-app.use((error, req, res, next) => {
-    console.error(error);
-
-    if (res.headersSent) {
-        return next(error);
-    }
-
-    if (req.accepts("json")) {
-        // send JSON formatted error
-        res.status(500).send({ error: `${error.name}: ${error.message}` });
-    }
-    else {
-        // send error page
-        res.status(500).render("errors/500", { error });
-    }
+database.setup().then(() => {
+    return server.setup();
+}).then(() => {
+    return server.start();
 });
 
-const server = new http.Server(app);
-server.listen(port, () => {
-    console.info(`Server ready and listening on port ${port}\n`);
-});

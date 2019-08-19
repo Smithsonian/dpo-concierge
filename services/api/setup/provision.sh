@@ -32,6 +32,9 @@ npm i -g npm
 node --version
 npm --version
 
+# increase file watch count
+echo fs.inotify.max_user_watches=524288 | tee -a /etc/sysctl.conf && sysctl -p
+
 # some helpful bash aliases
 cat <<EOF >> ~/.bash_aliases
 alias ll='ls -la'

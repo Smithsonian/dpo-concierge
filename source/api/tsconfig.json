@@ -1,9 +1,9 @@
 {
     "compilerOptions": {
-        "target": "ES6",
+        "target": "es2016",
         "module": "commonjs",
         "moduleResolution": "node",
-        "lib": [ "dom", "es2016", "esnext.asynciterable" ],
+        "lib": [ "es2016", "esnext.asynciterable" ],
         "sourceMap": true,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
@@ -13,6 +13,9 @@
     },
     "files": [
         "index.ts"
+    ],
+    "include": [
+        "**/*"
     ],
     "exclude": [
         "node_modules"

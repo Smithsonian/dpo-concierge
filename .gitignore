@@ -4,7 +4,8 @@
 node_modules/
 
 dist/
-server/bin/
+services/api/bin/
+services/db/bin/
 
 # FILES
 *.log

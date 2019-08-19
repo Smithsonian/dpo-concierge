@@ -15,18 +15,11 @@
  * limitations under the License.
  */
 
-import "reflect-metadata";
-import { Field, Int, ID, ObjectType } from "type-graphql";
+import { Table, Column, Model, DataType } from "sequelize-typescript";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-@ObjectType()
-export default class Item
+@Table
+export default class Part extends Model<Part>
 {
-    @Field(type => ID)
-    id: number;
-
-    @Field(type => String)
-    name: string;
 }
-

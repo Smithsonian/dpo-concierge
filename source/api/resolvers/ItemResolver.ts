@@ -22,10 +22,18 @@ import Item from "../schemas/Item";
 ////////////////////////////////////////////////////////////////////////////////
 
 @Resolver(of => Item)
-export default class ProjectResolver
+export default class ItemResolver
 {
+    @Query(returns => Item)
+    items(): ItemData[]
+    {
+        return items;
+    }
+
     @Query(returns => Item, { nullable: true })
-    itemByName(@Arg("name") name: string): ItemData | undefined
+    itemByName(
+        @Arg("name") name: string
+    ): ItemData | undefined
     {
         return items.find(item => item.name === name);
     }

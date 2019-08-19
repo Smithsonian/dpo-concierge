@@ -27,6 +27,8 @@ services:
     env_file:
       - services/config.env
       - services/secrets.env
+    volumes:
+      - ./services/db/bin:/var/lib/mysql
 
   adminer:
     image: adminer:latest

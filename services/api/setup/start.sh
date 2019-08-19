@@ -5,8 +5,15 @@
 # make sure path for node, npm and module binaries is registered
 source /root/.nvm/nvm.sh
 
-# install/update node module dependencies
+# increase file watch count
+sysctl -w fs.inotify.max_user_watches=524288
+
+# install/update application/api module dependencies
 cd /app
+npm install
+
+# install/update client module dependencies
+cd /app/source/client
 npm install
 
 # build server code in services/api/bin/

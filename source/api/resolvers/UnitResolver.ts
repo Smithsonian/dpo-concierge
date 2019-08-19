@@ -15,18 +15,15 @@
  * limitations under the License.
  */
 
-import "reflect-metadata";
-import { Field, Int, ID, ObjectType } from "type-graphql";
+import { Arg, FieldResolver, Query, Resolver, Root } from "type-graphql";
+
+import UnitModel from "../models/SI_Unit";
+import UnitSchema from "../schemas/Unit";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-@ObjectType()
-export default class Item
+@Resolver(of => UnitSchema)
+export default class ItemResolver
 {
-    @Field(type => ID)
-    id: number;
 
-    @Field(type => String)
-    name: string;
 }
-

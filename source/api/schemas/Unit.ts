@@ -16,15 +16,15 @@
  */
 
 import "reflect-metadata";
-import { Field, Int, ID, ObjectType } from "type-graphql";
+import { Field, ObjectType } from "type-graphql";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
-export default class Item
+export default class Unit
 {
-    @Field(type => ID)
-    id: number;
+    @Field(type => String)
+    isni: string;
 
     @Field(type => String)
     name: string;

@@ -17,7 +17,7 @@ const dirs = {
     source: path.resolve(project, "source"),
     assets: path.resolve(project, "assets"),
     output: path.resolve(project, "dist"),
-    modules: path.resolve(project, "node_modules"),
+    modules: path.resolve(project, "source/client/node_modules"),
     libs: path.resolve(project, "libs")
 };
 

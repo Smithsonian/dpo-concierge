@@ -15,18 +15,16 @@
  * limitations under the License.
  */
 
-import "reflect-metadata";
-import { Field, Int, ID, ObjectType } from "type-graphql";
+import { Table, Column, Model, DataType } from "sequelize-typescript";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-@ObjectType()
-export default class Item
+@Table
+export default class SI_Stakeholder extends Model<SI_Stakeholder>
 {
-    @Field(type => ID)
-    id: number;
+    @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, primaryKey: true })
+    id: string;
 
-    @Field(type => String)
+    @Column({ type: DataType.STRING })
     name: string;
 }
-

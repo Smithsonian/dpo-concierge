@@ -15,18 +15,20 @@
  * limitations under the License.
  */
 
-import "reflect-metadata";
-import { Field, Int, ID, ObjectType } from "type-graphql";
+import { ReadStream, WriteStream } from "fs";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-@ObjectType()
-export default class Item
-{
-    @Field(type => ID)
-    id: number;
+export { ReadStream, WriteStream };
 
-    @Field(type => String)
-    name: string;
+export interface IStorage
+{
+    get(filePath: string, version: number): Promise<ReadStream>;
+    put(filePath: string, version: number): Promise<WriteStream>;
+    delete(filePath: string, version: number): Promise<boolean>;
 }
 
+export interface IFileInfo
+{
+
+}

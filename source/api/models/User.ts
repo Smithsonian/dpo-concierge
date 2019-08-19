@@ -15,18 +15,30 @@
  * limitations under the License.
  */
 
-import "reflect-metadata";
-import { Field, Int, ID, ObjectType } from "type-graphql";
+import { Table, Column, Model } from "sequelize-typescript";
+import * as bcrypt from "bcrypt";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-@ObjectType()
-export default class Item
+@Table
+export default class User extends Model<User>
 {
-    @Field(type => ID)
-    id: number;
-
-    @Field(type => String)
+    @Column
     name: string;
-}
 
+    @Column
+    email: string;
+
+    @Column
+    password: string;
+
+    async getPasswordHash(password: string): Promise<string>
+    {
+        return await bcrypt.hash(password, 10);
+    }
+
+    async isValidPassword(password: string): Promise<boolean>
+    {
+        return await bcrypt.compare(password, this.password);
+    }
+}

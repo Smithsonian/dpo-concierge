@@ -15,18 +15,20 @@
  * limitations under the License.
  */
 
-import "reflect-metadata";
 import { Field, Int, ID, ObjectType } from "type-graphql";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
-export default class Item
+export default class User
 {
     @Field(type => ID)
     id: number;
 
     @Field(type => String)
     name: string;
+
+    @Field(type => String)
+    password: string;
 }
 
