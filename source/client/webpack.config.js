@@ -1,7 +1,37 @@
+/**
+ * 3D Foundation Project
+ * Copyright 2019 Smithsonian Institution
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Environment variables used
+//
+// NODE_ENV               development | production
+// VOYAGER_OFFLINE        True for an offline build (no external dependencies)
+// VOYAGER_ANALYTICS_ID   Google Analytics ID
+//
+////////////////////////////////////////////////////////////////////////////////
+
 "use strict";
+
+require('dotenv').config();
 
 const fs = require("fs-extra");
 const path = require("path");
+const childProcess = require("child_process");
 
 const TerserPlugin = require("terser-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
@@ -32,35 +62,40 @@ const apps = {
     }
 };
 
+const version = childProcess.execSync("git describe --tags");
+
 ////////////////////////////////////////////////////////////////////////////////
 
 module.exports = function(env, argv) {
 
-    const isDevMode = argv.mode !== "production";
-    const app = argv.app || "concierge";
+    const appKey = argv.app || "concierge";
+    const isDevMode = argv.mode !== undefined ? argv.mode !== "production" : process.env["NODE_ENV"] !== "production";
 
     // copy static assets
     fs.copy(dirs.assets, dirs.output, { overwrite: true });
 
-    if (app === "all") {
-        return Object.keys(apps).map(key => createAppConfig(key, dirs, isDevMode));
+    if (appKey === "all") {
+        return Object.keys(apps).map(key => createAppConfig(key, isDevMode));
     }
     else {
-        return createAppConfig(app, dirs, isDevMode);
+        return createAppConfig(appKey, isDevMode);
     }
 };
 
-function createAppConfig(app, dirs, isDevMode) {
+function createAppConfig(appKey, isDevMode) {
 
     const devMode = isDevMode ? "development" : "production";
 
-    const appName = apps[app].name;
-    const appEntryPoint = apps[app].entryPoint;
-    const appTitle = apps[app].title;
+    const app = apps[appKey];
+    const appName = app.name;
+    const appEntryPoint = app.entryPoint;
+    const appTitle = `${app.title} ${version} ${isDevMode ? " DEV" : " PROD"}`;
 
     console.log("WEBPACK BUILD SCRIPT");
     console.log("application = %s", appName);
     console.log("mode = %s", devMode);
+    console.log("  version = %s", version);
+    console.log("  source directory = %s", dirs.source);
     console.log("output directory = %s", dirs.output);
 
     const config = {
@@ -108,8 +143,9 @@ function createAppConfig(app, dirs, isDevMode) {
             }),
             new HTMLWebpackPlugin({
                 filename: isDevMode ? `${appName}-dev.html` : `${appName}.html`,
-                template: apps[app].template,
+                template: app.template,
                 title: appTitle,
+                version: version,
                 isDevelopment: isDevMode,
                 element: `<${appName}></${appName}>`,
                 chunks: [ appName ]

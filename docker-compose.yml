@@ -9,10 +9,9 @@ services:
       context: ./services/api/setup
       dockerfile: Dockerfile
     env_file:
-      - services/config.env
-      - services/secrets.env
+      - .env
     ports:
-      - "9060:8000"
+      - $CONCIERGE_SERVER_PORT:$CONCIERGE_SERVER_PORT
     volumes:
       - .:/app
     links:
@@ -25,8 +24,7 @@ services:
     container_name: concierge-db
     restart: always
     env_file:
-      - services/config.env
-      - services/secrets.env
+      - .env
     volumes:
       - ./services/db/bin:/var/lib/mysql
 
@@ -35,9 +33,9 @@ services:
     container_name: concierge-adminer
     restart: always
     env_file:
-      - services/config.env
+      - .env
     ports:
-      - "9061:8080"
+      - $CONCIERGE_ADMIN_PORT:$CONCIERGE_ADMIN_PORT
     links:
       - db
     depends_on:

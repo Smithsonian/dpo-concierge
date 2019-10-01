@@ -15,6 +15,7 @@ npm install
 # install/update client module dependencies
 cd /app/source/client
 npm install
+cd /app
 
 # build server code in services/api/bin/
 if [ ! -d "services/api/bin" ]; then

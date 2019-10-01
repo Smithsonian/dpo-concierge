@@ -8,7 +8,6 @@ services/api/bin/
 services/db/bin/
 
 # FILES
+.env
 *.log
 .DS_Store
-services/config.env
-services/secrets.env
