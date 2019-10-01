@@ -25,10 +25,11 @@ import Database, { IDatabaseConfiguration } from "./app/Database";
 ////////////////////////////////////////////////////////////////////////////////
 // CONFIGURATION
 
-const rootDir = process.env["CONCIERGE_PROJECT_ROOT"] || path.resolve(__dirname, "../../..");
+const rootDir = path.resolve(__dirname, "../../..");
+
 
 const serverConfig: IServerConfiguration = {
-    port: parseInt(process.env["CONCIERGE_SERVER_PORT"]) || 8000,
+    port: 8000,
     staticDir: path.resolve(rootDir, "dist/"),
     isDevMode: process.env["NODE_ENV"] !== "production",
 };

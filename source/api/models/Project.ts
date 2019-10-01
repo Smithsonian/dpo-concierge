@@ -15,13 +15,25 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, DataType } from "sequelize-typescript";
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
+
+import User from "./User";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @Table
 export default class Project extends Model<Project>
 {
-    @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, primaryKey: true })
-    id: string;
+    @Column({ type: DataType.STRING })
+    name: string;
+
+    @Column({ type: DataType.TEXT })
+    description: string;
+
+    @ForeignKey(() => User)
+    @Column
+    ownerId: number;
+
+    @BelongsTo(() => User)
+    owner: User;
 }

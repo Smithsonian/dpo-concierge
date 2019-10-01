@@ -15,19 +15,22 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model as DatabaseModel, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
 
-import Model from "./Model";
+import User from "./User";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @Table
-export default class Part extends DatabaseModel<Part>
+export default class PlayMigration extends Model<PlayMigration>
 {
-    @ForeignKey(() => Model)
-    @Column
-    modelId: number;
+    @Column({ type: DataType.STRING, unique: true })
+    boxId: string;
 
-    @BelongsTo(() => Model)
-    model: Model;
+    @ForeignKey(() => User)
+    @Column
+    ownerId: number;
+
+    @BelongsTo(() => User)
+    owner: User;
 }

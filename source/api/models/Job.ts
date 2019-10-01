@@ -15,19 +15,28 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model as DatabaseModel, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
 
-import Model from "./Model";
+import Project from "./Project";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @Table
-export default class Part extends DatabaseModel<Part>
+export default class Job extends Model<Job>
 {
-    @ForeignKey(() => Model)
-    @Column
-    modelId: number;
+    @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, unique: true })
+    uuid: string;
 
-    @BelongsTo(() => Model)
-    model: Model;
+    @Column
+    recipeId: string;
+
+    @Column({ type: DataType.JSON })
+    parameters: object;
+
+    @ForeignKey(() => Project)
+    @Column
+    projectId: number;
+
+    @BelongsTo(() => Project)
+    project: Project;
 }

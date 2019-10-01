@@ -62,7 +62,13 @@ const apps = {
     }
 };
 
-const version = childProcess.execSync("git describe --tags");
+let version = "vX.X.X";
+try {
+    version = childProcess.execSync("git describe --tags").toString().trim();
+}
+catch(e) {
+    console.warn(`failed to retrieve git version tag: ${e.message}`);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -72,7 +78,8 @@ module.exports = function(env, argv) {
     const isDevMode = argv.mode !== undefined ? argv.mode !== "production" : process.env["NODE_ENV"] !== "production";
 
     // copy static assets
-    fs.copy(dirs.assets, dirs.output, { overwrite: true });
+    // TODO: no assets to copy for now
+    // fs.copy(dirs.assets, dirs.output, { overwrite: true });
 
     if (appKey === "all") {
         return Object.keys(apps).map(key => createAppConfig(key, isDevMode));
@@ -92,11 +99,11 @@ function createAppConfig(appKey, isDevMode) {
     const appTitle = `${app.title} ${version} ${isDevMode ? " DEV" : " PROD"}`;
 
     console.log("WEBPACK BUILD SCRIPT");
-    console.log("application = %s", appName);
-    console.log("mode = %s", devMode);
+    console.log("  application = %s", appName);
+    console.log("  mode = %s", devMode);
     console.log("  version = %s", version);
     console.log("  source directory = %s", dirs.source);
-    console.log("output directory = %s", dirs.output);
+    console.log("  output directory = %s", dirs.output);
 
     const config = {
         mode: devMode,

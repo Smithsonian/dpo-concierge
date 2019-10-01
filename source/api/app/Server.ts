@@ -163,6 +163,6 @@ export default class Server
     {
         this._server = new http.Server(this.app);
         await this._server.listen(this.config.port);
-        console.info(`Server ready and listening on port ${this.config.port}\n`);
+        console.info(`\n\nServer ready and listening on port ${this.config.port}\n`);
     }
 }

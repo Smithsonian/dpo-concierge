@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import * as path from "path";
+
 import { Sequelize } from "sequelize-typescript";
 
 import SI_Unit from "../models/SI_Unit";
@@ -47,14 +49,14 @@ export default class Database
 
         const connectionString = `mariadb://${config.user}:${config.password}@${config.host}/${config.database}`;
 
-        const modelPath = __dirname + "/../models";
-        console.log(modelPath);
+        const modelPath = path.resolve(__dirname, "../models");
+        console.log(`Database Model Path: ${modelPath}`);
         this._db = new Sequelize(connectionString, { modelPaths: [ modelPath ]});
     }
 
     async setup()
     {
         await this._db.sync();
-        await SI_Unit.populate();
+        //await SI_Unit.populate();
     }
 }

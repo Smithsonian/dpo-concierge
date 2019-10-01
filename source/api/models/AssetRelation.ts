@@ -15,19 +15,20 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model as DatabaseModel, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
+import { Table, Column, Model, ForeignKey } from "sequelize-typescript";
 
-import Model from "./Model";
+import Asset from "./Asset";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @Table
-export default class Part extends DatabaseModel<Part>
+export default class AssetRelation extends Model<AssetRelation>
 {
-    @ForeignKey(() => Model)
+    @ForeignKey(() => Asset)
     @Column
-    modelId: number;
+    parentAssetId: number;
 
-    @BelongsTo(() => Model)
-    model: Model;
+    @ForeignKey(() => Asset)
+    @Column
+    childAssetId: number;
 }

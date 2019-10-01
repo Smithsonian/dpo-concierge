@@ -22,4 +22,5 @@ import { Table, Column, Model as DatabaseModel, DataType } from "sequelize-types
 @Table
 export default class Model extends DatabaseModel<Model>
 {
+
 }

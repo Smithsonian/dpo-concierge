@@ -22,8 +22,8 @@ import { Table, Column, Model, DataType } from "sequelize-typescript";
 @Table
 export default class SI_Stakeholder extends Model<SI_Stakeholder>
 {
-    @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, primaryKey: true })
-    id: string;
+    @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, unique: true })
+    uuid: string;
 
     @Column({ type: DataType.STRING })
     name: string;

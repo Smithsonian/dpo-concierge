@@ -15,19 +15,20 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model as DatabaseModel, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
 
-import Model from "./Model";
+import User from "./User";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @Table
-export default class Part extends DatabaseModel<Part>
+export default class LegacyMigration extends Model<LegacyMigration>
 {
-    @ForeignKey(() => Model)
+    @ForeignKey(() => User)
     @Column
-    modelId: number;
+    ownerId: number;
 
-    @BelongsTo(() => Model)
-    model: Model;
+    @BelongsTo(() => User)
+    owner: User;
+
 }

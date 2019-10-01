@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model } from "sequelize-typescript";
+import { Table, Column, Model, DataType } from "sequelize-typescript";
 import * as bcrypt from "bcrypt";
 
 ////////////////////////////////////////////////////////////////////////////////

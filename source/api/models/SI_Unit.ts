@@ -42,7 +42,6 @@ export default class SI_Unit extends Model<SI_Unit>
     static async populate()
     {
         return this.bulkCreate(data);
-        //return Promise.all(data.map(item => this.create({ isni: item.isni, name: item.name })));
     }
 
     @Column({ type: DataType.STRING, primaryKey: true })

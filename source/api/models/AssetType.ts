@@ -15,28 +15,31 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, DataType } from "sequelize-typescript";
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
+
+////////////////////////////////////////////////////////////////////////////////
+
+const data = [
+    { id: "voyagerDocument", name: "Voyager Scene Document" },
+    { id: "voyagerArticlePage", name: "Voyager Article Page" },
+    { id: "voyagerArticleMedia", name: "Voyager Article Media" },
+    { id: "voyagerModelAsset", name: "Voyager Model Asset" },
+    { id: "voyagerPreview", name: "Voyager Preview Image" },
+];
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @Table
-export default class Asset extends Model<Asset>
+export default class AssetType extends Model<AssetType>
 {
-    @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, unique: "idVersion" })
-    uuid: string;
+    static async populate()
+    {
+        return this.bulkCreate(data);
+    }
 
-    @Column({ type: DataType.INTEGER, unique: "idVersion" })
-    version: number;
-
-    @Column
-    path: string;
+    @Column({ type: DataType.STRING, primaryKey: true })
+    id: string;
 
     @Column({ type: DataType.STRING, allowNull: false })
     name: string;
-
-    @Column
-    extension: string;
-
-    @Column({ type: DataType.INTEGER })
-    byteSize: number;
 }
