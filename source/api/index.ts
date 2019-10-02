@@ -21,7 +21,8 @@ sourceMapSupport.install();
 import * as path from "path";
 import Server, { IServerConfiguration } from "./app/Server";
 import Database, { IDatabaseConfiguration } from "./app/Database";
-import MigrationSheet from "./utls/MigrationSheet";
+import MigrationSheet from "./utils/MigrationSheet";
+import EDANClient from "./utils/EDANClient";
 
 ////////////////////////////////////////////////////////////////////////////////
 // CONFIGURATION
@@ -59,7 +60,7 @@ Smithsonian 3D Foundation Project - Concierge Migration Workflow API
 Port:                    ${serverConfig.port}
 Development Mode:        ${serverConfig.isDevMode}
 Static File Directory:   ${serverConfig.staticDir}
----------------------------------------------------------------------
+--------------------------------------------------------------------
 `);
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -68,11 +69,17 @@ Static File Directory:   ${serverConfig.staticDir}
 const server = new Server(serverConfig);
 const database = new Database(databaseConfig);
 
+const edanAppId = process.env["EDAN_APP_ID"];
+const edanAppKey = process.env["EDAN_APP_KEY"];
+
 database.setup()
 .then(() => server.setup())
 .then(() => server.start())
 .then(() => {
     const migration = new MigrationSheet();
-    return migration.load();
+    migration.load();
+
+    const edanClient = new EDANClient(edanAppId, edanAppKey);
+    edanClient.fetchMdmRecord("edanmdm-nmnhpaleobiology_3446197");
 });
 

@@ -62,7 +62,8 @@
     "sequelize": "^5.19.1",
     "sequelize-typescript": "^1.0.0",
     "source-map-support": "^0.5.13",
-    "type-graphql": "^0.17.5"
+    "type-graphql": "^0.17.5",
+    "uuidv4": "^5.0.1"
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.27",

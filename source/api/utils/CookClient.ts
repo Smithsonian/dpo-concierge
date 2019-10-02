@@ -28,8 +28,8 @@ import { IJobOrder, IRecipe, IParameters, IJobInfo, IJobReport, TTaskState } fro
 
 export default class CookClient
 {
-    public readonly machineAddress: string;
-    public readonly clientId: string;
+    readonly machineAddress: string;
+    readonly clientId: string;
 
     protected jsonValidator: Ajv;
 
