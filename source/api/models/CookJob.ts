@@ -22,7 +22,7 @@ import Project from "./Project";
 ////////////////////////////////////////////////////////////////////////////////
 
 @Table
-export default class Job extends Model<Job>
+export default class CookJob extends Model<CookJob>
 {
     @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, unique: true })
     uuid: string;

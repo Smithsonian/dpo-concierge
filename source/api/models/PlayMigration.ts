@@ -18,6 +18,7 @@
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
 
 import User from "./User";
+import Project from "./Project";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -33,4 +34,11 @@ export default class PlayMigration extends Model<PlayMigration>
 
     @BelongsTo(() => User)
     owner: User;
+
+    @ForeignKey(() => Project)
+    @Column
+    projectId: number;
+
+    @BelongsTo(() => Project)
+    project: Project;
 }

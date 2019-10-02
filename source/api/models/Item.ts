@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, DataType } from "sequelize-typescript";
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
+
+import Subject from "./Subject";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -30,4 +32,12 @@ export default class Item extends Model<Item>
 
     @Column({ type: DataType.TEXT })
     description: string;
+
+    @ForeignKey(() => Subject)
+    @Column
+    subjectId: number;
+
+    @BelongsTo(() => Subject)
+    subject: Subject;
+
 }

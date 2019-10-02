@@ -79,7 +79,7 @@ database.setup()
     const migration = new MigrationSheet();
     migration.load();
 
-    const edanClient = new EDANClient(edanAppId, edanAppKey);
-    edanClient.fetchMdmRecord("edanmdm-nmnhpaleobiology_3446197");
+    //const edanClient = new EDANClient(edanAppId, edanAppKey);
+    //edanClient.fetchMdmRecord("edanmdm-nmnhpaleobiology_3446197");
 });
 
