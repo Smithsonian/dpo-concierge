@@ -4,6 +4,7 @@
 node_modules/
 
 dist/
+services/api/secrets/
 services/api/bin/
 services/db/bin/
 

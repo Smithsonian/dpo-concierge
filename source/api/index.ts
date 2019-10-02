@@ -21,6 +21,7 @@ sourceMapSupport.install();
 import * as path from "path";
 import Server, { IServerConfiguration } from "./app/Server";
 import Database, { IDatabaseConfiguration } from "./app/Database";
+import MigrationSheet from "./utls/MigrationSheet";
 
 ////////////////////////////////////////////////////////////////////////////////
 // CONFIGURATION
@@ -67,9 +68,11 @@ Static File Directory:   ${serverConfig.staticDir}
 const server = new Server(serverConfig);
 const database = new Database(databaseConfig);
 
-database.setup().then(() => {
-    return server.setup();
-}).then(() => {
-    return server.start();
+database.setup()
+.then(() => server.setup())
+.then(() => server.start())
+.then(() => {
+    const migration = new MigrationSheet();
+    return migration.load();
 });
 
