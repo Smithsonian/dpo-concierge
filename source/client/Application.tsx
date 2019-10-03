@@ -17,9 +17,11 @@
 
 import * as React from "react";
 
+import gql from "graphql-tag";
 import ApolloClient from "apollo-client";
 import { HttpLink } from "apollo-link-http";
 import { InMemoryCache } from "apollo-cache-inmemory";
+import { ApolloProvider } from "@apollo/react-hooks";
 
 import { withStyles } from '@material-ui/core/styles';
 import { ThemeProvider } from '@material-ui/styles';
@@ -54,7 +56,7 @@ interface IApplicationState
 
 class Application extends React.Component<IApplicationProps, IApplicationState>
 {
-    protected client;
+    protected client: ApolloClient<any>;
 
     constructor(props: IApplicationProps)
     {
@@ -79,28 +81,30 @@ class Application extends React.Component<IApplicationProps, IApplicationState>
 
         return (
             <ThemeProvider theme={theme}>
-                <div className={classes.root}>
-                    <CssBaseline />
-                    <nav className={classes.drawer}>
-                        <Hidden smUp implementation="js">
-                            <Navigator
-                                PaperProps={{ style: { width: drawerWidth } }}
-                                variant="temporary"
-                                open={this.state.mobileOpen}
-                                onClose={this.handleDrawerToggle}
-                            />
-                        </Hidden>
-                        <Hidden xsDown implementation="css">
-                            <Navigator PaperProps={{ style: { width: drawerWidth } }} />
-                        </Hidden>
-                    </nav>
-                    <div className={classes.appContent}>
-                        <Header onDrawerToggle={this.handleDrawerToggle} />
-                        <main className={classes.mainContent}>
-                            <MigrationPage />
-                        </main>
+                <ApolloProvider client={this.client}>
+                    <div className={classes.root}>
+                        <CssBaseline />
+                        <nav className={classes.drawer}>
+                            <Hidden smUp implementation="js">
+                                <Navigator
+                                    PaperProps={{ style: { width: drawerWidth } }}
+                                    variant="temporary"
+                                    open={this.state.mobileOpen}
+                                    onClose={this.handleDrawerToggle}
+                                />
+                            </Hidden>
+                            <Hidden xsDown implementation="css">
+                                <Navigator PaperProps={{ style: { width: drawerWidth } }} />
+                            </Hidden>
+                        </nav>
+                        <div className={classes.appContent}>
+                            <Header onDrawerToggle={this.handleDrawerToggle} />
+                            <main className={classes.mainContent}>
+                                <MigrationPage />
+                            </main>
+                        </div>
                     </div>
-                </div>
+                </ApolloProvider>
             </ThemeProvider>
         );
     }

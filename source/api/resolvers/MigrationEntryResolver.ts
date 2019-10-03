@@ -31,7 +31,7 @@ export default class MigrationEntryResolver
         @Arg("limit", { defaultValue: 50 }) limit: number,
     ): Promise<MigrationEntrySchema[]>
     {
-        return MigrationEntryModel.findAll({ offset, limit }).then(rows => rows.map(row => row.toJSON() as MigrationEntrySchema));
+        return MigrationEntryModel.findAll({ offset, limit: limit ? limit : undefined }).then(rows => rows.map(row => row.toJSON() as MigrationEntrySchema));
     }
 
     @Query(returns => MigrationEntrySchema)

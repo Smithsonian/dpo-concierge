@@ -34,6 +34,7 @@ export interface ITableColumn
     id: string;
     label?: string;
     numeric?: boolean;
+    format?: (value: any) => string;
 }
 
 export interface IDataTableProps<T>
@@ -42,6 +43,9 @@ export interface IDataTableProps<T>
     columns: ITableColumn[];
 
     classes: {
+        root: string;
+        table: string;
+        tableWrapper: string;
     }
 }
 
@@ -56,10 +60,6 @@ export interface IDataTableState
 class DataTable<T extends {}> extends React.Component<IDataTableProps<T>, IDataTableState>
 {
     static readonly styles: any = theme => ({
-        root: {
-            width: '100%',
-            marginTop: theme.spacing(3),
-        },
         table: {
             minWidth: 750,
         },
@@ -86,19 +86,21 @@ class DataTable<T extends {}> extends React.Component<IDataTableProps<T>, IDataT
 
     render()
     {
-        const { rows } = this.props;
+        const { rows, classes } = this.props;
         const { rowsPerPage, page } = this.state;
 
         return (
             <React.Fragment>
-                <Table>
-                    <TableHead>
-                        {this.renderHeadRow()}
-                    </TableHead>
-                    <TableBody>
-                        {this.getDisplayRows().map((row, index) => this.renderRow(row))}
-                    </TableBody>
-                </Table>
+                <div className={classes.tableWrapper}>
+                    <Table className={classes.table}>
+                        <TableHead>
+                            {this.renderHeadRow()}
+                        </TableHead>
+                        <TableBody>
+                            {this.getDisplayRows().map((row, index) => this.renderRow(row))}
+                        </TableBody>
+                    </Table>
+                </div>
                 <TablePagination
                     component="div"
                     rowsPerPageOptions={[ 10, 20, 50, 100 ]}
@@ -146,14 +148,19 @@ class DataTable<T extends {}> extends React.Component<IDataTableProps<T>, IDataT
             <TableRow
                 key={row[1]}
             >
-                {columns.map(column => (
-                    <TableCell
-                        key={column.id}
-                        align={column.numeric ? "right" : "left"}
-                    >
-                        {row[0][column.id]}
-                    </TableCell>
-                ))}
+                {columns.map(column => {
+                    const value = row[0][column.id];
+                    const text = column.format ? column.format(value) : String(value);
+
+                    return(
+                        <TableCell
+                            key={column.id}
+                            align={column.numeric ? "right" : "left"}
+                        >
+                            {text}
+                        </TableCell>
+                    );
+                })}
             </TableRow>
         )
     }

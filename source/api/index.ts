@@ -79,7 +79,7 @@ database.setup()
 .then(() => server.start())
 .then(() => {
     //const migration = new MigrationSheet();
-    //migration.load()
+    //migration.update()
     //.then(() => MigrationEntry.importSheet(migration))
     //.then(() => console.log("SHEET IMPORT DONE."));
 

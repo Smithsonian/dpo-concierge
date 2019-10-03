@@ -113,10 +113,10 @@ export default class MigrationSheet
                                     row["publiclylisted"] = row["publiclylisted"] === "Yes";
 
                                     row["partscount"] = parseInt(row["partscount"]) || null;
-                                    row["articles"] = parseInt(row["partscount"]) || null;
-                                    row["annotations"] = parseInt(row["partscount"]) || null;
-                                    row["tours"] = parseInt(row["partscount"]) || null;
-                                    row["tourstops"] = parseInt(row["partscount"]) || null;
+                                    row["articles"] = parseInt(row["articles"]) || null;
+                                    row["annotations"] = parseInt(row["annotations"]) || null;
+                                    row["tours"] = parseInt(row["tours"]) || null;
+                                    row["tourstops"] = parseInt(row["tourstops"]) || null;
 
                                     row["downloads"] = row["downloads"] === "Yes";
 
