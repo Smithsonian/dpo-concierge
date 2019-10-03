@@ -16,9 +16,10 @@
  */
 
 import * as React from "react";
-import { CSSProperties } from "react";
 
-import Button from "@material-ui/core/Button";
+import ApolloClient from "apollo-client";
+import { HttpLink } from "apollo-link-http";
+import { InMemoryCache } from "apollo-cache-inmemory";
 
 import { withStyles } from '@material-ui/core/styles';
 import { ThemeProvider } from '@material-ui/styles';
@@ -28,8 +29,10 @@ import Hidden from '@material-ui/core/Hidden';
 import { theme, drawerWidth, styles } from "./components/theme";
 
 import Header from "./components/Header";
+//import Header from "./sample/Header";
 import Navigator from "./components/Navigator";
-import Content from "./components/Content";
+//import Content from "./components/Content";
+import MigrationPage from "./components/MigrationPage";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -51,6 +54,8 @@ interface IApplicationState
 
 class Application extends React.Component<IApplicationProps, IApplicationState>
 {
+    protected client;
+
     constructor(props: IApplicationProps)
     {
         super(props);
@@ -58,6 +63,12 @@ class Application extends React.Component<IApplicationProps, IApplicationState>
         this.state = {
             mobileOpen: false,
         };
+
+        this.client = new ApolloClient({
+            link: new HttpLink({ uri: "/graphql" }),
+            cache: new InMemoryCache(),
+            name: "concierge-web-client",
+        });
 
         this.handleDrawerToggle = this.handleDrawerToggle.bind(this);
     }
@@ -86,7 +97,7 @@ class Application extends React.Component<IApplicationProps, IApplicationState>
                     <div className={classes.appContent}>
                         <Header onDrawerToggle={this.handleDrawerToggle} />
                         <main className={classes.mainContent}>
-                            <Content />
+                            <MigrationPage />
                         </main>
                     </div>
                 </div>

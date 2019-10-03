@@ -89,6 +89,7 @@ class Content extends React.Component<IContentProps, IContentState>
 
         return (
             <Paper className={classes.paper}>
+                Here's the paper.
                 <AppBar className={classes.searchBar} position="static" color="default" elevation={0}>
                     <Toolbar>
                         <Grid container spacing={2} alignItems="center">

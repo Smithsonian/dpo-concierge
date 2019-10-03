@@ -15,7 +15,27 @@
  * limitations under the License.
  */
 
-import { Arg, FieldResolver, Query, Resolver, Root } from "type-graphql";
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
+
+import Job from "./Job";
+import MigrationEntry from "./MigrationEntry";
 
 ////////////////////////////////////////////////////////////////////////////////
 
+@Table
+export default class PlayMigrationJob extends Model<PlayMigrationJob>
+{
+    @ForeignKey(() => Job)
+    @Column
+    jobId: number;
+
+    @BelongsTo(() => Job)
+    job: Job;
+
+    @ForeignKey(() => MigrationEntry)
+    @Column
+    migrationEntryId: string;
+
+    @BelongsTo(() => MigrationEntry)
+    migrationEntry: MigrationEntry;
+}

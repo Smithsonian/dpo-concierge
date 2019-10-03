@@ -17,7 +17,7 @@
 
 import { Table, Column, Model, ForeignKey } from "sequelize-typescript";
 
-import PlayMigration from "./PlayMigration";
+import MigrationEntry from "./MigrationEntry";
 import Asset from "./Asset";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -25,7 +25,7 @@ import Asset from "./Asset";
 @Table
 export default class SceneItem extends Model<SceneItem>
 {
-    @ForeignKey(() => PlayMigration)
+    @ForeignKey(() => MigrationEntry)
     @Column
     playMigrationId: number;
 

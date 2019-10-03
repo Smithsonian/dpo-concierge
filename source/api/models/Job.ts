@@ -15,7 +15,27 @@
  * limitations under the License.
  */
 
-import { Arg, FieldResolver, Query, Resolver, Root } from "type-graphql";
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
+
+import User from "./User";
+import Project from "./Project";
 
 ////////////////////////////////////////////////////////////////////////////////
 
+@Table
+export default class Job extends Model<Job>
+{
+    @ForeignKey(() => User)
+    @Column
+    ownerId: number;
+
+    @BelongsTo(() => User)
+    owner: User;
+
+    @ForeignKey(() => Project)
+    @Column
+    projectId: number;
+
+    @BelongsTo(() => Project)
+    project: Project;
+}

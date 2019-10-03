@@ -16,29 +16,17 @@
  */
 
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
-
-import User from "./User";
-import Project from "./Project";
+import MigrationEntry from "./MigrationEntry";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @Table
-export default class PlayMigration extends Model<PlayMigration>
+export default class LegacyMigrationJob extends Model<LegacyMigrationJob>
 {
-    @Column({ type: DataType.STRING, unique: true })
-    boxId: string;
-
-    @ForeignKey(() => User)
+    @ForeignKey(() => MigrationEntry)
     @Column
-    ownerId: number;
+    migrationEntryId: string;
 
-    @BelongsTo(() => User)
-    owner: User;
-
-    @ForeignKey(() => Project)
-    @Column
-    projectId: number;
-
-    @BelongsTo(() => Project)
-    project: Project;
+    @BelongsTo(() => MigrationEntry)
+    migrationEntry: MigrationEntry;
 }

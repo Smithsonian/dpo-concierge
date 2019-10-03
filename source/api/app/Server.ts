@@ -27,6 +27,8 @@ import * as LdapStrategy from "passport-ldapauth";
 
 import * as graphqlHttp from "express-graphql";
 import { buildSchema } from "type-graphql";
+
+import MigrationEntryResolver from "../resolvers/MigrationEntryResolver";
 import ItemResolver from "../resolvers/ItemResolver";
 
 import User from "../models/User";
@@ -126,7 +128,11 @@ export default class Server
         app.use(passport.session());
 
         // GraphQL endpoint
-        const schema = await buildSchema({ resolvers: [ ItemResolver ]});
+        const schema = await buildSchema({ resolvers: [
+            MigrationEntryResolver,
+            ItemResolver
+        ]});
+
         app.use("/graphql", graphqlHttp({ schema: schema, graphiql: true }));
 
         // Web application
@@ -153,7 +159,7 @@ export default class Server
                 res.status(500).send({ error: `${error.name}: ${error.message}` });
             }
             else {
-                // send error page
+                // send generic error page
                 res.status(500).render("errors/500", { error });
             }
         });

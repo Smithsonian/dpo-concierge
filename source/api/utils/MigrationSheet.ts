@@ -109,6 +109,22 @@ export default class MigrationSheet
                                     delete row["_xml"];
                                     delete row["_links"];
                                     delete row["app:edited"];
+
+                                    row["publiclylisted"] = row["publiclylisted"] === "Yes";
+
+                                    row["partscount"] = parseInt(row["partscount"]) || null;
+                                    row["articles"] = parseInt(row["partscount"]) || null;
+                                    row["annotations"] = parseInt(row["partscount"]) || null;
+                                    row["tours"] = parseInt(row["partscount"]) || null;
+                                    row["tourstops"] = parseInt(row["partscount"]) || null;
+
+                                    row["downloads"] = row["downloads"] === "Yes";
+
+                                    const playboxId = Number.parseInt(row["playboxid"]);
+                                    row["playboxid"] = Number.isFinite(playboxId) ? row["playboxid"] : null;
+
+                                    row["rawdatasizegb"] = parseFloat(row["rawdatasizegb"]) || null;
+                                    row["mastermodelsizegb"] = parseFloat(row["mastermodelsizegb"]) || null;
                                 });
                                 this.data.worksheets[index].rows = rows;
                                 console.log(`MigrationSheet.update - worksheet: ${worksheet.info.title}`);

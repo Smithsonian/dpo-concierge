@@ -21,7 +21,9 @@ sourceMapSupport.install();
 import * as path from "path";
 import Server, { IServerConfiguration } from "./app/Server";
 import Database, { IDatabaseConfiguration } from "./app/Database";
+
 import MigrationSheet from "./utils/MigrationSheet";
+import MigrationEntry from "./models/MigrationEntry";
 import EDANClient from "./utils/EDANClient";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -76,8 +78,10 @@ database.setup()
 .then(() => server.setup())
 .then(() => server.start())
 .then(() => {
-    const migration = new MigrationSheet();
-    migration.load();
+    //const migration = new MigrationSheet();
+    //migration.load()
+    //.then(() => MigrationEntry.importSheet(migration))
+    //.then(() => console.log("SHEET IMPORT DONE."));
 
     //const edanClient = new EDANClient(edanAppId, edanAppKey);
     //edanClient.fetchMdmRecord("edanmdm-nmnhpaleobiology_3446197");
