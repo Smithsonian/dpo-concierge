@@ -36,8 +36,17 @@ const styles = theme => ({
 
 });
 
+export interface IHeaderTab
+{
+    text: string;
+    link: any;
+}
+
 export interface IHeaderProps
 {
+    title: string;
+    tabs: IHeaderTab[];
+
     classes: {
         secondaryBar: string;
         menuButton: string;
@@ -54,7 +63,7 @@ class Header extends React.Component<IHeaderProps, {}>
 {
     render()
     {
-        const { classes, onDrawerToggle } = this.props;
+        const { classes, title, tabs, onDrawerToggle } = this.props;
 
         return (
             <React.Fragment>
@@ -76,15 +85,12 @@ class Header extends React.Component<IHeaderProps, {}>
                     </Toolbar>
                     <Toolbar>
                         <Typography color="inherit" variant="h5" component="h1">
-                            Authentication
+                            {title}
                         </Typography>
                     </Toolbar>
-                    <Tabs value={0} textColor="inherit">
-                        <Tab textColor="inherit" label="Users" />
-                        <Tab textColor="inherit" label="Sign-in method" />
-                        <Tab textColor="inherit" label="Templates" />
-                        <Tab textColor="inherit" label="Usage" />
-                    </Tabs>
+                    {tabs.map(tab => (
+                        <Tab textColor="inherit" label={tab.text} />
+                    ))}
                 </AppBar>
             </React.Fragment>
         )

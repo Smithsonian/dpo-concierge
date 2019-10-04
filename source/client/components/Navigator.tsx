@@ -16,17 +16,14 @@
  */
 
 import * as React from "react";
-import { CSSProperties } from "react";
 
-import clsx from "clsx";
-
-import { withStyles } from '@material-ui/core/styles';
-import Divider from '@material-ui/core/Divider';
-import Drawer from '@material-ui/core/Drawer';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
+import Hidden from "@material-ui/core/Hidden";
+import Drawer from "@material-ui/core/Drawer";
+import List from "@material-ui/core/List";
+import ListItem from "@material-ui/core/ListItem";
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
+import Divider from '@material-ui/core/Divider';
 
 import HomeIcon from '@material-ui/icons/Home';
 import PersonIcon from "@material-ui/icons/Person";
@@ -34,52 +31,73 @@ import InsertDriveFileIcon from "@material-ui/icons/InsertDriveFile";
 import WorkIcon from "@material-ui/icons/Work";
 import FolderIcon from "@material-ui/icons/Folder";
 import AirportShuttleIcon from "@material-ui/icons/AirportShuttle";
-
 import SettingsIcon from '@material-ui/icons/Settings';
+
+import { withStyles, makeStyles, Theme } from "@material-ui/core/styles";
+import clsx from "clsx";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-/** Properties for [[Navigator]] component. */
 export interface INavigatorProps
 {
-    [id: string]: any;
+    open: boolean;
+    onClose: () => void;
+
+    classes: {
+        root: string;
+        drawer: string;
+
+    }
 }
 
-interface INavigatorState
-{
-}
+const categories = [{
+    name: "Repository",
+    items: [
+        { name: "Items", icon: <WorkIcon />, active: true },
+        { name: "Files", icon: <FolderIcon /> },
+    ],
+}, {
+    name: "Workflow",
+    items: [
+        { name: "Migration", icon: <AirportShuttleIcon /> },
+    ],
+}, {
+    name: "Administration",
+    items: [
+        { name: "Users and Roles", icon: <PersonIcon /> },
+    ],
+}];
 
-const categories = [
-    {
-        id: "Repository",
-        children: [
-            { id: "Projects", icon: <WorkIcon />, active: true },
-            { id: "Items", icon: <FolderIcon /> },
-            { id: "Files", icon: <InsertDriveFileIcon /> },
-        ],
-    },
-    {
-        id: "Workflow",
-        children: [
-            { id: "Migration", icon: <AirportShuttleIcon /> },
-        ],
-    },
-    {
-        id: "Settings",
-        children: [
-            { id: "Users", icon: <PersonIcon /> },
-            { id: "Settings", icon: <SettingsIcon /> },
-        ],
-    },
-];
+const drawerWidth = 256;
 
-const styles = theme => ({
-    categoryHeader: {
+const styles: any = theme => ({
+    root: {
+
+    },
+    drawer: {
+        width: drawerWidth,
+        flexShrink: 0,
+        // [theme.breakpoints.up('sm')]: {
+        //     width: drawerWidth,
+        //     flexShrink: 0,
+        // },
+    }
+});
+
+const sidebarStyles: any = theme => ({
+    title: {
+        paddingTop: theme.spacing(3),
+        fontSize: 24,
+        color: theme.palette.common.white,
+    },
+    category: {
         paddingTop: theme.spacing(2),
         paddingBottom: theme.spacing(2),
-    },
-    categoryHeaderPrimary: {
         color: theme.palette.common.white,
+    },
+    spaced: {
+        paddingTop: theme.spacing(2),
+        paddingBottom: theme.spacing(2),
     },
     item: {
         paddingTop: 1,
@@ -89,97 +107,88 @@ const styles = theme => ({
             backgroundColor: 'rgba(255, 255, 255, 0.08)',
         },
     },
-    itemCategory: {
-        backgroundColor: '#232f3e',
-        boxShadow: '0 -1px 0 #404854 inset',
-        paddingTop: theme.spacing(2),
-        paddingBottom: theme.spacing(2),
-    },
-    firebase: {
-        fontSize: 24,
-        color: theme.palette.common.white,
-    },
-    itemActiveItem: {
-        color: '#4fc3f7',
-    },
-    itemPrimary: {
-        fontSize: 'inherit',
-    },
     itemIcon: {
         minWidth: 'auto',
         marginRight: theme.spacing(2),
+    },
+    itemText: {
+        fontSize: 'inherit',
+    },
+    activeItem: {
+        color: '#4fc3f7',
     },
     divider: {
         marginTop: theme.spacing(2),
     },
 });
 
-class Navigator extends React.Component<INavigatorProps, INavigatorState>
-{
-    constructor(props: INavigatorProps)
-    {
-        super(props);
+const Sidebar = withStyles(sidebarStyles)(function(props: any) {
+    const { classes } = props;
 
-        this.state = {
-        };
-    }
+    return (
+        <List disablePadding>
+            <ListItem className={classes.title}>
+                Concierge
+            </ListItem>
+            <Divider className={classes.divider} />
 
-    render()
-    {
-        const { classes, ...other } = this.props as any;
-
-        return (
-            <Drawer variant="permanent" {...other}>
-                <List disablePadding>
-                    <ListItem className={clsx(classes.firebase, classes.item, classes.itemCategory)}>
-                        Concierge
-                    </ListItem>
-                    <ListItem className={clsx(classes.item, classes.itemCategory)}>
-                        <ListItemIcon className={classes.itemIcon}>
-                            <HomeIcon />
-                        </ListItemIcon>
+            {categories.map(({ name, items }) => (
+                <React.Fragment key={name}>
+                    <ListItem className={classes.category}>
                         <ListItemText
-                            classes={{
-                                primary: classes.itemPrimary,
-                            }}
-                        >
-                            Home
-                        </ListItemText>
+                            primary={name}
+                        />
                     </ListItem>
-                    {categories.map(({ id, children }) => (
-                        <React.Fragment key={id}>
-                            <ListItem className={classes.categoryHeader}>
-                                <ListItemText
-                                    classes={{
-                                        primary: classes.categoryHeaderPrimary,
-                                    }}
-                                >
-                                    {id}
-                                </ListItemText>
-                            </ListItem>
-                            {children.map(({ id: childId, icon, active }) => (
-                                <ListItem
-                                    key={childId}
-                                    button
-                                    className={clsx(classes.item, active && classes.itemActiveItem)}
-                                >
-                                    <ListItemIcon className={classes.itemIcon}>{icon}</ListItemIcon>
-                                    <ListItemText
-                                        classes={{
-                                            primary: classes.itemPrimary,
-                                        }}
-                                    >
-                                        {childId}
-                                    </ListItemText>
-                                </ListItem>
-                            ))}
-                            <Divider className={classes.divider} />
-                        </React.Fragment>
+                    {items.map(({ name, icon, active }) => (
+                        <ListItem
+                            key={name}
+                            className={clsx(classes.item, active && classes.activeItem)}
+                            button
+                        >
+                            <ListItemIcon className={classes.itemIcon}>
+                                {icon}
+                            </ListItemIcon>
+                            <ListItemText
+                                classes={{ primary: classes.itemText }}
+                                primary={name}
+                            />
+                        </ListItem>
                     ))}
-                </List>
-            </Drawer>
-        );
-    }
+                    <Divider className={classes.divider} />
+                </React.Fragment>
+            ))}
+        </List>
+    );
+});
+
+function Navigator(props: INavigatorProps)
+{
+    const { classes, open, onClose } = props;
+
+    return (
+        <nav className={classes.root}>
+            <Hidden smUp implementation="js">
+                <Drawer
+                    className={classes.drawer}
+                    PaperProps={{ style: { width: drawerWidth } }}
+                    variant="temporary"
+                    open={open}
+                    onClose={onClose}
+                >
+                    <Sidebar/>
+                </Drawer>
+            </Hidden>
+            <Hidden xsDown implementation="css">
+                <Drawer
+                    className={classes.drawer}
+                    PaperProps={{ style: { width: drawerWidth } }}
+                    variant="permanent"
+                >
+                    <Sidebar/>
+                </Drawer>
+            </Hidden>
+        </nav>
+    );
 }
 
 export default withStyles(styles)(Navigator);

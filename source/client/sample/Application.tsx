@@ -17,19 +17,24 @@
 
 import * as React from "react";
 
+import gql from "graphql-tag";
 import ApolloClient from "apollo-client";
 import { HttpLink } from "apollo-link-http";
 import { InMemoryCache } from "apollo-cache-inmemory";
 import { ApolloProvider } from "@apollo/react-hooks";
 
-import { ThemeProvider } from '@material-ui/styles';
 import { withStyles } from '@material-ui/core/styles';
+import { ThemeProvider } from '@material-ui/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
+import Hidden from '@material-ui/core/Hidden';
 
-import Navigator from "./components/Navigator";
-import Header from "./components/Header";
+import { theme, drawerWidth, styles } from "../components/theme";
 
-import { theme } from "./components/theme";
+import Header from "./Header";
+//import Header from "./sample/Header";
+import Navigator from "./Navigator";
+//import Content from "./components/Content";
+import MigrationPage from "../components/MigrationPage";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -38,33 +43,16 @@ export interface IApplicationProps
 {
     classes: {
         root: string;
+        drawer: string;
         appContent: string;
         mainContent: string;
     };
 }
 
-export interface IApplicationState
+interface IApplicationState
 {
-    isNavigatorOpen: boolean;
+    mobileOpen: boolean;
 }
-
-const styles: any = theme => ({
-    root: {
-        display: 'flex',
-        minHeight: '100vh',
-    },
-
-    appContent: {
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-    },
-    mainContent: {
-        flex: 1,
-        padding: '48px 36px 0',
-        background: '#eaeff1',
-    },
-});
 
 class Application extends React.Component<IApplicationProps, IApplicationState>
 {
@@ -74,36 +62,47 @@ class Application extends React.Component<IApplicationProps, IApplicationState>
     {
         super(props);
 
-        this.toggleNavigator = this.toggleNavigator.bind(this);
-
         this.state = {
-            isNavigatorOpen: false,
+            mobileOpen: false,
         };
 
         this.client = new ApolloClient({
             link: new HttpLink({ uri: "/graphql" }),
             cache: new InMemoryCache(),
-            name: "concierge-web-client",
+            name: "concierge-web-clientx",
         });
+
+        this.handleDrawerToggle = this.handleDrawerToggle.bind(this);
     }
 
     render()
     {
-        const { classes } = this.props;
+        const classes = this.props.classes;
 
         return (
             <ThemeProvider theme={theme}>
                 <ApolloProvider client={this.client}>
                     <div className={classes.root}>
                         <CssBaseline />
-                        <Navigator
-                            open={this.state.isNavigatorOpen}
-                            onClose={this.toggleNavigator}
-                        />
+                        <nav className={classes.drawer}>
+                            <Hidden smUp implementation="js">
+                                <Navigator
+                                    PaperProps={{ style: { width: drawerWidth } }}
+                                    variant="temporary"
+                                    open={this.state.mobileOpen}
+                                    onClose={this.handleDrawerToggle}
+                                />
+                            </Hidden>
+                            <Hidden xsDown implementation="css">
+                                <Navigator
+                                    PaperProps={{ style: { width: drawerWidth } }}
+                                />
+                            </Hidden>
+                        </nav>
                         <div className={classes.appContent}>
-                            <Header onDrawerToggle={this.toggleNavigator} />
+                            <Header onDrawerToggle={this.handleDrawerToggle} />
                             <main className={classes.mainContent}>
-
+                                <MigrationPage />
                             </main>
                         </div>
                     </div>
@@ -112,9 +111,9 @@ class Application extends React.Component<IApplicationProps, IApplicationState>
         );
     }
 
-    protected toggleNavigator()
+    protected handleDrawerToggle()
     {
-        this.setState(state => ({ isNavigatorOpen: !state.isNavigatorOpen }));
+        this.setState(state => ({ mobileOpen: !state.mobileOpen }));
     }
 }
 
