@@ -16,13 +16,27 @@
  */
 
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 
-import Application from "./Application";
+import MigrationSpreadsheetView from "../views/MigrationSpreadsheetView";
+import Page, { IPageView } from "../Page";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-ReactDOM.render(
-    <Application/>,
-    document.getElementById("main")
+const views: IPageView[] = [
+    { title: "Spreadsheet", component: MigrationSpreadsheetView, route: "/spreadsheet" },
+    { title: "Migrate Play", component: null, route: "/play" },
+    { title: "Migrate Legacy", component: null, route: "/legacy" },
+];
+
+export interface IPageProps
+{
+    onNavigatorToggle: () => void;
+}
+
+export default (props: IPageProps) => (
+    <Page
+        title="Migration"
+        views={views}
+        {...props}
+    />
 );

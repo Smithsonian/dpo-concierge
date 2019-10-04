@@ -17,6 +17,8 @@
 
 import * as React from "react";
 
+import { BrowserRouter, Route, Switch } from "react-router-dom";
+
 import ApolloClient from "apollo-client";
 import { HttpLink } from "apollo-link-http";
 import { InMemoryCache } from "apollo-cache-inmemory";
@@ -27,9 +29,12 @@ import { withStyles } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 
 import Navigator from "./components/Navigator";
-import Header from "./components/Header";
-
 import { theme } from "./components/theme";
+
+import RepositoryPage from "./components/pages/RepositoryPage";
+import WorkflowPage from "./components/pages/WorkflowPage";
+import MigrationPage from "./components/pages/MigrationPage";
+import AdminPage from "./components/pages/AdminPage";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -94,19 +99,21 @@ class Application extends React.Component<IApplicationProps, IApplicationState>
         return (
             <ThemeProvider theme={theme}>
                 <ApolloProvider client={this.client}>
-                    <div className={classes.root}>
-                        <CssBaseline />
-                        <Navigator
-                            open={this.state.isNavigatorOpen}
-                            onClose={this.toggleNavigator}
-                        />
-                        <div className={classes.appContent}>
-                            <Header onDrawerToggle={this.toggleNavigator} />
-                            <main className={classes.mainContent}>
-
-                            </main>
+                    <BrowserRouter>
+                        <div className={classes.root}>
+                            <CssBaseline />
+                            <Navigator
+                                open={this.state.isNavigatorOpen}
+                                onClose={this.toggleNavigator}
+                            />
+                            <Switch>
+                                <Route path="/repository" render={props => <RepositoryPage {...props} onNavigatorToggle={this.toggleNavigator}/>} />
+                                <Route path="/workflow" render={props => <WorkflowPage {...props} onNavigatorToggle={this.toggleNavigator}/>} />
+                                <Route path="/migration" render={props => <MigrationPage {...props} onNavigatorToggle={this.toggleNavigator}/>} />
+                                <Route path="/admin" render={props => <AdminPage {...props} onNavigatorToggle={this.toggleNavigator}/>} />
+                            </Switch>
                         </div>
-                    </div>
+                    </BrowserRouter>
                 </ApolloProvider>
             </ThemeProvider>
         );

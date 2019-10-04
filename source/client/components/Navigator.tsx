@@ -17,24 +17,26 @@
 
 import * as React from "react";
 
+import { NavLink } from "react-router-dom";
+
 import Hidden from "@material-ui/core/Hidden";
 import Drawer from "@material-ui/core/Drawer";
 import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
-import Divider from '@material-ui/core/Divider';
+import ListItemIcon from "@material-ui/core/ListItemIcon";
+import ListItemText from "@material-ui/core/ListItemText";
+import Divider from "@material-ui/core/Divider";
 
-import HomeIcon from '@material-ui/icons/Home';
 import PersonIcon from "@material-ui/icons/Person";
+import GroupIcon from "@material-ui/icons/Group";
+import DescriptionIcon from "@material-ui/icons/Description";
 import InsertDriveFileIcon from "@material-ui/icons/InsertDriveFile";
+import AssignmentIcon from "@material-ui/icons/Assignment";
 import WorkIcon from "@material-ui/icons/Work";
-import FolderIcon from "@material-ui/icons/Folder";
 import AirportShuttleIcon from "@material-ui/icons/AirportShuttle";
-import SettingsIcon from '@material-ui/icons/Settings';
+import { withStyles } from "@material-ui/core/styles";
 
-import { withStyles, makeStyles, Theme } from "@material-ui/core/styles";
-import clsx from "clsx";
+import { ConciergeIcon, ModelIcon, SceneIcon } from "./icons";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -53,22 +55,27 @@ export interface INavigatorProps
 const categories = [{
     name: "Repository",
     items: [
-        { name: "Items", icon: <WorkIcon />, active: true },
-        { name: "Files", icon: <FolderIcon /> },
+        { name: "Items", icon: <DescriptionIcon />, link: "/repository/items", active: true },
+        { name: "Models", icon: <ModelIcon />, link: "/repository/models" },
+        { name: "Scenes", icon: <SceneIcon />, link: "/repository/scenes" },
+        { name: "Assets", icon: <InsertDriveFileIcon />, link: "/repository/assets" },
     ],
 }, {
     name: "Workflow",
     items: [
-        { name: "Migration", icon: <AirportShuttleIcon /> },
+        { name: "Projects", icon: <WorkIcon />, link: "/workflow/projects" },
+        { name: "Jobs", icon: <AssignmentIcon />, link: "/workflow/jobs" },
+        { name: "Migration", icon: <AirportShuttleIcon />, link: "/migration" },
     ],
 }, {
     name: "Administration",
     items: [
-        { name: "Users and Roles", icon: <PersonIcon /> },
+        { name: "Users", icon: <PersonIcon />, link: "/admin/users" },
+        { name: "Roles", icon: <GroupIcon />, link: "/admin/roles" },
     ],
 }];
 
-const drawerWidth = 256;
+const drawerWidth = 220;
 
 const styles: any = theme => ({
     root: {
@@ -86,9 +93,15 @@ const styles: any = theme => ({
 
 const sidebarStyles: any = theme => ({
     title: {
-        paddingTop: theme.spacing(3),
-        fontSize: 24,
-        color: theme.palette.common.white,
+        paddingTop: theme.spacing(2.5),
+        paddingBottom: theme.spacing(2),
+        background: "rgba(130,193,255,0.06)",
+        color: "rgba(230,242,255,0.8)",
+        fontSize: 26,
+    },
+    titleIcon: {
+        marginRight: theme.spacing(1),
+        fontSize: 32,
     },
     category: {
         paddingTop: theme.spacing(2),
@@ -108,14 +121,17 @@ const sidebarStyles: any = theme => ({
         },
     },
     itemIcon: {
-        minWidth: 'auto',
+        minWidth: "auto",
         marginRight: theme.spacing(2),
     },
     itemText: {
         fontSize: 'inherit',
     },
-    activeItem: {
-        color: '#4fc3f7',
+    active: {
+        color: "#4fc3f7 !important",
+    },
+    link: {
+        textDecoration: "none",
     },
     divider: {
         marginTop: theme.spacing(2),
@@ -128,9 +144,10 @@ const Sidebar = withStyles(sidebarStyles)(function(props: any) {
     return (
         <List disablePadding>
             <ListItem className={classes.title}>
-                Concierge
+                <ConciergeIcon fontSize="inherit" className={classes.titleIcon} />
+                <span>Concierge</span>
             </ListItem>
-            <Divider className={classes.divider} />
+            <Divider />
 
             {categories.map(({ name, items }) => (
                 <React.Fragment key={name}>
@@ -139,20 +156,21 @@ const Sidebar = withStyles(sidebarStyles)(function(props: any) {
                             primary={name}
                         />
                     </ListItem>
-                    {items.map(({ name, icon, active }) => (
-                        <ListItem
-                            key={name}
-                            className={clsx(classes.item, active && classes.activeItem)}
-                            button
-                        >
-                            <ListItemIcon className={classes.itemIcon}>
-                                {icon}
-                            </ListItemIcon>
-                            <ListItemText
-                                classes={{ primary: classes.itemText }}
-                                primary={name}
-                            />
-                        </ListItem>
+                    {items.map(({ name, icon, link, active }) => (
+                        <NavLink key={name} to={link} className={classes.link}>
+                            <ListItem
+                                className={classes.item}
+                                button
+                            >
+                                <ListItemIcon className={classes.itemIcon}>
+                                    {icon}
+                                </ListItemIcon>
+                                <ListItemText
+                                    classes={{ primary: classes.itemText }}
+                                    primary={name}
+                                />
+                            </ListItem>
+                        </NavLink>
                     ))}
                     <Divider className={classes.divider} />
                 </React.Fragment>

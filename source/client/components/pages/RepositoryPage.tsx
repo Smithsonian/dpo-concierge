@@ -16,13 +16,26 @@
  */
 
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 
-import Application from "./Application";
+import Page, { IPageView } from "../Page";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-ReactDOM.render(
-    <Application/>,
-    document.getElementById("main")
+const views: IPageView[] = [
+    { title: "Items", component: null, route: "/items" },
+    { title: "Units", component: null, route: "/units" },
+    { title: "Stakeholders", component: null, route: "/stakeholders" },
+];
+
+export interface IPageProps
+{
+    onNavigatorToggle: () => void;
+}
+
+export default (props: IPageProps) => (
+    <Page
+        title="Repository"
+        views={views}
+        {...props}
+    />
 );

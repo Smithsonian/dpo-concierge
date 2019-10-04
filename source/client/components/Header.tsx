@@ -17,13 +17,14 @@
 
 import * as React from "react";
 
+import { NavLink } from "react-router-dom";
+
 import { withStyles } from '@material-ui/core/styles';
 
 import AppBar from '@material-ui/core/AppBar';
 import Tab from '@material-ui/core/Tab';
 import Tabs from '@material-ui/core/Tabs';
 import Toolbar from '@material-ui/core/Toolbar';
-import Grid from '@material-ui/core/Grid';
 import Hidden from '@material-ui/core/Hidden';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
@@ -39,13 +40,14 @@ const styles = theme => ({
 export interface IHeaderTab
 {
     text: string;
-    link: any;
+    link: string;
 }
 
 export interface IHeaderProps
 {
     title: string;
     tabs: IHeaderTab[];
+    match: any;
 
     classes: {
         secondaryBar: string;
@@ -56,14 +58,33 @@ export interface IHeaderProps
         avatar: string;
     };
 
-    onDrawerToggle: any;
+    onNavigatorToggle: () => void;
+}
+
+function TabLink(props) {
+    const { label, to, value } = props;
+
+    const renderLink = React.useMemo(
+        () =>
+            React.forwardRef((itemProps, ref) => (
+                <NavLink to={to} {...itemProps} innerRef={ref} />
+            )),
+        [to],
+    );
+
+    return (
+        <Tab component={renderLink} label={label} value={value} />
+    );
 }
 
 class Header extends React.Component<IHeaderProps, {}>
 {
     render()
     {
-        const { classes, title, tabs, onDrawerToggle } = this.props;
+        const { classes, title, tabs, onNavigatorToggle, match } = this.props;
+
+        console.log("MATCH", match.path, match.url);
+        console.log("TABS", tabs[0].link);
 
         return (
             <React.Fragment>
@@ -76,7 +97,7 @@ class Header extends React.Component<IHeaderProps, {}>
                             <IconButton
                                 color="inherit"
                                 aria-label="open drawer"
-                                onClick={onDrawerToggle}
+                                onClick={onNavigatorToggle}
                                 className={classes.menuButton}
                             >
                                 <MenuIcon />
@@ -88,9 +109,11 @@ class Header extends React.Component<IHeaderProps, {}>
                             {title}
                         </Typography>
                     </Toolbar>
-                    {tabs.map(tab => (
-                        <Tab textColor="inherit" label={tab.text} />
-                    ))}
+                    <Tabs value={match.path}>
+                        {tabs.map(tab => (
+                            <TabLink key={tab.text} label={tab.text} to={tab.link} value={tab.link} />
+                        ))}
+                    </Tabs>
                 </AppBar>
             </React.Fragment>
         )

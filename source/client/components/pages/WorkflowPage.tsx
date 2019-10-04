@@ -16,13 +16,25 @@
  */
 
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 
-import Application from "./Application";
+import Page, { IPageView } from "../Page";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-ReactDOM.render(
-    <Application/>,
-    document.getElementById("main")
+const views: IPageView[] = [
+    { title: "Projects", component: null, route: "/projects" },
+    { title: "Jobs", component: null, route: "/jobs" },
+];
+
+export interface IPageProps
+{
+    onNavigatorToggle: () => void;
+}
+
+export default (props: IPageProps) => (
+    <Page
+        title="Workflow"
+        views={views}
+        {...props}
+    />
 );

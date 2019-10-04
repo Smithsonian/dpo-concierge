@@ -135,16 +135,17 @@ export default class Server
 
         app.use("/graphql", graphqlHttp({ schema: schema, graphiql: true }));
 
+        // static file server
+        app.use("/", express.static(this.config.staticDir));
+
         // Web application
-        app.get("/", (req, res, next) => {
-            res.sendFile(this.config.staticDir + "/concierge-dev.html", err => {
+        app.get("*", (req, res, next) => {
+            res.sendFile(`${this.config.staticDir}/concierge-dev.html`, err => {
                 if (err) {
                     next(err);
                 }
             });
         });
-
-        app.use("/", express.static(this.config.staticDir));
 
         // error handling
         app.use((error, req, res, next) => {
