@@ -22,9 +22,23 @@ import Project from "./Project";
 
 ////////////////////////////////////////////////////////////////////////////////
 
+export type JobState = "created" | "waiting" | "running" | "done" | "error" | "cancelled";
+
 @Table
 export default class Job extends Model<Job>
 {
+    @Column
+    name: string;
+
+    @Column
+    type: string;
+
+    @Column
+    state: JobState;
+
+    @Column
+    error: string;
+
     @ForeignKey(() => User)
     @Column
     ownerId: number;

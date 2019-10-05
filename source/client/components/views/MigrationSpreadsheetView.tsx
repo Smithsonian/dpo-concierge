@@ -17,25 +17,31 @@
 
 import * as React from "react";
 
+import { Link } from "react-router-dom";
+
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
-import { withStyles } from '@material-ui/core/styles';
-import Paper from '@material-ui/core/Paper';
+import { withStyles, styled, StyleRules } from "@material-ui/core/styles";
+import CircularProgress from "@material-ui/core/CircularProgress";
+import Card from "@material-ui/core/Card";
+import CardContent from "@material-ui/core/CardContent";
+import Paper from "@material-ui/core/Paper";
+import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 
-import DataTable, { ITableColumn } from "../DataTable";
+import DataTable, { ITableColumn, TableCellFormatter } from "../DataTable";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 const format = value => value === undefined || value === null ? "" : String(value);
 
 const columns: ITableColumn[] = [
-    { id: "object", label: "Object Name", format },
-    { id: "unitrecordid", label: "Unit Record ID", format },
-    { id: "edanrecordid", label: "EDAN Record ID", format },
+    { id: "object", label: "Object Name", format, width: 200 },
+    { id: "unitrecordid", label: "Unit Record ID", format, width: 150 },
+    { id: "edanrecordid", label: "EDAN Record ID", format, width: 270 },
     { id: "collectingbody", label: "Collecting Body", format },
-    { id: "collection", label: "Collection", format },
+    { id: "collection", label: "Collection", format, width: 200 },
     { id: "scantype", label: "Scan Type", format },
     { id: "levelofcompletion", label: "Level Of Completion", format },
     { id: "rawdatastatus", label: "Raw Data Status", format },
@@ -53,69 +59,102 @@ const columns: ITableColumn[] = [
     { id: "previewlink", label: "Preview Link", format },
     { id: "legacyplayboxid", label: "Legacy Playbox ID", format },
     { id: "legacypreviewlink", label: "Legacy Preview Link", format },
-    { id: "shareddrivefolder", label: "Shared Drive Folder", format },
-    { id: "mastermodellocation", label: "Master Model Location", format },
+    { id: "shareddrivefolder", label: "Shared Drive Folder", format, width: 200 },
+    { id: "mastermodellocation", label: "Master Model Location", format, width: 200 },
     { id: "rawdatasizegb", label: "Raw Data Size (GB)", numeric: true, format },
     { id: "mastermodelsizegb", label: "Master Model Size (GB)", numeric: true, format },
-    { id: "notes", label: "Notes", format },
+    { id: "notes", label: "Notes", format, width: 300 },
 ];
+
+const queryColumns = columns.map(column => column.id).join(", ");
 
 const queryMigrationEntries = gql`
 {
     migrationEntries(offset: 0, limit: 0) {
-        ${columns.map(column => column.id).join(", ")}
+        id, ${queryColumns}
     }
 }
 `;
 
-export interface IMigrationPageProps
+const FlatButton = styled(Button)({
+    margin: "-16px 0",
+    padding: "2px 8px 0 8px"
+});
+
+const formatStatus: TableCellFormatter = (value, id, row) => {
+    if (!value && row["playboxid"]) {
+        return (
+            <Link
+                style={{ textDecoration: "none "}}
+                to={`/migration/play?id=${encodeURIComponent(row["id"])}`}>
+                <FlatButton
+                    variant="contained"
+                    color="primary"
+                >
+                Migrate Play
+                </FlatButton>
+            </Link>
+        );
+    }
+
+    return value === undefined || value === null ? "\u2014" : String(value);
+};
+
+columns.unshift({ id: "status", label: "Migration", format: formatStatus, width: 120 });
+
+export interface IMigrationSpreadsheetViewProps
 {
+    history?: any;
+
     classes: {
         root: string;
+        progress: string;
+        card: string;
         paper: string;
     };
 }
 
-const styles = theme => ({
-    root: {
-        width: "100%",
-        marginTop: theme.spacing(3),
-    },
-    paper: {
-        width: "100%",
-        marginBottom: theme.spacing(2),
-    }
-});
-
-function MigrationSpreadsheetView(props: IMigrationPageProps)
+function MigrationSpreadsheetView(props: IMigrationSpreadsheetViewProps)
 {
-    const { classes } = props;
+    const { classes, history } = props;
     const { loading, error, data } = useQuery(queryMigrationEntries);
 
     if (loading) {
-        return (<Paper className={classes.paper}>
-            <Typography>Loading data...</Typography>
-        </Paper>)
+        return (<CircularProgress className={classes.progress} />)
     }
 
     if (error) {
-        return (<Paper className={classes.paper}>
-            <Typography>Data query error...</Typography>
-        </Paper>)
+        return (<Card>
+            <CardContent>
+                <Typography>Data query error...</Typography>
+            </CardContent>
+        </Card>)
     }
 
     const rows = data.migrationEntries;
 
     return (
-        <div className={classes.root}>
-            <Paper className={classes.paper}>
-                <DataTable
-                    rows={rows}
-                    columns={columns}
-                />
-            </Paper>
-        </div>
+        <Paper className={classes.paper}>
+            <DataTable
+                storageKey="migration/spreadsheet"
+                rows={rows}
+                columns={columns}
+                history={history}
+            />
+        </Paper>
     );
-};
+}
+
+const styles = theme => ({
+    progress: {
+        alignSelf: "center"
+    },
+    card: {
+        width: "150px",
+    },
+    paper: {
+        alignSelf: "stretch",
+    },
+} as StyleRules);
 
 export default withStyles(styles)(MigrationSpreadsheetView);

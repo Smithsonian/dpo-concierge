@@ -18,11 +18,11 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import Application from "./Application";
+import Auth from "./components/auth/Auth";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 ReactDOM.render(
-    <Application/>,
+    <Auth/>,
     document.getElementById("main")
 );

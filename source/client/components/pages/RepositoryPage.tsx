@@ -17,14 +17,19 @@
 
 import * as React from "react";
 
+import NotYetImplementedView from "../views/NotYetImplementedView";
+
 import Page, { IPageView } from "../Page";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 const views: IPageView[] = [
-    { title: "Items", component: null, route: "/items" },
-    { title: "Units", component: null, route: "/units" },
-    { title: "Stakeholders", component: null, route: "/stakeholders" },
+    { title: "Items", component: NotYetImplementedView, route: "/items" },
+    { title: "Models", component: NotYetImplementedView, route: "/models" },
+    { title: "Scenes", component: NotYetImplementedView, route: "/scenes" },
+    { title: "Assets", component: NotYetImplementedView, route: "/assets" },
+    { title: "Units", component: NotYetImplementedView, route: "/units" },
+    { title: "Stakeholders", component: NotYetImplementedView, route: "/stakeholders" },
 ];
 
 export interface IPageProps

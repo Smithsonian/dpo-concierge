@@ -15,34 +15,14 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
+import * as React from "react";
+import * as ReactDOM from "react-dom";
 
-import Job from "./Job";
-import MigrationEntry from "./MigrationEntry";
+import Application from "./components/Application";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-@Table
-export default class PlayMigrationJob extends Model<PlayMigrationJob>
-{
-    @ForeignKey(() => Job)
-    @Column
-    jobId: number;
-
-    @BelongsTo(() => Job)
-    job: Job;
-
-    @ForeignKey(() => MigrationEntry)
-    @Column
-    migrationEntryId: string;
-
-    @BelongsTo(() => MigrationEntry)
-    migrationEntry: MigrationEntry;
-
-    @Column
-    playboxId: string;
-
-    @Column
-    edanRecordId: string;
-
-}
+ReactDOM.render(
+    <Application/>,
+    document.getElementById("main")
+);

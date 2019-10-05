@@ -17,26 +17,22 @@
 
 import * as React from "react";
 
-import NotYetImplementedView from "../views/NotYetImplementedView";
+import { withStyles } from '@material-ui/core/styles';
+import Paper from "@material-ui/core/Paper";
+import Typography from "@material-ui/core/Typography";
 
-import Page, { IPageView } from "../Page";
+const styles = theme => ({
+    paper: {
+        padding: theme.spacing(3)
+    }
+});
 
-////////////////////////////////////////////////////////////////////////////////
-
-const views: IPageView[] = [
-    { title: "Users", component: NotYetImplementedView, route: "/users" },
-    { title: "Roles", component: NotYetImplementedView, route: "/roles" },
-];
-
-export interface IPageProps
-{
-    onNavigatorToggle: () => void;
-}
-
-export default (props: IPageProps) => (
-    <Page
-        title="Administration"
-        views={views}
-        {...props}
-    />
+const NotYetImplementedView = props => (
+    <Paper className={props.classes.paper}>
+        <Typography variant="h6">
+            Not yet implemented
+        </Typography>
+    </Paper>
 );
+
+export default withStyles(styles)(NotYetImplementedView);

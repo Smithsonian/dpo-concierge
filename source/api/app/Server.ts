@@ -133,14 +133,31 @@ export default class Server
             ItemResolver
         ]});
 
-        app.use("/graphql", graphqlHttp({ schema: schema, graphiql: true }));
+        app.use("/graphql", graphqlHttp({ schema: schema, graphiql: this.isDevMode }));
 
         // static file server
-        app.use("/", express.static(this.config.staticDir));
+        app.use("/static", express.static(this.config.staticDir));
+
+        // login/registration page
+        app.get(["/login", "/register"], (req, res, next) => {
+            res.sendFile(`${this.config.staticDir}/auth-dev.html`, err => {
+                if (err) {
+                    next(err);
+                }
+            });
+        });
+
+        app.post("/register", (req, res, next) => {
+
+        });
 
         // Web application
-        app.get("*", (req, res, next) => {
-            res.sendFile(`${this.config.staticDir}/concierge-dev.html`, err => {
+        app.get("/*", (req, res, next) => {
+            if (!req.user) {
+                return res.redirect("/login");
+            }
+
+            res.sendFile(`${this.config.staticDir}/main-dev.html`, err => {
                 if (err) {
                     next(err);
                 }

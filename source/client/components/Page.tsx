@@ -41,6 +41,8 @@ export interface IPageProps
 
     classes: {
         root: string;
+        header: string;
+        wrapper: string;
         main: string;
     }
 }
@@ -51,17 +53,30 @@ const styles = theme => ({
         display: "flex",
         flexDirection: "column",
     },
-    main: {
+    header: {
+        flex: 0,
+    },
+    wrapper: {
         flex: 1,
-        padding: "48px 36px 0",
+        position: "relative",
+    },
+    main: {
+        position: "absolute",
+        left: 0,
+        right: 0,
+        top: 0,
+        bottom: 0,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "auto",
+        padding: theme.spacing(3),
         background: "#eaeff1",
     }
 } as StyleRules);
 
-const Page = function(props: IPageProps)
+const Page = function(props: React.PropsWithChildren<IPageProps>)
 {
-    const { classes, title, views, match, onNavigatorToggle } = props;
-
+    const { children, classes, title, views, match, onNavigatorToggle } = props;
 
     const tabs: IHeaderTab[] = views.map(view => ({
         text: view.title,
@@ -71,18 +86,22 @@ const Page = function(props: IPageProps)
     return (
         <div className={classes.root}>
             <Header
+                className={classes.header}
                 title={title}
                 tabs={tabs}
-                match={match}
+                pathPrefix={match.path}
                 onNavigatorToggle={onNavigatorToggle}
             />
-            <main className={classes.main}>
-                <Switch>
-                {views.map(view => (
-                    <Route key={view.route} path={`${match.path}${view.route}`} component={view.component}></Route>
-                ))}
-                </Switch>
-            </main>
+            <div className={classes.wrapper}>
+                <main className={classes.main}>
+                    <Switch>
+                        {views.map(view => (
+                            <Route key={view.route} path={`${match.path}${view.route}`} component={view.component} />
+                        ))}
+                        {children}
+                    </Switch>
+                </main>
+            </div>
         </div>
     );
 };

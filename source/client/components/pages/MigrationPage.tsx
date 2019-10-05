@@ -18,25 +18,36 @@
 import * as React from "react";
 
 import MigrationSpreadsheetView from "../views/MigrationSpreadsheetView";
+import MigratePlayView from "../views/MigratePlayView";
+import NotYetImplementedView from "../views/NotYetImplementedView";
+
 import Page, { IPageView } from "../Page";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 const views: IPageView[] = [
     { title: "Spreadsheet", component: MigrationSpreadsheetView, route: "/spreadsheet" },
-    { title: "Migrate Play", component: null, route: "/play" },
-    { title: "Migrate Legacy", component: null, route: "/legacy" },
+    { title: "Migrate Play", component: MigratePlayView, route: "/play" },
+    { title: "Migrate Legacy", component: NotYetImplementedView, route: "/legacy" },
 ];
 
 export interface IPageProps
 {
     onNavigatorToggle: () => void;
+    match?: any;
 }
 
-export default (props: IPageProps) => (
-    <Page
-        title="Migration"
-        views={views}
-        {...props}
-    />
-);
+export default class MigrationPage extends React.Component<IPageProps, {}>
+{
+    render()
+    {
+        return (
+            <Page
+                title="Migration"
+                views={views}
+                {...this.props}
+            />
+        );
+    }
+}
+

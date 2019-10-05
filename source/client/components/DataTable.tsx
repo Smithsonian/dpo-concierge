@@ -17,8 +17,10 @@
 
 import * as React from "react";
 
-import { withStyles, Theme } from "@material-ui/core/styles";
+import * as queryString from "query-string";
+import { History } from "react-router-dom";
 
+import { withStyles, StyleRules } from "@material-ui/core/styles";
 import Table from "@material-ui/core/Table";
 import TableHead from "@material-ui/core/TableHead";
 import TableBody from "@material-ui/core/TableBody";
@@ -27,25 +29,33 @@ import TableCell from "@material-ui/core/TableCell";
 import TableSortLabel from "@material-ui/core/TableSortLabel";
 import TablePagination from "@material-ui/core/TablePagination";
 
+import { getStorageObject, setStorageObject } from "../utils/LocalStorage";
+
 ////////////////////////////////////////////////////////////////////////////////
 
-export interface ITableColumn
+export type TableCellFormatter<T extends {} = {}> = (value: any, id: string, row: T) => any;
+
+export interface ITableColumn<T extends {} = {}>
 {
     id: string;
     label?: string;
     numeric?: boolean;
-    format?: (value: any) => string;
+    format?: TableCellFormatter;
+    width?: string | number;
 }
 
-export interface IDataTableProps<T>
+export interface IDataTableProps<T extends {} = {}>
 {
     rows: T[];
-    columns: ITableColumn[];
+    columns: ITableColumn<T>[];
+    storageKey?: string;
+    history?: History;
 
     classes: {
         root: string;
+        wrapper: string;
         table: string;
-        tableWrapper: string;
+        cell: string;
     }
 }
 
@@ -57,17 +67,8 @@ export interface IDataTableState
     rowsPerPage: number;
 }
 
-class DataTable<T extends {}> extends React.Component<IDataTableProps<T>, IDataTableState>
+class DataTable<T extends {} = {}> extends React.Component<IDataTableProps<T>, IDataTableState>
 {
-    static readonly styles: any = theme => ({
-        table: {
-            minWidth: 750,
-        },
-        tableWrapper: {
-            overflowX: "auto",
-        },
-    });
-
     constructor(props: IDataTableProps<T>)
     {
         super(props);
@@ -86,38 +87,49 @@ class DataTable<T extends {}> extends React.Component<IDataTableProps<T>, IDataT
 
     render()
     {
-        const { rows, classes } = this.props;
-        const { rowsPerPage, page } = this.state;
+        const { rows, classes, storageKey } = this.props;
+
+        const params: any = queryString.parse(location.search);
+
+        const state = storageKey ? getStorageObject(storageKey, this.state) : this.state;
+
+        const page = params.page !== undefined ? parseInt(params.page) || 0 : state.page;
+        const rowsPerPage = params.rowsPerPage !== undefined ? parseInt(params.rowsPerPage) || 10 : state.rowsPerPage;
+        const order = params.order !== undefined ? params.order : state.order;
+        const orderBy = params.orderBy !== undefined ? params.orderBy : state.orderBy;
+
+        if (storageKey) {
+            setStorageObject(storageKey, { page, rowsPerPage, order, orderBy });
+        }
 
         return (
-            <React.Fragment>
-                <div className={classes.tableWrapper}>
+            <div className={classes.root}>
+                <div className={classes.wrapper}>
                     <Table className={classes.table}>
                         <TableHead>
-                            {this.renderHeadRow()}
+                            {this.renderHeadRow(order, orderBy)}
                         </TableHead>
                         <TableBody>
-                            {this.getDisplayRows().map((row, index) => this.renderRow(row))}
+                            {this.getDisplayRows(state).map((row, index) => this.renderRow(row))}
                         </TableBody>
                     </Table>
                 </div>
                 <TablePagination
                     component="div"
-                    rowsPerPageOptions={[ 10, 20, 50, 100 ]}
+                    rowsPerPageOptions={[ 5, 10, 20, 50, 100 ]}
                     count={rows.length}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onChangePage={this.onChangePage}
                     onChangeRowsPerPage={this.onChangeRowsPerPage}
                 />
-            </React.Fragment>
+            </div>
         );
     }
 
-    protected renderHeadRow()
+    protected renderHeadRow(order, orderBy)
     {
-        const { columns } = this.props;
-        const { orderBy, order } = this.state;
+        const { columns, classes } = this.props;
 
         return(
             <TableRow>
@@ -128,6 +140,7 @@ class DataTable<T extends {}> extends React.Component<IDataTableProps<T>, IDataT
                         sortDirection={orderBy === column.id ? order : false}
                     >
                         <TableSortLabel
+                            className={classes.cell}
                             active={orderBy === column.id}
                             direction={order}
                             onClick={() => this.onClickColumnSort(column.id)}
@@ -142,22 +155,33 @@ class DataTable<T extends {}> extends React.Component<IDataTableProps<T>, IDataT
 
     protected renderRow(row: [ T, number ])
     {
-        const { columns } = this.props;
+        const { columns, classes } = this.props;
 
         return(
             <TableRow
                 key={row[1]}
             >
                 {columns.map(column => {
-                    const value = row[0][column.id];
-                    const text = column.format ? column.format(value) : String(value);
+                    const values = row[0];
+                    const value = values[column.id];
+                    const content = column.format ? column.format(value, column.id, values) : String(value);
+                    const isText = typeof content === "string";
 
                     return(
                         <TableCell
                             key={column.id}
                             align={column.numeric ? "right" : "left"}
+                            title={isText ? content : null}
                         >
-                            {text}
+                            {isText ? (
+                                <div
+                                    className={classes.cell}
+                                    style={column.width ? { width: column.width } : null}
+                                >
+                                    {content}
+                                </div>
+                            ) : content}
+
                         </TableCell>
                     );
                 })}
@@ -165,9 +189,9 @@ class DataTable<T extends {}> extends React.Component<IDataTableProps<T>, IDataT
         )
     }
 
-    protected getDisplayRows(): [ T, number ][]
+    protected getDisplayRows(state: IDataTableState): [ T, number ][]
     {
-        const { order, orderBy, page, rowsPerPage } = this.state;
+        const { page, rowsPerPage, order, orderBy } = state;
 
         const desc = (a, b, orderBy) => {
             if (b[orderBy] < a[orderBy]) {
@@ -193,26 +217,55 @@ class DataTable<T extends {}> extends React.Component<IDataTableProps<T>, IDataT
 
     protected onClickColumnSort(id: string)
     {
-        this.setState((state, props) => ({
+        const state = this.state;
+
+        this.updateState({
             order: id === state.orderBy ? (state.order === "asc" ? "desc" : "asc") : "asc",
             orderBy: id,
-        }));
+        });
     }
 
     protected onChangePage(event: unknown, page: number)
     {
-        this.setState({
-            page
-        });
+        this.updateState({ page });
     }
 
     protected onChangeRowsPerPage(event: React.ChangeEvent<HTMLInputElement>)
     {
-        this.setState({
-            rowsPerPage: Number.parseInt(event.target.value),
-            page: 0
+        this.updateState({ page: 0, rowsPerPage: Number.parseInt(event.target.value) });
+    }
+
+    protected updateState(state: Partial<IDataTableState>)
+    {
+        const { history, storageKey } = this.props;
+
+        this.setState(prevState => {
+            const nextState = Object.assign({}, prevState, state);
+            if (storageKey) {
+                setStorageObject(storageKey, nextState);
+            }
+            if (history) {
+                const vars = Object.keys(nextState).map(key => `${key}=${encodeURIComponent(nextState[key])}`).join("&");
+                history.push(`${location.pathname}?${vars}`);
+            }
+            return nextState;
         });
     }
 }
 
-export default withStyles(DataTable.styles)(DataTable);
+const styles = theme => ({
+    root: {
+    },
+    wrapper: {
+        overflow: "auto",
+    },
+    table: {
+    },
+    cell: {
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+    },
+} as StyleRules);
+
+export default withStyles(styles)(DataTable);

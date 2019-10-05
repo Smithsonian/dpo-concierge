@@ -54,27 +54,33 @@ const dirs = {
 ////////////////////////////////////////////////////////////////////////////////
 
 const apps = {
-    "concierge": {
-        name: "concierge",
-        entryPoint: "client/index.tsx",
+    "main": {
+        name: "main",
+        entryPoint: "client/main.tsx",
+        title: "Concierge",
+        template: "index.hbs"
+    },
+    "auth": {
+        name: "auth",
+        entryPoint: "client/auth.tsx",
         title: "Concierge",
         template: "index.hbs"
     }
 };
 
-let version = "vX.X.X";
+let version = "v0.0.0";
 try {
     version = childProcess.execSync("git describe --tags").toString().trim();
 }
 catch(e) {
-    console.warn(`failed to retrieve git version tag: ${e.message}`);
+    console.warn(`WARNING: failed to retrieve git version tag: ${e.message}`);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 module.exports = function(env, argv) {
 
-    const appKey = argv.app || "concierge";
+    const appKey = argv.app || "main";
     const isDevMode = argv.mode !== undefined ? argv.mode !== "production" : process.env["NODE_ENV"] !== "production";
 
     // copy static assets
@@ -97,22 +103,31 @@ function createAppConfig(appKey, isDevMode) {
     const appName = app.name;
     const appEntryPoint = app.entryPoint;
     const appTitle = `${app.title} ${version} ${isDevMode ? " DEV" : " PROD"}`;
+    const appFileName = isDevMode ? `js/${appName}.dev.js` : `js/${appName}.min.js`;
 
-    console.log("WEBPACK BUILD SCRIPT");
-    console.log("  application = %s", appName);
-    console.log("  mode = %s", devMode);
-    console.log("  version = %s", version);
-    console.log("  source directory = %s", dirs.source);
-    console.log("  output directory = %s", dirs.output);
+    console.log(`
+WEBPACK BUILD SCRIPT
+    application = ${appName}
+    mode = ${devMode}
+    version = ${version}
+    app file name = ${appFileName}
+    source directory = ${dirs.source}
+    output directory = ${dirs.output}
+    `);
 
     const config = {
         mode: devMode,
+
+        watchOptions: {
+            aggregateTimeout: 200,
+            poll: 1000,
+        },
 
         entry: { [appName]: path.resolve(dirs.source, appEntryPoint) },
 
         output: {
             path: dirs.output,
-            filename: isDevMode ? "js/[name].dev.js" : "js/[name].min.js"
+            filename: appFileName,
         },
 
         resolve: {
@@ -154,8 +169,8 @@ function createAppConfig(appKey, isDevMode) {
                 title: appTitle,
                 version: version,
                 isDevelopment: isDevMode,
-                element: `<${appName}></${appName}>`,
-                chunks: [ appName ]
+                appFileName: appFileName,
+                chunks: []
             })
         ],
 

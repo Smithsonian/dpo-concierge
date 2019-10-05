@@ -34,9 +34,9 @@ export let theme = createMuiTheme({
             dark: '#006db3',
         },
     },
-    shape: {
-        borderRadius: 8,
-    },
+    // shape: {
+    //     borderRadius: 8,
+    // },
 });
 
 theme = {
@@ -47,17 +47,17 @@ theme = {
                 backgroundColor: '#18202c',
             },
         },
-        MuiButton: {
-            label: {
-                textTransform: 'none',
-            },
-            contained: {
-                boxShadow: 'none',
-                '&:active': {
-                    boxShadow: 'none',
-                },
-            },
-        },
+        // MuiButton: {
+        //     label: {
+        //         textTransform: 'none',
+        //     },
+        //     contained: {
+        //         boxShadow: 'none',
+        //         '&:active': {
+        //             boxShadow: 'none',
+        //         },
+        //     },
+        // },
         MuiTabs: {
             root: {
                 marginLeft: theme.spacing(1),
@@ -130,27 +130,27 @@ theme = {
     },
 };
 
-export const drawerWidth = 256;
-
-export const styles = createStyles({
-    root: {
-        display: 'flex',
-        minHeight: '100vh',
-    },
-    drawer: {
-        [theme.breakpoints.up('sm')]: {
-            width: drawerWidth,
-            flexShrink: 0,
-        },
-    },
-    appContent: {
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-    },
-    mainContent: {
-        flex: 1,
-        padding: '48px 36px 0',
-        background: '#eaeff1',
-    },
-});
+// export const drawerWidth = 256;
+//
+// export const styles = createStyles({
+//     root: {
+//         display: 'flex',
+//         minHeight: '100vh',
+//     },
+//     drawer: {
+//         [theme.breakpoints.up('sm')]: {
+//             width: drawerWidth,
+//             flexShrink: 0,
+//         },
+//     },
+//     appContent: {
+//         flex: 1,
+//         display: 'flex',
+//         flexDirection: 'column',
+//     },
+//     mainContent: {
+//         flex: 1,
+//         padding: '48px 36px 0',
+//         background: '#eaeff1',
+//     },
+// });

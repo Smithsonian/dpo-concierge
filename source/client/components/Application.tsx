@@ -25,16 +25,16 @@ import { InMemoryCache } from "apollo-cache-inmemory";
 import { ApolloProvider } from "@apollo/react-hooks";
 
 import { ThemeProvider } from '@material-ui/styles';
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles, StyleRules } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 
-import Navigator from "./components/Navigator";
-import { theme } from "./components/theme";
+import Navigator from "./Navigator";
+import { theme } from "./theme";
 
-import RepositoryPage from "./components/pages/RepositoryPage";
-import WorkflowPage from "./components/pages/WorkflowPage";
-import MigrationPage from "./components/pages/MigrationPage";
-import AdminPage from "./components/pages/AdminPage";
+import RepositoryPage from "./pages/RepositoryPage";
+import WorkflowPage from "./pages/WorkflowPage";
+import MigrationPage from "./pages/MigrationPage";
+import AdminPage from "./pages/AdminPage";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -43,8 +43,6 @@ export interface IApplicationProps
 {
     classes: {
         root: string;
-        appContent: string;
-        mainContent: string;
     };
 }
 
@@ -53,23 +51,16 @@ export interface IApplicationState
     isNavigatorOpen: boolean;
 }
 
-const styles: any = theme => ({
+const styles = theme => ({
     root: {
-        display: 'flex',
-        minHeight: '100vh',
+        position: "absolute",
+        left: 0,
+        right: 0,
+        top: 0,
+        bottom: 0,
+        display: "flex",
     },
-
-    appContent: {
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-    },
-    mainContent: {
-        flex: 1,
-        padding: '48px 36px 0',
-        background: '#eaeff1',
-    },
-});
+} as StyleRules);
 
 class Application extends React.Component<IApplicationProps, IApplicationState>
 {

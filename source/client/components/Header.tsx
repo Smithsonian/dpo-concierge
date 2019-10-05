@@ -45,9 +45,10 @@ export interface IHeaderTab
 
 export interface IHeaderProps
 {
+    className?: string;
     title: string;
     tabs: IHeaderTab[];
-    match: any;
+    pathPrefix: string;
 
     classes: {
         secondaryBar: string;
@@ -64,7 +65,7 @@ export interface IHeaderProps
 function TabLink(props) {
     const { label, to, value } = props;
 
-    const renderLink = React.useMemo(
+    const linkRef = React.useMemo(
         () =>
             React.forwardRef((itemProps, ref) => (
                 <NavLink to={to} {...itemProps} innerRef={ref} />
@@ -73,7 +74,7 @@ function TabLink(props) {
     );
 
     return (
-        <Tab component={renderLink} label={label} value={value} />
+        <Tab component={linkRef} label={label} value={value} />
     );
 }
 
@@ -81,41 +82,41 @@ class Header extends React.Component<IHeaderProps, {}>
 {
     render()
     {
-        const { classes, title, tabs, onNavigatorToggle, match } = this.props;
+        const { className, classes, title, tabs, pathPrefix, onNavigatorToggle } = this.props;
 
-        console.log("MATCH", match.path, match.url);
-        console.log("TABS", tabs[0].link);
+        const subPath = window.location.pathname.substr(pathPrefix.length).split("/")[1];
 
         return (
-            <React.Fragment>
-                <AppBar
-                    position="static"
-                    elevation={0}
-                >
-                    <Toolbar>
-                        <Hidden smUp>
-                            <IconButton
-                                color="inherit"
-                                aria-label="open drawer"
-                                onClick={onNavigatorToggle}
-                                className={classes.menuButton}
-                            >
-                                <MenuIcon />
-                            </IconButton>
-                        </Hidden>
-                    </Toolbar>
-                    <Toolbar>
-                        <Typography color="inherit" variant="h5" component="h1">
-                            {title}
-                        </Typography>
-                    </Toolbar>
-                    <Tabs value={match.path}>
-                        {tabs.map(tab => (
-                            <TabLink key={tab.text} label={tab.text} to={tab.link} value={tab.link} />
-                        ))}
-                    </Tabs>
-                </AppBar>
-            </React.Fragment>
+            <AppBar
+                position="static"
+                elevation={0}
+            >
+                <Toolbar className={className}>
+                    <Hidden smUp>
+                        <IconButton
+                            color="inherit"
+                            aria-label="open drawer"
+                            onClick={onNavigatorToggle}
+                            className={classes.menuButton}
+                        >
+                            <MenuIcon />
+                        </IconButton>
+                    </Hidden>
+                </Toolbar>
+                <Toolbar>
+                    <Typography color="inherit" variant="h5" component="h1">
+                        {title}
+                    </Typography>
+                </Toolbar>
+                <Tabs value={subPath}>
+                    {tabs.map(tab => {
+                        const subPath = tab.link.split("/").pop();
+                        return (
+                            <TabLink key={tab.text} label={tab.text} to={tab.link} value={subPath}/>
+                        );
+                    })}
+                </Tabs>
+            </AppBar>
         )
     }
 }

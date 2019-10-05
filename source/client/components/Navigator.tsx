@@ -65,7 +65,7 @@ const categories = [{
     items: [
         { name: "Projects", icon: <WorkIcon />, link: "/workflow/projects" },
         { name: "Jobs", icon: <AssignmentIcon />, link: "/workflow/jobs" },
-        { name: "Migration", icon: <AirportShuttleIcon />, link: "/migration" },
+        { name: "Migration", icon: <AirportShuttleIcon />, link: "/migration/spreadsheet" },
     ],
 }, {
     name: "Administration",
@@ -137,6 +137,25 @@ const sidebarStyles: any = theme => ({
         marginTop: theme.spacing(2),
     },
 });
+
+function ListItemLink(props) {
+    const { to, classes, children } = props;
+
+    const linkRef = React.useMemo(() =>
+        React.forwardRef((props, ref) => (
+            <NavLink to={to} {...props} innerRef={ref} />
+        )), [to]
+    );
+
+    return (
+        <ListItem
+            className={classes.item}
+            button
+        >
+            {children}
+        </ListItem>
+    );
+}
 
 const Sidebar = withStyles(sidebarStyles)(function(props: any) {
     const { classes } = props;

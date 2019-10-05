@@ -15,28 +15,22 @@
  * limitations under the License.
  */
 
-import * as React from "react";
+const storage = window.localStorage;
 
-import NotYetImplementedView from "../views/NotYetImplementedView";
-
-import Page, { IPageView } from "../Page";
-
-////////////////////////////////////////////////////////////////////////////////
-
-const views: IPageView[] = [
-    { title: "Users", component: NotYetImplementedView, route: "/users" },
-    { title: "Roles", component: NotYetImplementedView, route: "/roles" },
-];
-
-export interface IPageProps
+export function getStorageObject(key: string, defaultObject?: any)
 {
-    onNavigatorToggle: () => void;
+    const json = storage ? storage.getItem(key) : undefined;
+    return Object.assign({}, defaultObject, json && JSON.parse(json));
 }
 
-export default (props: IPageProps) => (
-    <Page
-        title="Administration"
-        views={views}
-        {...props}
-    />
-);
+export function setStorageObject(key: string, object: any)
+{
+    const json = JSON.stringify(object);
+    storage && storage.setItem(key, json);
+}
+
+export function mergeStorageObject(key: string, object: any)
+{
+    const prevObject = getStorageObject(key);
+    setStorageObject(key, Object.assign({}, prevObject, object));
+}
