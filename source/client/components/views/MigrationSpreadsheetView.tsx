@@ -19,7 +19,7 @@ import * as React from "react";
 
 import { Link, History } from "react-router-dom";
 
-import { useQuery } from "@apollo/react-hooks";
+import { useQuery, useMutation, useApolloClient } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
 import { withStyles, styled, StyleRules } from "@material-ui/core/styles";
@@ -27,6 +27,7 @@ import CircularProgress from "@material-ui/core/CircularProgress";
 import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
 import Paper from "@material-ui/core/Paper";
+import Toolbar from "@material-ui/core/Toolbar";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 
@@ -56,9 +57,9 @@ const columns: ITableColumn[] = [
     { id: "tourstops", label: "Tour Stops", numeric: true, format },
     { id: "downloads", label: "Downloads", numeric: true, format },
     { id: "playboxid", label: "Playbox ID", numeric: true, format },
-    { id: "previewlink", label: "Preview Link", format },
+    { id: "previewlink", label: "Preview Link", format, width: 200 },
     { id: "legacyplayboxid", label: "Legacy Playbox ID", format },
-    { id: "legacypreviewlink", label: "Legacy Preview Link", format },
+    { id: "legacypreviewlink", label: "Legacy Preview Link", format, width: 200 },
     { id: "shareddrivefolder", label: "Shared Drive Folder", format, width: 200 },
     { id: "mastermodellocation", label: "Master Model Location", format, width: 200 },
     { id: "rawdatasizegb", label: "Raw Data Size (GB)", numeric: true, format },
@@ -68,13 +69,19 @@ const columns: ITableColumn[] = [
 
 const queryColumns = columns.map(column => column.id).join(", ");
 
-const queryMigrationEntries = gql`
+const QUERY_MIGRATION_SHEET_ENTRIES = gql`
 {
     migrationSheetEntries(offset: 0, limit: 0) {
         id, ${queryColumns}
     }
-}
-`;
+}`;
+
+const FETCH_SPREADSHEET_DATA = gql`
+mutation {
+    updateMigrationSheetEntries(offset: 0, limit: 0) {
+        id, ${queryColumns}
+    }    
+}`;
 
 const FlatButton = styled(Button)({
     margin: "-16px 0",
@@ -100,7 +107,7 @@ const formatStatus: TableCellFormatter = (value, id, row) => {
     return value === undefined || value === null ? "\u2014" : String(value);
 };
 
-columns.unshift({ id: "status", label: "Migration", format: formatStatus, width: 120 });
+columns.unshift({ id: "status", label: "Migration", format: formatStatus, width: 150 });
 
 export interface IMigrationSpreadsheetViewProps
 {
@@ -110,31 +117,55 @@ export interface IMigrationSpreadsheetViewProps
         paper: string;
         card: string;
         progress: string;
+        toolbar: string;
     };
 }
 
 function MigrationSpreadsheetView(props: IMigrationSpreadsheetViewProps)
 {
     const { classes, history } = props;
-    const { loading, error, data } = useQuery(queryMigrationEntries);
 
-    if (loading) {
+    const { loading: loading0, error: error0, data: data0, client } = useQuery(QUERY_MIGRATION_SHEET_ENTRIES);
+    const [ updateData, { loading: loading1, error: error1, data: data1 }] = useMutation(FETCH_SPREADSHEET_DATA);
+
+
+    if (loading0 || loading1) {
         return (<CircularProgress className={classes.progress} />)
     }
 
-    if (error) {
+    if (error0 || error1) {
+        const message = error0 ? error0.message : error1.message;
         return (<Card raised className={classes.card}>
             <CardContent>
                 <Typography variant="h6">Query Error</Typography>
-                <Typography>{error.message}</Typography>
+                <Typography>{message}</Typography>
             </CardContent>
         </Card>)
     }
 
-    const rows = data.migrationSheetEntries;
+    let rows;
+
+    if (data1) {
+        rows = data1.updateMigrationSheetEntries;
+
+        // update GraphQL cache
+        client.writeQuery({
+            query: QUERY_MIGRATION_SHEET_ENTRIES,
+            data: { migrationSheetEntries: rows },
+        });
+    }
+    else if (data0) {
+        rows = data0.migrationSheetEntries;
+    }
 
     return (
         <Paper className={classes.paper}>
+            <Toolbar className={classes.toolbar}>
+                <Button color="primary" onClick={() => updateData()}>
+                    Fetch Spreadsheet Data
+                </Button>
+            </Toolbar>
+
             <DataTable
                 storageKey="migration/spreadsheet"
                 rows={rows}
@@ -156,7 +187,11 @@ const styles = theme => ({
     progress: {
         alignSelf: "center"
     },
-
+    toolbar: {
+        display: "flex",
+        justifyContent: "flex-end",
+        padding: theme.spacing(1),
+    },
 } as StyleRules);
 
 export default withStyles(styles)(MigrationSpreadsheetView);

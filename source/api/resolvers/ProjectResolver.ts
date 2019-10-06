@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Arg, Query, Mutation, Resolver, Ctx } from "type-graphql";
+import { Arg, Query, Mutation, Resolver, Ctx, Int } from "type-graphql";
 
 import { ProjectType, ProjectInput } from "../schemas/Project";
 import Project from "../models/Project";
@@ -36,10 +36,44 @@ export default class ProjectResolver
     async projects(
         @Arg("offset", { defaultValue: 0 }) offset: number,
         @Arg("limit", { defaultValue: 50 }) limit: number,
+        @Ctx() context: IContext,
     ): Promise<ProjectType[]>
     {
-        return Project.findAll({ offset, limit: limit ? limit : undefined })
+        limit = limit ? limit : undefined;
+        const ownerId = context.user.id;
+
+        return Project.findAll({ where: { ownerId }, offset, limit })
             .then(rows => rows.map(row => row.toJSON() as ProjectType));
     }
 
+    @Query(returns => ProjectType, { nullable: true })
+    async project(
+        @Arg("id", type => Int) id: number,
+        @Ctx() context: IContext,
+    ): Promise<ProjectType>
+    {
+        const ownerId = context.user.id;
+
+        return Project.findOne({ where: { id, ownerId }})
+            .then(row => row ? row.toJSON() as ProjectType : null);
+    }
+
+    @Mutation(returns => ProjectType, { nullable: true })
+    async upsertProject(
+        @Arg("project") project: ProjectInput,
+        @Ctx() context: IContext,
+    ): Promise<ProjectType>
+    {
+        const id = project.id;
+        const ownerId = context.user.id;
+
+        if (id) {
+            return Project.update(project, { where: { id, ownerId }})
+                .then(() => Project.findOne({ where: { id, ownerId }}))
+                .then(row => row ? row.toJSON() as ProjectType : null);
+        }
+
+        return Project.create({ ...project, ownerId })
+            .then(row => row.toJSON() as ProjectType);
+    }
 }

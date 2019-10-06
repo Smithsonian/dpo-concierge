@@ -86,5 +86,6 @@ database.setup()
 
     //const edanClient = new EDANClient(edanAppId, edanAppKey);
     //edanClient.fetchMdmRecord("edanmdm-nmnhpaleobiology_3446197");
+
 });
 

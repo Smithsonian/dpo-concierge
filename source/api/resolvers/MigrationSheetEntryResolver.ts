@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
-import { Arg, Query, Resolver } from "type-graphql";
+import { Arg, Query, Resolver, Mutation } from "type-graphql";
 
 import { MigrationSheetEntryType } from "../schemas/MigrationSheetEntry";
 import MigrationSheetEntry from "../models/MigrationSheetEntry";
+
+import MigrationSheet from "../utils/MigrationSheet";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -40,8 +42,22 @@ export default class MigrationSheetEntryResolver
         @Arg("id") id: string
     ): Promise<MigrationSheetEntryType>
     {
+        console.log("MIGRATIONSHEETENTRY");
         return MigrationSheetEntry.findOne({ where: { id } })
             .then(row => row.toJSON() as MigrationSheetEntryType);
+    }
+
+    @Mutation(returns => [ MigrationSheetEntryType ])
+    async updateMigrationSheetEntries(
+        @Arg("offset", { defaultValue: 0 }) offset: number,
+        @Arg("limit", { defaultValue: 50 }) limit: number,
+    ): Promise<MigrationSheetEntryType[]>
+    {
+        const migration = new MigrationSheet();
+        return migration.update()
+            .then(() => MigrationSheetEntry.importSheet(migration))
+            .then(() => MigrationSheetEntry.findAll({ offset, limit: limit ? limit : undefined }))
+            .then(rows => rows.map(row => row.toJSON() as MigrationSheetEntryType));
     }
 }
 

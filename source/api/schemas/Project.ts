@@ -28,14 +28,20 @@ export class ProjectType
 
     @Field(type => String)
     name: string;
+
+    @Field(type => String)
+    description: string;
 }
 
 @InputType()
 export class ProjectInput
 {
-    @Field(type => ID)
+    @Field(type => ID, { nullable: true })
     id: number;
 
     @Field(type => String)
     name: string;
+
+    @Field(type => String)
+    description: string;
 }

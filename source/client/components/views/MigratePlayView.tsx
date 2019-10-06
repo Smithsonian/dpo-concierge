@@ -25,67 +25,55 @@ import gql from "graphql-tag";
 import { withStyles } from '@material-ui/core/styles';
 import Paper from "@material-ui/core/Paper";
 import Typography from "@material-ui/core/Typography";
-//import TextField from "@material-ui/core/TextField";
 import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
 import Grid from "@material-ui/core/Grid";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Button from "@material-ui/core/Button";
 
-import { Formik, Field, Form } from "formik";
+import { Formik, Field } from "formik";
 import { TextField } from 'formik-material-ui';
 
 ////////////////////////////////////////////////////////////////////////////////
+
+const QUERY_MIGRATION_SHEET_ENTRY = gql`
+query MigrationSheetEntry($id: String!) {
+    migrationSheetEntry(id: $id) {
+        id, object, unitrecordid, edanrecordid, playboxid, shareddrivefolder, mastermodellocation
+    }
+}`;
 
 export interface IMigratePlayViewProps
 {
     classes: {
         paper: string;
+        card: string;
         progress: string;
-        form: string;
-        textField: string;
     }
 }
-
-const styles = theme => ({
-    paper: {
-        padding: theme.spacing(3)
-    },
-    progress: {
-        alignSelf: "center"
-    },
-    form: {
-
-    },
-    textField: {
-
-    },
-});
 
 function MigratePlayView(props: IMigratePlayViewProps)
 {
     const { classes } = props;
-
     const params = queryString.parse(location.search);
 
     let entry = null;
 
     if (params.id) {
-        const queryMigrationEntry = gql`{
-            migrationSheetEntry(id: "${params.id}") {
-                id, object, unitrecordid, edanrecordid, playboxid, shareddrivefolder, mastermodellocation
-            }
-        }`;
-
-        const { loading, error, data } = useQuery(queryMigrationEntry);
+        const variables = { id: params.id };
+        const { loading, error, data } = useQuery(QUERY_MIGRATION_SHEET_ENTRY, { variables });
 
         if (loading) {
             return (<CircularProgress className={classes.progress} />)
         }
         if (error) {
-            return (<Card>
+            return (<Card raised className={classes.card}>
                 <CardContent>
-                    <Typography>Data query error...</Typography>
+                    <Typography variant="h6">Query Error</Typography>
+                    <Typography>{error.message}</Typography>
+                    {error.graphQLErrors.map(error => (
+                        <Typography>{error.message}</Typography>
+                    ))}
                 </CardContent>
             </Card>)
         }
@@ -130,7 +118,6 @@ function MigratePlayView(props: IMigratePlayViewProps)
                                     name="object"
                                     label="Object Name"
                                     component={TextField}
-                                    className={classes.textField}
                                     margin="normal"
                                     fullWidth
                                 />
@@ -140,7 +127,6 @@ function MigratePlayView(props: IMigratePlayViewProps)
                                     name="playboxid"
                                     label="Playbox ID"
                                     component={TextField}
-                                    className={classes.textField}
                                     margin="normal"
                                     fullWidth
                                 />
@@ -150,7 +136,6 @@ function MigratePlayView(props: IMigratePlayViewProps)
                                     name="edanrecordid"
                                     label="EDAN Record ID"
                                     component={TextField}
-                                    className={classes.textField}
                                     margin="normal"
                                     fullWidth
                                 />
@@ -160,7 +145,6 @@ function MigratePlayView(props: IMigratePlayViewProps)
                                     name="shareddrivefolder"
                                     label="Shared Drive Folder"
                                     component={TextField}
-                                    className={classes.textField}
                                     margin="normal"
                                     fullWidth
                                 />
@@ -170,7 +154,6 @@ function MigratePlayView(props: IMigratePlayViewProps)
                                     name="mastermodelgeometry"
                                     label="Master Model Geometry"
                                     component={TextField}
-                                    className={classes.textField}
                                     margin="normal"
                                     fullWidth
                                 />
@@ -180,7 +163,6 @@ function MigratePlayView(props: IMigratePlayViewProps)
                                     name="mastermodeltexture"
                                     label="Master Model Texture"
                                     component={TextField}
-                                    className={classes.textField}
                                     margin="normal"
                                     fullWidth
                                 />
@@ -201,5 +183,18 @@ function MigratePlayView(props: IMigratePlayViewProps)
         </Paper>
     );
 }
+
+const styles = theme => ({
+    paper: {
+        padding: theme.spacing(3)
+    },
+    card: {
+        maxWidth: 480,
+        alignSelf: "center",
+    },
+    progress: {
+        alignSelf: "center",
+    },
+});
 
 export default withStyles(styles)(MigratePlayView);

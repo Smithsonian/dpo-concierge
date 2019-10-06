@@ -93,10 +93,14 @@ class DataTable<T extends {} = {}> extends React.Component<IDataTableProps<T>, I
 
         const state = storageKey ? getStorageObject(storageKey, this.state) : this.state;
 
-        const page = params.page !== undefined ? parseInt(params.page) || 0 : state.page;
+        let page = params.page !== undefined ? parseInt(params.page) || 0 : state.page;
         const rowsPerPage = params.rowsPerPage !== undefined ? parseInt(params.rowsPerPage) || 10 : state.rowsPerPage;
         const order = params.order !== undefined ? params.order : state.order;
         const orderBy = params.orderBy !== undefined ? params.orderBy : state.orderBy;
+
+        if (page * rowsPerPage >= rows.length) {
+            page = 0;
+        }
 
         if (storageKey) {
             setStorageObject(storageKey, { page, rowsPerPage, order, orderBy });
@@ -135,6 +139,7 @@ class DataTable<T extends {} = {}> extends React.Component<IDataTableProps<T>, I
             <TableRow>
                 {columns.map(column => (
                     <TableCell
+                        style={{ width: column.width }}
                         key={column.id}
                         align={column.numeric ? "right" : "left"}
                         sortDirection={orderBy === column.id ? order : false}

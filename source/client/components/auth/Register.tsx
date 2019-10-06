@@ -43,7 +43,7 @@ export interface IRegisterProps
     }
 }
 
-const insertUserQuery = gql`
+const INSERT_USER = gql`
 mutation InsertUser($user: UserInput!) {
     insertUser(user: $user) {
         id
@@ -55,7 +55,7 @@ function Register(props: IRegisterProps)
 {
     const { classes } = props;
 
-    const [insertUser, { loading, error, data }] = useMutation(insertUserQuery);
+    const [insertUser, { loading, error, data }] = useMutation(INSERT_USER);
 
     if (error) {
         return (
@@ -90,9 +90,8 @@ function Register(props: IRegisterProps)
                         errors.password = "Please enter your password";
                     }
                 }}
-                onSubmit={(values, { setSubmitting }) => {
-                    const variables = { user: { ...values  }};
-                    console.log("SUBMIT", variables);
+                onSubmit={user => {
+                    const variables = { user };
                     insertUser({ variables });
                 }}
             >

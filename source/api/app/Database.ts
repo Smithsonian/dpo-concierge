@@ -19,8 +19,6 @@ import * as path from "path";
 
 import { Sequelize } from "sequelize-typescript";
 
-import SI_Unit from "../models/SI_Unit";
-
 ////////////////////////////////////////////////////////////////////////////////
 
 export interface IDatabaseConfiguration
@@ -56,7 +54,6 @@ export default class Database
 
     async setup()
     {
-        await this._db.sync();
-        //await SI_Unit.populate();
+        return this._db.sync();
     }
 }
