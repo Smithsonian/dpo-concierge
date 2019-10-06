@@ -23,7 +23,7 @@ import Server, { IServerConfiguration } from "./app/Server";
 import Database, { IDatabaseConfiguration } from "./app/Database";
 
 import MigrationSheet from "./utils/MigrationSheet";
-import MigrationEntry from "./models/MigrationEntry";
+import MigrationSheetEntry from "./models/MigrationSheetEntry";
 import EDANClient from "./utils/EDANClient";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -80,8 +80,9 @@ database.setup()
 .then(() => {
     //const migration = new MigrationSheet();
     //migration.update()
-    //.then(() => MigrationEntry.importSheet(migration))
+    //.then(() => MigrationSheetEntry.importSheet(migration))
     //.then(() => console.log("SHEET IMPORT DONE."));
+
 
     //const edanClient = new EDANClient(edanAppId, edanAppKey);
     //edanClient.fetchMdmRecord("edanmdm-nmnhpaleobiology_3446197");

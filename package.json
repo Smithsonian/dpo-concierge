@@ -2,7 +2,6 @@
   "name": "dpo-concierge",
   "version": "0.1.0",
   "description": "Migration Workflow Management Tool",
-  "main": "index.js",
   "scripts": {
     "start": "npm run api",
     "api": "nodemon services/api/bin/index.js",
@@ -41,6 +40,7 @@
   "dependencies": {
     "ajv": "^6.10.2",
     "bcrypt": "^3.0.6",
+    "body-parser": "^1.19.0",
     "dataloader-sequelize": "^2.0.1",
     "express": "^4.17.1",
     "express-graphql": "^0.9.0",

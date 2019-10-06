@@ -22,6 +22,8 @@ import { NavLink } from "react-router-dom";
 import { withStyles } from '@material-ui/core/styles';
 
 import AppBar from '@material-ui/core/AppBar';
+import Avatar from '@material-ui/core/Avatar';
+import Grid from '@material-ui/core/Grid';
 import Tab from '@material-ui/core/Tab';
 import Tabs from '@material-ui/core/Tabs';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -29,13 +31,12 @@ import Hidden from '@material-ui/core/Hidden';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
+import PersonIcon from "@material-ui/icons/Person";
 
+import { useQuery } from "@apollo/react-hooks";
+import gql from "graphql-tag";
 
 ////////////////////////////////////////////////////////////////////////////////
-
-const styles = theme => ({
-
-});
 
 export interface IHeaderTab
 {
@@ -51,12 +52,10 @@ export interface IHeaderProps
     pathPrefix: string;
 
     classes: {
-        secondaryBar: string;
+        user: string;
+        avatar: string;
         menuButton: string;
         iconButtonAvatar: string;
-        link: string;
-        button: string;
-        avatar: string;
     };
 
     onNavigatorToggle: () => void;
@@ -78,6 +77,40 @@ function TabLink(props) {
     );
 }
 
+const queryUser = gql`
+    query {
+        me {
+            name
+        }
+    }
+`;
+
+const UserAvatar = withStyles(theme => ({
+    user: {
+        display: "flex",
+        alignItems: "center",
+    },
+    avatar: {
+        marginLeft: theme.spacing(1)
+    },
+}))((props: any) => {
+    const { classes } = props;
+    const { loading, error, data } = useQuery(queryUser);
+
+    return (
+        <div className={classes.user}>
+            <Typography>
+                { data ? data.me.name : "not logged in" }
+            </Typography>
+            {/*<IconButton color="inherit" className={classes.iconButtonAvatar}>*/}
+            <Avatar className={classes.avatar}>
+                <PersonIcon />
+            </Avatar>
+            {/*</IconButton>*/}
+        </div>
+    );
+});
+
 class Header extends React.Component<IHeaderProps, {}>
 {
     render()
@@ -92,16 +125,24 @@ class Header extends React.Component<IHeaderProps, {}>
                 elevation={0}
             >
                 <Toolbar className={className}>
-                    <Hidden smUp>
-                        <IconButton
-                            color="inherit"
-                            aria-label="open drawer"
-                            onClick={onNavigatorToggle}
-                            className={classes.menuButton}
-                        >
-                            <MenuIcon />
-                        </IconButton>
-                    </Hidden>
+                    <Grid container spacing={1} alignItems="stretch">
+                        <Hidden smUp>
+                            <Grid item>
+                                <IconButton
+                                    color="inherit"
+                                    aria-label="open drawer"
+                                    onClick={onNavigatorToggle}
+                                    className={classes.menuButton}
+                                >
+                                    <MenuIcon />
+                                </IconButton>
+                            </Grid>
+                        </Hidden>
+                        <Grid item xs />
+                        <Grid item>
+                            <UserAvatar/>
+                        </Grid>
+                    </Grid>
                 </Toolbar>
                 <Toolbar>
                     <Typography color="inherit" variant="h5" component="h1">
@@ -120,5 +161,8 @@ class Header extends React.Component<IHeaderProps, {}>
         )
     }
 }
+
+const styles = theme => ({
+});
 
 export default withStyles(styles)(Header);

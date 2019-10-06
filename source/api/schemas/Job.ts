@@ -15,21 +15,27 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, ForeignKey } from "sequelize-typescript";
-
-import LegacyMigration from "./LegacyMigration";
-import Asset from "./Asset";
+import "reflect-metadata";
+import { Field, Int, ID, ObjectType, InputType } from "type-graphql";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-@Table
-export default class SceneItem extends Model<SceneItem>
+@ObjectType()
+export class JobType
 {
-    @ForeignKey(() => LegacyMigration)
-    @Column
-    legacyMigrationId: number;
+    @Field(type => ID)
+    id: number;
 
-    @ForeignKey(() => Asset)
-    @Column
-    assetId: number;
+    @Field(type => String)
+    name: string;
+}
+
+@InputType()
+export class JobInput
+{
+    @Field(type => ID)
+    id: number;
+
+    @Field(type => String)
+    name: string;
 }

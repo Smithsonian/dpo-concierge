@@ -72,7 +72,7 @@ function MigratePlayView(props: IMigratePlayViewProps)
 
     if (params.id) {
         const queryMigrationEntry = gql`{
-            migrationEntry(id: "${params.id}") {
+            migrationSheetEntry(id: "${params.id}") {
                 id, object, unitrecordid, edanrecordid, playboxid, shareddrivefolder, mastermodellocation
             }
         }`;
@@ -90,7 +90,7 @@ function MigratePlayView(props: IMigratePlayViewProps)
             </Card>)
         }
         if (data) {
-            entry = data.migrationEntry;
+            entry = data.migrationSheetEntry;
         }
     }
 
@@ -185,7 +185,7 @@ function MigratePlayView(props: IMigratePlayViewProps)
                                     fullWidth
                                 />
                             </Grid>
-                            <Grid item xs={2}>
+                            <Grid item>
                                 <Button
                                     variant="contained"
                                     color="primary"

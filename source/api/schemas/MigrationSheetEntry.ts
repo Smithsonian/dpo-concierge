@@ -15,108 +15,95 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
-
-import MigrationSheet from "../utils/MigrationSheet";
+import "reflect-metadata";
+import { Field, Int, ID, ObjectType } from "type-graphql";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-@Table
-export default class MigrationEntry extends Model<MigrationEntry>
+@ObjectType()
+export class MigrationSheetEntryType
 {
-    static async importSheet(sheet: MigrationSheet)
-    {
-        const rows = sheet.data.worksheets[0].rows;
-
-        let p: Promise<any> = Promise.resolve();
-        rows.forEach(row =>
-            p = p.then(() => this.upsert(row))
-        );
-
-        return p;
-    }
-
-    @Column({ type: DataType.STRING, primaryKey: true })
+    @Field(type => ID)
     id: string;
 
-    @Column
+    @Field()
     object: string;
 
-    @Column
+    @Field()
     unitrecordid: string;
 
-    @Column
+    @Field()
     edanrecordid: string;
 
-    @Column
+    @Field()
     collectingbody: string;
 
-    @Column
+    @Field()
     collection: string;
 
-    @Column
+    @Field()
     scantype: string;
 
-    @Column
+    @Field()
     levelofcompletion: string;
 
-    @Column
+    @Field()
     rawdatastatus: string;
 
-    @Column
+    @Field()
     source: string;
 
-    @Column
+    @Field()
     publiclylisted: boolean;
 
-    @Column
+    @Field()
     publishstatus: string;
 
-    @Column
+    @Field()
     rights: string;
 
-    @Column({ type: DataType.INTEGER })
+    @Field(type => Int, { nullable: true })
     partscount: number;
 
-    @Column({ type: DataType.INTEGER })
+    @Field(type => Int, { nullable: true })
     articles: number;
 
-    @Column({ type: DataType.INTEGER })
+    @Field(type => Int, { nullable: true })
     annotations: number;
 
-    @Column({ type: DataType.INTEGER })
+    @Field(type => Int, { nullable: true })
     tours: number;
 
-    @Column({ type: DataType.INTEGER })
+    @Field(type => Int, { nullable: true })
     tourstops: number;
 
-    @Column({ type: DataType.BOOLEAN })
+    @Field()
     downloads: boolean;
 
-    @Column
+    @Field({ nullable: true })
     playboxid: string;
 
-    @Column
+    @Field()
     previewlink: string;
 
-    @Column
+    @Field()
     legacyplayboxid: string;
 
-    @Column
+    @Field()
     legacypreviewlink: string;
 
-    @Column
+    @Field()
     shareddrivefolder: string;
 
-    @Column
+    @Field()
     mastermodellocation: string;
 
-    @Column
+    @Field({ nullable: true })
     rawdatasizegb: number;
 
-    @Column
+    @Field({ nullable: true })
     mastermodelsizegb: number;
 
-    @Column({ type: DataType.TEXT })
+    @Field()
     notes: string;
 }

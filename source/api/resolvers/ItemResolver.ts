@@ -16,25 +16,33 @@
  */
 
 import { Arg, FieldResolver, Query, Resolver, Root } from "type-graphql";
-import { items, ItemData } from "../data";
-import Item from "../schemas/Item";
+
+import { ItemType } from "../schemas/Item";
+import Item from "../models/Item";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @Resolver(of => Item)
 export default class ItemResolver
 {
-    @Query(returns => Item)
-    items(): ItemData[]
+    @Query(returns => [ ItemType ])
+    items(): Promise<ItemType[]>
     {
-        return items;
+        return Item.findAll()
+            .then(rows => rows.map(row => row.toJSON() as ItemType));
     }
 
-    @Query(returns => Item, { nullable: true })
-    itemByName(
-        @Arg("name") name: string
-    ): ItemData | undefined
+    @Query(returns => ItemType, { nullable: true })
+    item(
+        @Arg("name") name: string,
+        @Arg("uuid") uuid: string,
+    ): Promise<ItemType | null>
     {
-        return items.find(item => item.name === name);
+        const query: any = {};
+        if (name) query.name = name;
+        if (uuid) query.uud = uuid;
+
+        return Item.findOne({ where: query })
+            .then(row => row ? row.toJSON() as ItemType : null);
     }
 }

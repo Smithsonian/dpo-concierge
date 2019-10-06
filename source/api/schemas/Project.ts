@@ -15,13 +15,27 @@
  * limitations under the License.
  */
 
-export interface ItemData
+import "reflect-metadata";
+import { Field, Int, ID, ObjectType, InputType } from "type-graphql";
+
+////////////////////////////////////////////////////////////////////////////////
+
+@ObjectType()
+export class ProjectType
 {
+    @Field(type => ID)
     id: number;
+
+    @Field(type => String)
     name: string;
 }
 
-export const items: ItemData[] = [
-    { id: 1, name: "Item1" },
-    { id: 2, name: "Item2" }
-];
+@InputType()
+export class ProjectInput
+{
+    @Field(type => ID)
+    id: number;
+
+    @Field(type => String)
+    name: string;
+}

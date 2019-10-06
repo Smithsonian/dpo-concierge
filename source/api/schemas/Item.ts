@@ -21,10 +21,10 @@ import { Field, Int, ID, ObjectType } from "type-graphql";
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
-export default class Item
+export class ItemType
 {
     @Field(type => ID)
-    id: number;
+    uuid: string;
 
     @Field(type => String)
     name: string;

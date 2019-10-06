@@ -15,95 +15,116 @@
  * limitations under the License.
  */
 
-import "reflect-metadata";
-import { Field, Int, ID, ObjectType } from "type-graphql";
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
+
+import Job from "./Job";
+import MigrationSheet from "../utils/MigrationSheet";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-@ObjectType()
-export default class MigrationEntry
+@Table
+export default class MigrationSheetEntry extends Model<MigrationSheetEntry>
 {
-    @Field(type => ID)
+    static async importSheet(sheet: MigrationSheet)
+    {
+        const rows = sheet.data.worksheets[0].rows;
+
+        let p: Promise<any> = Promise.resolve();
+        rows.forEach(row =>
+            p = p.then(() => this.upsert(row))
+        );
+
+        return p;
+    }
+
+    @ForeignKey(() => Job)
+    @Column
+    jobId: number;
+
+    @BelongsTo(() => Job)
+    job: Job;
+
+    @Column({ type: DataType.STRING, primaryKey: true })
     id: string;
 
-    @Field()
+    @Column
     object: string;
 
-    @Field()
+    @Column
     unitrecordid: string;
 
-    @Field()
+    @Column
     edanrecordid: string;
 
-    @Field()
+    @Column
     collectingbody: string;
 
-    @Field()
+    @Column
     collection: string;
 
-    @Field()
+    @Column
     scantype: string;
 
-    @Field()
+    @Column
     levelofcompletion: string;
 
-    @Field()
+    @Column
     rawdatastatus: string;
 
-    @Field()
+    @Column
     source: string;
 
-    @Field()
+    @Column
     publiclylisted: boolean;
 
-    @Field()
+    @Column
     publishstatus: string;
 
-    @Field()
+    @Column
     rights: string;
 
-    @Field(type => Int, { nullable: true })
+    @Column({ type: DataType.INTEGER })
     partscount: number;
 
-    @Field(type => Int, { nullable: true })
+    @Column({ type: DataType.INTEGER })
     articles: number;
 
-    @Field(type => Int, { nullable: true })
+    @Column({ type: DataType.INTEGER })
     annotations: number;
 
-    @Field(type => Int, { nullable: true })
+    @Column({ type: DataType.INTEGER })
     tours: number;
 
-    @Field(type => Int, { nullable: true })
+    @Column({ type: DataType.INTEGER })
     tourstops: number;
 
-    @Field()
+    @Column({ type: DataType.BOOLEAN })
     downloads: boolean;
 
-    @Field({ nullable: true })
+    @Column
     playboxid: string;
 
-    @Field()
+    @Column
     previewlink: string;
 
-    @Field()
+    @Column
     legacyplayboxid: string;
 
-    @Field()
+    @Column
     legacypreviewlink: string;
 
-    @Field()
+    @Column
     shareddrivefolder: string;
 
-    @Field()
+    @Column
     mastermodellocation: string;
 
-    @Field({ nullable: true })
+    @Column
     rawdatasizegb: number;
 
-    @Field({ nullable: true })
+    @Column
     mastermodelsizegb: number;
 
-    @Field()
+    @Column({ type: DataType.TEXT })
     notes: string;
 }

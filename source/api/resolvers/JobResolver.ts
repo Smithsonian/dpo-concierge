@@ -15,18 +15,31 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
-import MigrationEntry from "./MigrationEntry";
+import { Arg, Query, Mutation, Resolver, Ctx } from "type-graphql";
+
+import { JobType, JobInput } from "../schemas/Job";
+import Job from "../models/Job";
+
+import User from "../models/User";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-@Table
-export default class LegacyMigrationJob extends Model<LegacyMigrationJob>
+export interface IContext
 {
-    @ForeignKey(() => MigrationEntry)
-    @Column
-    migrationEntryId: string;
+    user?: User;
+}
 
-    @BelongsTo(() => MigrationEntry)
-    migrationEntry: MigrationEntry;
+@Resolver()
+export default class JobResolver
+{
+    @Query(returns => [ JobType ])
+    async jobs(
+        @Arg("offset", { defaultValue: 0 }) offset: number,
+        @Arg("limit", { defaultValue: 50 }) limit: number,
+    ): Promise<JobType[]>
+    {
+        return Job.findAll({ offset, limit: limit ? limit : undefined })
+            .then(rows => rows.map(row => row.toJSON() as JobType));
+    }
+
 }

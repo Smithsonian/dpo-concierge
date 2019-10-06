@@ -18,7 +18,6 @@
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
 
 import Job from "./Job";
-import MigrationEntry from "./MigrationEntry";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -32,17 +31,18 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob>
     @BelongsTo(() => Job)
     job: Job;
 
-    @ForeignKey(() => MigrationEntry)
-    @Column
-    migrationEntryId: string;
+    @Column({ allowNull: false })
+    object: string;
 
-    @BelongsTo(() => MigrationEntry)
-    migrationEntry: MigrationEntry;
-
-    @Column
+    @Column({ allowNull: false })
     playboxId: string;
 
     @Column
     edanRecordId: string;
 
+    @Column({ type: DataType.STRING })
+    masterModelGeometry: string;
+
+    @Column({ type: DataType.STRING })
+    masterModelTexture: string;
 }

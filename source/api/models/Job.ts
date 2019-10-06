@@ -17,7 +17,6 @@
 
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
 
-import User from "./User";
 import Project from "./Project";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -38,13 +37,6 @@ export default class Job extends Model<Job>
 
     @Column
     error: string;
-
-    @ForeignKey(() => User)
-    @Column
-    ownerId: number;
-
-    @BelongsTo(() => User)
-    owner: User;
 
     @ForeignKey(() => Project)
     @Column

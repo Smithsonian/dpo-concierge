@@ -17,7 +17,7 @@
 
 import * as React from "react";
 
-import { Link } from "react-router-dom";
+import { Link, History } from "react-router-dom";
 
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
@@ -70,7 +70,7 @@ const queryColumns = columns.map(column => column.id).join(", ");
 
 const queryMigrationEntries = gql`
 {
-    migrationEntries(offset: 0, limit: 0) {
+    migrationSheetEntries(offset: 0, limit: 0) {
         id, ${queryColumns}
     }
 }
@@ -104,13 +104,12 @@ columns.unshift({ id: "status", label: "Migration", format: formatStatus, width:
 
 export interface IMigrationSpreadsheetViewProps
 {
-    history?: any;
+    history?: History;
 
     classes: {
-        root: string;
-        progress: string;
-        card: string;
         paper: string;
+        card: string;
+        progress: string;
     };
 }
 
@@ -124,14 +123,15 @@ function MigrationSpreadsheetView(props: IMigrationSpreadsheetViewProps)
     }
 
     if (error) {
-        return (<Card>
+        return (<Card raised className={classes.card}>
             <CardContent>
-                <Typography>Data query error...</Typography>
+                <Typography variant="h6">Query Error</Typography>
+                <Typography>{error.message}</Typography>
             </CardContent>
         </Card>)
     }
 
-    const rows = data.migrationEntries;
+    const rows = data.migrationSheetEntries;
 
     return (
         <Paper className={classes.paper}>
@@ -146,15 +146,17 @@ function MigrationSpreadsheetView(props: IMigrationSpreadsheetViewProps)
 }
 
 const styles = theme => ({
-    progress: {
-        alignSelf: "center"
-    },
-    card: {
-        width: "150px",
-    },
     paper: {
         alignSelf: "stretch",
     },
+    card: {
+        maxWidth: 480,
+        alignSelf: "center",
+    },
+    progress: {
+        alignSelf: "center"
+    },
+
 } as StyleRules);
 
 export default withStyles(styles)(MigrationSpreadsheetView);

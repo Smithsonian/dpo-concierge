@@ -17,13 +17,16 @@
 
 import * as React from "react";
 
+import ProjectListView from "../views/ProjectListView";
+import JobListView from "../views/JobListView";
+
 import Page, { IPageView } from "../Page";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 const views: IPageView[] = [
-    { title: "Projects", component: null, route: "/projects" },
-    { title: "Jobs", component: null, route: "/jobs" },
+    { title: "Projects", component: ProjectListView, route: "/projects" },
+    { title: "Jobs", component: JobListView, route: "/jobs" },
 ];
 
 export interface IPageProps

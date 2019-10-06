@@ -20,12 +20,12 @@ import * as React from "react";
 import { withStyles, StyleRules } from '@material-ui/core/styles';
 import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
-import TextField from '@material-ui/core/TextField';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Checkbox from '@material-ui/core/Checkbox';
 import Link from '@material-ui/core/Link';
-import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
+import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
+
+import { Formik, Field } from "formik";
+import { TextField } from 'formik-material-ui';
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -50,39 +50,67 @@ function Login(props: ILoginProps)
             <Typography component="h1" variant="h5">
                 Sign in
             </Typography>
-            <form className={classes.form} noValidate>
-                <TextField
-                    variant="outlined"
-                    margin="normal"
-                    required
-                    fullWidth
-                    id="email"
-                    label="Email Address"
-                    name="email"
-                    autoComplete="email"
-                    autoFocus
-                />
-                <TextField
-                    variant="outlined"
-                    margin="normal"
-                    required
-                    fullWidth
-                    name="password"
-                    label="Password"
-                    type="password"
-                    id="password"
-                    autoComplete="current-password"
-                />
-                <Button
-                    type="submit"
-                    fullWidth
-                    variant="contained"
-                    color="primary"
-                    className={classes.submit}
-                >
-                    Sign In
-                </Button>
-            </form>
+            <Formik
+                initialValues={{ email: "", password: "" }}
+                validate={values => {
+                    let errors: any = {};
+                    if (!values.email) {
+                        errors.email = "Please enter your email address";
+                    }
+                    if (!values.password) {
+                        errors.password = "Please enter your password";
+                    }
+                }}
+                onSubmit={(values, { setSubmitting }) => {
+                    fetch("/login", {
+                        method: "POST",
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(values),
+                    }).then(result => {
+                        setSubmitting(false);
+                        if (result.ok) {
+                             window.location.href = "/workflow/projects";
+                        }
+                    });
+                }}
+            >
+                {({ handleSubmit }) => (
+                    <form className={classes.form} onSubmit={handleSubmit}>
+                        <Field
+                            variant="outlined"
+                            margin="normal"
+                            required
+                            fullWidth
+                            name="email"
+                            label="Email Address"
+                            autoComplete="email"
+                            autoFocus
+                            component={TextField}
+
+                        />
+                        <Field
+                            variant="outlined"
+                            margin="normal"
+                            required
+                            fullWidth
+                            name="password"
+                            label="Password"
+                            type="password"
+                            autoComplete="current-password"
+                            component={TextField}
+                        />
+                        <Button
+                            type="submit"
+                            fullWidth
+                            variant="contained"
+                            color="primary"
+                            className={classes.submit}
+                        >
+                            Sign In
+                        </Button>
+                    </form>
+                )}
+            </Formik>
             <Link href="/register" variant="body2">
                 {"Need an account? Sign Up."}
             </Link>

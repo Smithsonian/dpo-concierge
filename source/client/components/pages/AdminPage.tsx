@@ -18,13 +18,14 @@
 import * as React from "react";
 
 import NotYetImplementedView from "../views/NotYetImplementedView";
+import UserListView from "../views/UserListView";
 
 import Page, { IPageView } from "../Page";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 const views: IPageView[] = [
-    { title: "Users", component: NotYetImplementedView, route: "/users" },
+    { title: "Users", component: UserListView, route: "/users" },
     { title: "Roles", component: NotYetImplementedView, route: "/roles" },
 ];
 

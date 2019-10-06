@@ -84,8 +84,7 @@ module.exports = function(env, argv) {
     const isDevMode = argv.mode !== undefined ? argv.mode !== "production" : process.env["NODE_ENV"] !== "production";
 
     // copy static assets
-    // TODO: no assets to copy for now
-    // fs.copy(dirs.assets, dirs.output, { overwrite: true });
+    fs.copy(dirs.assets, dirs.output, { overwrite: true });
 
     if (appKey === "all") {
         return Object.keys(apps).map(key => createAppConfig(key, isDevMode));

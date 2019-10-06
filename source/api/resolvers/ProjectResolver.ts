@@ -15,31 +15,31 @@
  * limitations under the License.
  */
 
-import { Arg, FieldResolver, Query, Resolver, Root } from "type-graphql";
+import { Arg, Query, Mutation, Resolver, Ctx } from "type-graphql";
 
-import MigrationEntrySchema from "../schemas/MigrationEntry";
-import MigrationEntryModel from "../models/MigrationEntry";
+import { ProjectType, ProjectInput } from "../schemas/Project";
+import Project from "../models/Project";
+
+import User from "../models/User";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-@Resolver(of => MigrationEntrySchema)
-export default class MigrationEntryResolver
+export interface IContext
 {
-    @Query(returns => [ MigrationEntrySchema ])
-    async migrationEntries(
-        @Arg("offset", { defaultValue: 0 }) offset: number,
-        @Arg("limit", { defaultValue: 50 }) limit: number,
-    ): Promise<MigrationEntrySchema[]>
-    {
-        return MigrationEntryModel.findAll({ offset, limit: limit ? limit : undefined }).then(rows => rows.map(row => row.toJSON() as MigrationEntrySchema));
-    }
-
-    @Query(returns => MigrationEntrySchema)
-    async migrationEntry(
-        @Arg("id") id: string
-    ): Promise<MigrationEntrySchema>
-    {
-        return MigrationEntryModel.findOne({ where: { id } }).then(row => row.toJSON() as MigrationEntrySchema);
-    }
+    user?: User;
 }
 
+@Resolver()
+export default class ProjectResolver
+{
+    @Query(returns => [ ProjectType ])
+    async projects(
+        @Arg("offset", { defaultValue: 0 }) offset: number,
+        @Arg("limit", { defaultValue: 50 }) limit: number,
+    ): Promise<ProjectType[]>
+    {
+        return Project.findAll({ offset, limit: limit ? limit : undefined })
+            .then(rows => rows.map(row => row.toJSON() as ProjectType));
+    }
+
+}

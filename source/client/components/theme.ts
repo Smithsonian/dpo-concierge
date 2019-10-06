@@ -20,13 +20,13 @@ import { createMuiTheme, createStyles } from '@material-ui/core/styles';
 ////////////////////////////////////////////////////////////////////////////////
 
 export let theme = createMuiTheme({
-    typography: {
-        h5: {
-            fontWeight: 500,
-            fontSize: 26,
-            letterSpacing: 0.5,
-        },
-    },
+    // typography: {
+    //     h5: {
+    //         fontWeight: 500,
+    //         fontSize: 26,
+    //         letterSpacing: 0.5,
+    //     },
+    // },
     palette: {
         primary: {
             light: '#63ccff',

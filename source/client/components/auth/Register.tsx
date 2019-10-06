@@ -19,25 +19,57 @@ import * as React from "react";
 
 import { withStyles, StyleRules } from '@material-ui/core/styles';
 import Avatar from "@material-ui/core/Avatar";
-import PersonIcon from "@material-ui/icons/Person";
-import Typography from "@material-ui/core/Typography";
-import TextField from "@material-ui/core/TextField";
 import Button from "@material-ui/core/Button";
+import Typography from "@material-ui/core/Typography";
+import Card from "@material-ui/core/Card";
+import CardContent from "@material-ui/core/CardContent";
+import PersonIcon from "@material-ui/icons/Person";
+
+import { Formik, Field } from "formik";
+import { TextField } from 'formik-material-ui';
+
+import { useMutation } from "@apollo/react-hooks";
+import gql from "graphql-tag";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export interface IRegisterProps
 {
     classes: {
+        card: string;
         avatar: string;
         form: string;
         submit: string;
     }
 }
 
+const insertUserQuery = gql`
+mutation InsertUser($user: UserInput!) {
+    insertUser(user: $user) {
+        id
+    }
+}
+`;
+
 function Register(props: IRegisterProps)
 {
     const { classes } = props;
+
+    const [insertUser, { loading, error, data }] = useMutation(insertUserQuery);
+
+    if (error) {
+        return (
+            <CardContent>
+                <Typography variant="h6">Query Error</Typography>
+                <Typography>{error.message}</Typography>
+            </CardContent>
+        );
+    }
+
+    if (data) {
+        window.location.href = "/workflow/projects";
+        return null;
+    }
 
     return (
         <React.Fragment>
@@ -47,48 +79,68 @@ function Register(props: IRegisterProps)
             <Typography component="h1" variant="h5">
                 Sign Up
             </Typography>
-            <form className={classes.form} noValidate>
-                <TextField
-                    variant="outlined"
-                    margin="normal"
-                    required
-                    fullWidth
-                    id="name"
-                    label="Name"
-                    name="name"
-                    autoFocus
-                />
-                <TextField
-                    variant="outlined"
-                    margin="normal"
-                    required
-                    fullWidth
-                    id="email"
-                    label="Email Address"
-                    name="email"
-                    autoComplete="email"
-                />
-                <TextField
-                    variant="outlined"
-                    margin="normal"
-                    required
-                    fullWidth
-                    name="password"
-                    label="Password"
-                    type="password"
-                    id="password"
-                    autoComplete="current-password"
-                />
-                <Button
-                    type="submit"
-                    fullWidth
-                    variant="contained"
-                    color="primary"
-                    className={classes.submit}
-                >
-                    Register
-                </Button>
-            </form>
+            <Formik
+                initialValues={{ name: "", email: "", password: "" }}
+                validate={values => {
+                    let errors: any = {};
+                    if (!values.email) {
+                        errors.email = "Please enter your email address";
+                    }
+                    if (!values.password) {
+                        errors.password = "Please enter your password";
+                    }
+                }}
+                onSubmit={(values, { setSubmitting }) => {
+                    const variables = { user: { ...values  }};
+                    console.log("SUBMIT", variables);
+                    insertUser({ variables });
+                }}
+            >
+                {({ handleSubmit}) => (
+                    <form className={classes.form} onSubmit={handleSubmit}>
+                        <Field
+                            name="name"
+                            label="Name"
+                            required
+                            autoFocus
+                            fullWidth
+                            variant="outlined"
+                            margin="normal"
+                            component={TextField}
+                        />
+                        <Field
+                            name="email"
+                            label="Email Address"
+                            autoComplete="email"
+                            required
+                            fullWidth
+                            variant="outlined"
+                            margin="normal"
+                            component={TextField}
+                        />
+                        <Field
+                            name="password"
+                            label="Password"
+                            type="password"
+                            autoComplete="current-password"
+                            required
+                            fullWidth
+                            variant="outlined"
+                            margin="normal"
+                            component={TextField}
+                        />
+                        <Button
+                            type="submit"
+                            fullWidth
+                            variant="contained"
+                            color="primary"
+                            className={classes.submit}
+                        >
+                            Sign Up
+                        </Button>
+                    </form>
+                )}
+            </Formik>
         </React.Fragment>
     );
 }

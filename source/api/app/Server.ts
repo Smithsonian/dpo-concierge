@@ -20,6 +20,7 @@ import * as session from "express-session";
 import * as memorystore from "memorystore";
 import * as http from "http";
 import * as morgan from "morgan";
+import * as bodyParser from "body-parser";
 
 import * as passport from "passport";
 import * as LocalStrategy from "passport-local";
@@ -28,8 +29,11 @@ import * as LdapStrategy from "passport-ldapauth";
 import * as graphqlHttp from "express-graphql";
 import { buildSchema } from "type-graphql";
 
-import MigrationEntryResolver from "../resolvers/MigrationEntryResolver";
+import MigrationSheetEntryResolver from "../resolvers/MigrationSheetEntryResolver";
 import ItemResolver from "../resolvers/ItemResolver";
+import UserResolver from "../resolvers/UserResolver";
+import JobResolver from "../resolvers/JobResolver";
+import ProjectResolver from "../resolvers/ProjectResolver";
 
 import User from "../models/User";
 
@@ -85,17 +89,23 @@ export default class Server
             saveUninitialized: true,
         }));
 
-        const localStrategy = new LocalStrategy((username, password, done) => {
-            User.findOne({ where: { name: username }}).then(user => {
+        const localStrategy = new LocalStrategy({
+            usernameField: "email",
+            passwordField: "password",
+        },(email, password, done) => {
+            User.findOne({ where: { email }}).then(user => {
                 if (!user) {
+                    console.log(`LocalStrategy - user email not found: ${email}`);
                     return done(null, false, { message: "Incorrect username" });
                 }
 
                 user.isValidPassword(password).then(result => {
                     if (result) {
-                        done(null, user);
+                        console.log(`LocalStrategy - authenticated user: ${email}`);
+                        return done(null, user);
                     }
                     else {
+                        console.log(`LocalStrategy - password mismatch for user: ${email}`);
                         return done(null, false, { message: "Incorrect password" });
                     }
                 });
@@ -124,22 +134,30 @@ export default class Server
         passport.use(localStrategy);
         // passport.use(ldapStrategy);
 
+        app.use(bodyParser.json());
         app.use(passport.initialize());
         app.use(passport.session());
 
         // GraphQL endpoint
-        const schema = await buildSchema({ resolvers: [
-            MigrationEntryResolver,
-            ItemResolver
-        ]});
-
-        app.use("/graphql", graphqlHttp({ schema: schema, graphiql: this.isDevMode }));
+        const schema = await buildSchema({
+            resolvers: [
+                MigrationSheetEntryResolver,
+                ItemResolver,
+                UserResolver,
+                ProjectResolver,
+                JobResolver,
+            ],
+            authChecker: ({ root, args, context, info }, roles) => {
+                return true;
+            },
+        });
 
         // static file server
         app.use("/static", express.static(this.config.staticDir));
 
-        // login/registration page
+        // sign in/sign up page
         app.get(["/login", "/register"], (req, res, next) => {
+            console.log("SEND LOGIN PAGE");
             res.sendFile(`${this.config.staticDir}/auth-dev.html`, err => {
                 if (err) {
                     next(err);
@@ -147,16 +165,44 @@ export default class Server
             });
         });
 
-        app.post("/register", (req, res, next) => {
+        app.post("/login", passport.authenticate("local"), (req, res) => {
+            res.json({ status: "ok" });
+        });
 
+        // TODO: Must be authorized
+        app.use("/graphql", graphqlHttp({
+            schema: schema,
+            graphiql: this.isDevMode,
+        }));
+
+        ////////////////////////////////////////////////////////////////////////////////
+        // AUTHENTICATED USERS ONLY
+
+        app.use((req, res, next) => {
+            //if (!req.user) {
+            //    // TODO: Temp auto login
+            //    req.user = User.findOne({ where: { id: 1 }});
+            //}
+
+            if (!req.user) {
+                if (req.xhr) {
+                    return res.status(401).send();
+                }
+
+                return res.redirect("/login");
+            }
+
+            return next();
+        });
+
+        app.get("/logout", (req, res) => {
+            const name = req.user.name;
+            req.logout();
+            return res.send(`Bye, ${name}, come back soon!`);
         });
 
         // Web application
         app.get("/*", (req, res, next) => {
-            if (!req.user) {
-                return res.redirect("/login");
-            }
-
             res.sendFile(`${this.config.staticDir}/main-dev.html`, err => {
                 if (err) {
                     next(err);

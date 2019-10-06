@@ -18,21 +18,30 @@
 import * as React from "react";
 
 import { withStyles } from '@material-ui/core/styles';
-import Paper from "@material-ui/core/Paper";
+import Card from "@material-ui/core/Card";
+import CardContent from "@material-ui/core/CardContent";
 import Typography from "@material-ui/core/Typography";
 
+////////////////////////////////////////////////////////////////////////////////
+
 const styles = theme => ({
-    paper: {
-        padding: theme.spacing(3)
-    }
+    card: {
+        maxWidth: 480,
+        alignSelf: "center",
+    },
 });
 
 const NotYetImplementedView = props => (
-    <Paper className={props.classes.paper}>
-        <Typography variant="h6">
-            Not yet implemented
-        </Typography>
-    </Paper>
+    <Card raised className={props.classes.card}>
+        <CardContent>
+            <Typography variant="h6">
+                Patience, please.
+            </Typography>
+            <Typography variant="body1">
+                This is a preview. This part of the application hasn't been implemented yet. We're working hard, stay tuned.
+            </Typography>
+        </CardContent>
+    </Card>
 );
 
 export default withStyles(styles)(NotYetImplementedView);

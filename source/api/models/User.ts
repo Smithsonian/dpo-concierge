@@ -32,7 +32,7 @@ export default class User extends Model<User>
     @Column
     password: string;
 
-    async getPasswordHash(password: string): Promise<string>
+    static async getPasswordHash(password: string): Promise<string>
     {
         return await bcrypt.hash(password, 10);
     }
