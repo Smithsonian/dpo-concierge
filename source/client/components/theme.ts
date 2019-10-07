@@ -20,6 +20,11 @@ import { createMuiTheme, createStyles } from '@material-ui/core/styles';
 ////////////////////////////////////////////////////////////////////////////////
 
 export let theme = createMuiTheme({
+    typography: {
+        body2: {
+            fontSize: 12,
+        }
+    },
     // typography: {
     //     h5: {
     //         fontWeight: 500,

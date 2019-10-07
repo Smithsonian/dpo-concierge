@@ -35,7 +35,14 @@ export default class UserResolver
         @Ctx() context: IContext
     ): Promise<UserType>
     {
-        return Promise.resolve(context.user ? context.user.toJSON() as UserType : null);
+        const user = context.user;
+
+        // if (user) {
+        //     return user.$get("activeProject")
+        //         .then(() => user.toJSON() as UserType);
+        // }
+
+        return Promise.resolve(user ? user.toJSON() as UserType : null);
     }
 
     @Query(returns => UserType)

@@ -32,7 +32,7 @@ export default class Job extends Model<Job>
     @Column
     type: string;
 
-    @Column
+    @Column({ defaultValue: "created" })
     state: JobState;
 
     @Column

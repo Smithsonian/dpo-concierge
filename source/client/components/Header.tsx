@@ -77,13 +77,15 @@ function TabLink(props) {
     );
 }
 
-const queryUser = gql`
-    query {
-        me {
-            name
+export const QUERY_ACTIVE_USER = gql`
+query {
+    me {
+        name
+        activeProject {
+            id, name
         }
     }
-`;
+}`;
 
 const UserAvatar = withStyles(theme => ({
     user: {
@@ -95,13 +97,28 @@ const UserAvatar = withStyles(theme => ({
     },
 }))((props: any) => {
     const { classes } = props;
-    const { loading, error, data } = useQuery(queryUser);
+    const { loading, error, data } = useQuery(QUERY_ACTIVE_USER);
+
+    let name = "not logged in";
+    let project = "no active project";
+
+    if (data && data.me) {
+        name = data.me.name;
+        if (data.me.activeProject) {
+            project = data.me.activeProject.name;
+        }
+    }
 
     return (
         <div className={classes.user}>
-            <Typography>
-                { data ? data.me.name : "not logged in" }
-            </Typography>
+            <div>
+                <Typography variant="body2" style={{ textAlign: "end" }}>
+                    { name }
+                </Typography>
+                <Typography variant="body1" style={{ textAlign: "end" }}>
+                    { project }
+                </Typography>
+            </div>
             {/*<IconButton color="inherit" className={classes.iconButtonAvatar}>*/}
             <Avatar className={classes.avatar}>
                 <PersonIcon />

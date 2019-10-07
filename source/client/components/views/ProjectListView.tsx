@@ -19,7 +19,7 @@ import * as React from "react";
 
 import { Link, Route, Switch, History } from "react-router-dom";
 
-import { useQuery } from "@apollo/react-hooks";
+import { useQuery, useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
 import { withStyles, styled, StyleRules } from "@material-ui/core/styles";
@@ -40,22 +40,21 @@ import DeleteIcon from "@material-ui/icons/DeleteForever";
 
 import ProjectEditView from "./ProjectEditView";
 
+import { QUERY_ACTIVE_USER } from "../Header";
+
 ////////////////////////////////////////////////////////////////////////////////
 
 const CellIconButton = styled(IconButton)({
     margin: "-16px 0",
 });
 
-const buttons: TableCellFormatter = (value, id, row) => (
+const buttons: TableCellFormatter = (value, row, column) => (
     <div style={{ display: "flex", flexWrap: "nowrap" }}>
-        <Link
-            to={`projects/edit?id=${encodeURIComponent(row["id"])}`}
-            style={{ textDecoration: "none" }}
-        >
-            <CellIconButton>
-                <UncheckedIcon/>
-            </CellIconButton>
-        </Link>
+        <CellIconButton onClick={() => {
+            column.data.setActiveProject({ variables: { id: row["id"] }, refetchQueries: () => [{ query: QUERY_ACTIVE_USER }] });
+        }}>
+            {column.data.activeProjectId === row["id"] ? <CheckedIcon/> : <UncheckedIcon/>}
+        </CellIconButton>
         <Link
             to={`projects/edit?id=${encodeURIComponent(row["id"])}`}
             style={{ textDecoration: "none" }}
@@ -64,31 +63,25 @@ const buttons: TableCellFormatter = (value, id, row) => (
                 <EditIcon/>
             </CellIconButton>
         </Link>
-        <Link
-            to={`projects/edit?id=${encodeURIComponent(row["id"])}`}
-            style={{ textDecoration: "none" }}
-        >
-            <CellIconButton>
-                <DeleteIcon/>
-            </CellIconButton>
-        </Link>
+        <CellIconButton>
+            <DeleteIcon/>
+        </CellIconButton>
     </div>
 );
 
-
-const columns: ITableColumn[] = [
-    { id: "active", label: "Actions", format: buttons, width: 1 },
-    { id: "name", label: "Name" },
-    { id: "description", label: "Description" },
-];
-
 const QUERY_PROJECTS = gql`
-{
+query {
     projects(offset: 0, limit: 0) {
         id, name, description
     }
-}
-`;
+}`;
+
+const ACTIVATE_PROJECT = gql`
+mutation SetActiveProject($id: Int!) {
+    setActiveProject(id: $id) {
+        id, name, description
+    }
+}`;
 
 export interface IProjectListViewProps
 {
@@ -106,22 +99,35 @@ export interface IProjectListViewProps
 function ProjectListView(props: IProjectListViewProps)
 {
     const { classes, history, match } = props;
-    const { loading, error, data } = useQuery(QUERY_PROJECTS);
 
-    if (loading) {
+    const { data: userData } = useQuery(QUERY_ACTIVE_USER);
+    const activeProject = userData && userData.me && userData.me.activeProject;
+    const activeProjectId = activeProject && activeProject.id;
+
+    const { loading: loading0, error: error0, data: data0 } = useQuery(QUERY_PROJECTS);
+
+    const [setActiveProject, { error: error1, data: data1 }] = useMutation(ACTIVATE_PROJECT);
+
+    const columns: ITableColumn[] = [
+        { id: "active", label: "Actions", format: buttons, width: 1, data: { setActiveProject, activeProjectId } },
+        { id: "name", label: "Name" },
+        { id: "description", label: "Description" },
+    ];
+
+    if (loading0) {
         return (<CircularProgress className={classes.progress} />)
     }
 
-    if (error) {
+    if (error0 || error1) {
         return (<Card raised className={classes.card}>
             <CardContent>
                 <Typography variant="h6">Query Error</Typography>
-                <Typography>{error.message}</Typography>
+                <Typography>{(error0 || error1).message}</Typography>
             </CardContent>
         </Card>)
     }
 
-    const rows = data.projects;
+    const rows = data0.projects;
 
     return (
         <Switch>

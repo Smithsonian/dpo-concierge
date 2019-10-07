@@ -88,7 +88,7 @@ const FlatButton = styled(Button)({
     padding: "2px 8px 0 8px"
 });
 
-const formatStatus: TableCellFormatter = (value, id, row) => {
+const formatStatus: TableCellFormatter = (value, row, column) => {
     if (!value && row["playboxid"]) {
         return (
             <Link

@@ -16,14 +16,14 @@
  */
 
 import "reflect-metadata";
-import { Field, Int, ID, ObjectType, InputType } from "type-graphql";
+import { Field, Int, ObjectType, InputType } from "type-graphql";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
 export class ProjectType
 {
-    @Field(type => ID)
+    @Field(type => Int)
     id: number;
 
     @Field(type => String)
@@ -36,7 +36,7 @@ export class ProjectType
 @InputType()
 export class ProjectInput
 {
-    @Field(type => ID, { nullable: true })
+    @Field(type => Int, { nullable: true })
     id: number;
 
     @Field(type => String)

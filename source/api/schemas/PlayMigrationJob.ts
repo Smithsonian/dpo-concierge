@@ -16,41 +16,69 @@
  */
 
 import "reflect-metadata";
-import { Field, Int, ObjectType, InputType } from "type-graphql";
-
-import { ProjectType } from "./Project";
+import { Field, Int, ID, ObjectType, InputType } from "type-graphql";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
-export class UserType
+export class PlayMigrationJobType
 {
     @Field(type => Int)
     id: number;
 
-    @Field(type => String)
-    name: string;
+    @Field()
+    object: string;
 
-    @Field(type => String)
-    email: string;
+    @Field()
+    playboxId: string;
 
-    @Field(type => ProjectType, { nullable: true })
-    activeProject: ProjectType;
+    @Field()
+    edanRecordId: string;
+
+    @Field()
+    masterModelGeometry: string;
+
+    @Field()
+    masterModelTexture: string;
+
+    @Field()
+    annotationStyle: string;
+
+    @Field()
+    migrateAnnotationColor: boolean;
+
 }
 
 @InputType()
-export class UserInput
+export class PlayMigrationJobInput
 {
     @Field(type => Int, { nullable: true })
     id: number;
 
-    @Field(type => String)
+    @Field()
     name: string;
 
-    @Field(type => String)
-    email: string;
+    @Field()
+    object: string;
 
-    @Field(type => String)
-    password: string;
+    @Field()
+    playboxId: string;
+
+    @Field()
+    edanRecordId: string;
+
+    @Field()
+    masterModelGeometry: string;
+
+    @Field()
+    masterModelTexture: string;
+
+    @Field()
+    annotationStyle: string;
+
+    @Field()
+    migrateAnnotationColor: boolean;
+
+    @Field(type => ID, { nullable: true })
+    sheetEntryId: string;
 }
-

@@ -33,7 +33,7 @@ import { getStorageObject, setStorageObject } from "../utils/LocalStorage";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export type TableCellFormatter<T extends {} = {}> = (value: any, id: string, row: T) => any;
+export type TableCellFormatter<T extends {} = {}> = (value: any, row: T, column: ITableColumn<T>) => any;
 
 export interface ITableColumn<T extends {} = {}>
 {
@@ -42,6 +42,7 @@ export interface ITableColumn<T extends {} = {}>
     numeric?: boolean;
     format?: TableCellFormatter;
     width?: string | number;
+    data?: any;
 }
 
 export interface IDataTableProps<T extends {} = {}>
@@ -169,7 +170,7 @@ class DataTable<T extends {} = {}> extends React.Component<IDataTableProps<T>, I
                 {columns.map(column => {
                     const values = row[0];
                     const value = values[column.id];
-                    const content = column.format ? column.format(value, column.id, values) : String(value);
+                    const content = column.format ? column.format(value, values, column) : String(value);
                     const isText = typeof content === "string";
 
                     return(

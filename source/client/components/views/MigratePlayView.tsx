@@ -19,7 +19,7 @@ import * as React from "react";
 
 import * as queryString from "query-string";
 
-import { useQuery } from "@apollo/react-hooks";
+import { useQuery, useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
 import { withStyles } from '@material-ui/core/styles';
@@ -30,9 +30,11 @@ import CardContent from "@material-ui/core/CardContent";
 import Grid from "@material-ui/core/Grid";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Button from "@material-ui/core/Button";
+import MenuItem from "@material-ui/core/MenuItem";
+import InputLabel from "@material-ui/core/InputLabel";
 
 import { Formik, Field } from "formik";
-import { TextField } from 'formik-material-ui';
+import { TextField, Switch, Select } from 'formik-material-ui';
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -40,6 +42,13 @@ const QUERY_MIGRATION_SHEET_ENTRY = gql`
 query MigrationSheetEntry($id: String!) {
     migrationSheetEntry(id: $id) {
         id, object, unitrecordid, edanrecordid, playboxid, shareddrivefolder, mastermodellocation
+    }
+}`;
+
+const CREATE_PLAY_MIGRATION_JOB = gql`
+mutation CreatePlayMigrationJob($job: PlayMigrationJobInput!) {
+    createPlayMigrationJob(playMigrationJob: $job) {
+        id
     }
 }`;
 
@@ -56,11 +65,17 @@ function MigratePlayView(props: IMigratePlayViewProps)
 {
     const { classes } = props;
     const params = queryString.parse(location.search);
+    const sheetEntryId = params.id || "";
+
+    const [ createPlayMigrationJob, { error } ] = useMutation(CREATE_PLAY_MIGRATION_JOB);
+    if (error) {
+        console.warn(error.graphQLErrors);
+    }
 
     let entry = null;
 
-    if (params.id) {
-        const variables = { id: params.id };
+    if (sheetEntryId) {
+        const variables = { id: sheetEntryId };
         const { loading, error, data } = useQuery(QUERY_MIGRATION_SHEET_ENTRY, { variables });
 
         if (loading) {
@@ -83,12 +98,15 @@ function MigratePlayView(props: IMigratePlayViewProps)
     }
 
     const formValues = {
+        name: `Play Scene Migration${entry ? `: #${entry.playboxid}` : ""}${entry && entry.object ? ` - ${entry.object}` : ""}`,
         object: entry ? entry.object : "",
-        playboxid: entry ? entry.playboxid : "",
-        edanrecordid: entry ? entry.edanrecordid : "",
-        shareddrivefolder: entry ? entry.shareddrivefolder : "",
-        mastermodelgeometry: entry ? entry.mastermodellocation : "",
-        mastermodeltexture: ""
+        playboxId: entry ? entry.playboxid : "",
+        edanRecordId: entry ? entry.edanrecordid : "",
+        shardDriveFolder: entry ? entry.shareddrivefolder : "",
+        masterModelGeometry: entry ? entry.mastermodellocation : "",
+        masterModelTexture: "",
+        annotationStyle: "Circle",
+        migrateAnnotationColor: false,
     };
 
     return (
@@ -100,19 +118,30 @@ function MigratePlayView(props: IMigratePlayViewProps)
                 initialValues={formValues}
                 validate={values => {
                     let errors: any = {};
-                    if (!values.playboxid) {
-                        errors.playboxid = "Can't be empty";
+                    if (!values.playboxId) {
+                        errors.playboxId = "Can't be empty";
                     }
                     return errors;
                 }}
                 onSubmit={(values, { setSubmitting }) => {
-                    console.log(JSON.stringify(values, null, 2));
+                    const variables = { job: { ...values, sheetEntryId }};
+                    createPlayMigrationJob({ variables });
                     setSubmitting(false);
+                    console.log(JSON.stringify(variables, null, 2));
                 }}
             >
                 {({ handleSubmit }) => (
                     <form onSubmit={handleSubmit}>
                         <Grid container spacing={3}>
+                            <Grid item xs={12}>
+                                <Field
+                                    name="name"
+                                    label="Job Name"
+                                    component={TextField}
+                                    margin="normal"
+                                    fullWidth
+                                />
+                            </Grid>
                             <Grid item xs={12}>
                                 <Field
                                     name="object"
@@ -124,7 +153,7 @@ function MigratePlayView(props: IMigratePlayViewProps)
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <Field
-                                    name="playboxid"
+                                    name="playboxId"
                                     label="Playbox ID"
                                     component={TextField}
                                     margin="normal"
@@ -133,7 +162,7 @@ function MigratePlayView(props: IMigratePlayViewProps)
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <Field
-                                    name="edanrecordid"
+                                    name="edanRecordId"
                                     label="EDAN Record ID"
                                     component={TextField}
                                     margin="normal"
@@ -142,7 +171,7 @@ function MigratePlayView(props: IMigratePlayViewProps)
                             </Grid>
                             <Grid item xs={12}>
                                 <Field
-                                    name="shareddrivefolder"
+                                    name="shardDriveFolder"
                                     label="Shared Drive Folder"
                                     component={TextField}
                                     margin="normal"
@@ -151,7 +180,7 @@ function MigratePlayView(props: IMigratePlayViewProps)
                             </Grid>
                             <Grid item xs={12}>
                                 <Field
-                                    name="mastermodelgeometry"
+                                    name="masterModelGeometry"
                                     label="Master Model Geometry"
                                     component={TextField}
                                     margin="normal"
@@ -160,11 +189,34 @@ function MigratePlayView(props: IMigratePlayViewProps)
                             </Grid>
                             <Grid item xs={12}>
                                 <Field
-                                    name="mastermodeltexture"
+                                    name="masterModelTexture"
                                     label="Master Model Texture"
                                     component={TextField}
                                     margin="normal"
                                     fullWidth
+                                />
+                            </Grid>
+                            <Grid item xs={6}>
+                                <InputLabel htmlFor="annotationStyle">Annotation Style</InputLabel>
+                                <Field
+                                    name="annotationStyle"
+                                    label="AnnotationStyle"
+                                    component={Select}
+                                    fullWidth
+                                    inputProps={{ id: 'annotationStyle' }}
+                                >
+                                    <MenuItem value="Circle">Circle</MenuItem>
+                                    <MenuItem value="Standard">Standard</MenuItem>
+                                    <MenuItem value="Extended">Extended</MenuItem>
+                                </Field>
+                            </Grid>
+                            <Grid item xs={6}>
+                                <InputLabel htmlFor="migrateAnnotationColor">Migrate Annotation Color</InputLabel>
+                                <Field
+                                    name="migrateAnnotationColor"
+                                    label="Migrate Annotation Color"
+                                    id="migrateAnnotationColor"
+                                    component={Switch}
                                 />
                             </Grid>
                             <Grid item>

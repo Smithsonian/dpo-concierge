@@ -34,8 +34,10 @@ import ItemResolver from "../resolvers/ItemResolver";
 import UserResolver from "../resolvers/UserResolver";
 import JobResolver from "../resolvers/JobResolver";
 import ProjectResolver from "../resolvers/ProjectResolver";
+import PlayMigrationJobResolver from "../resolvers/PlayMigrationJobResolver";
 
 import User from "../models/User";
+import Project from "../models/Project";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -124,7 +126,7 @@ export default class Server
         });
 
         passport.deserializeUser((id: string, done) => {
-            User.findByPk(id).then(user => {
+            User.findByPk(id, { include: [ { model: Project, as: "activeProject" } ] }).then(user => {
                 done(null, user);
             }).catch(err => {
                 done(err, null);
@@ -146,6 +148,7 @@ export default class Server
                 UserResolver,
                 ProjectResolver,
                 JobResolver,
+                PlayMigrationJobResolver,
             ],
             authChecker: ({ root, args, context, info }, roles) => {
                 return true;

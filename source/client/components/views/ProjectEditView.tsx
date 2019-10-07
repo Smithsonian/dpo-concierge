@@ -45,7 +45,7 @@ query Project($id: Int!) {
 }`;
 
 const UPSERT_PROJECT = gql`
-mutation Project($project: ProjectInput!) {
+mutation UpdateProject($project: ProjectInput!) {
     upsertProject(project: $project) {
         id, name, description
     }
@@ -69,7 +69,7 @@ function ProjectEditView(props: IProjectEditViewProps)
 
     let project = { name: "New Project", description: "" };
 
-    const [upsertProject, { loading: loading1, error: error1, data: data1, client }] = useMutation(UPSERT_PROJECT);
+    const [upsertProject, { loading: loading1, error: error1, data: data1 }] = useMutation(UPSERT_PROJECT);
 
     const variables = { id };
     const { loading: loading0, error: error0, data: data0 } = useQuery(QUERY_PROJECT, { variables });

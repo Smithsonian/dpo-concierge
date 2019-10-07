@@ -17,7 +17,7 @@
 
 import { Arg, Query, Mutation, Resolver, Ctx } from "type-graphql";
 
-import { JobType, JobInput } from "../schemas/Job";
+import { JobType } from "../schemas/Job";
 import Job from "../models/Job";
 
 import User from "../models/User";
@@ -36,9 +36,13 @@ export default class JobResolver
     async jobs(
         @Arg("offset", { defaultValue: 0 }) offset: number,
         @Arg("limit", { defaultValue: 50 }) limit: number,
+        @Ctx() context: IContext,
     ): Promise<JobType[]>
     {
-        return Job.findAll({ offset, limit: limit ? limit : undefined })
+        limit = limit ? limit : undefined;
+        const projectId = context.user.activeProjectId || 0;
+
+        return Job.findAll({ where: { projectId }, offset, limit })
             .then(rows => rows.map(row => row.toJSON() as JobType));
     }
 

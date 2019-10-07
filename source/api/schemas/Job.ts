@@ -16,26 +16,25 @@
  */
 
 import "reflect-metadata";
-import { Field, Int, ID, ObjectType, InputType } from "type-graphql";
+import { Field, Int, ObjectType, InputType } from "type-graphql";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
 export class JobType
 {
-    @Field(type => ID)
+    @Field(type => Int)
     id: number;
 
-    @Field(type => String)
+    @Field()
     name: string;
-}
 
-@InputType()
-export class JobInput
-{
-    @Field(type => ID)
-    id: number;
+    @Field()
+    state: string;
 
-    @Field(type => String)
-    name: string;
+    @Field({ nullable: true })
+    error: string;
+
+    @Field(type => Int)
+    projectId: number;
 }

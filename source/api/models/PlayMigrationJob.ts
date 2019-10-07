@@ -40,9 +40,15 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob>
     @Column
     edanRecordId: string;
 
-    @Column({ type: DataType.STRING })
+    @Column
     masterModelGeometry: string;
 
-    @Column({ type: DataType.STRING })
+    @Column
     masterModelTexture: string;
+
+    @Column({ defaultValue: "Circle" }) // Standard, Extended, Circle
+    annotationStyle: string;
+
+    @Column({ defaultValue: false })
+    migrateAnnotationColor: boolean;
 }

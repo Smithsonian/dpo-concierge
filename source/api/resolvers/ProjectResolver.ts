@@ -18,8 +18,8 @@
 import { Arg, Query, Mutation, Resolver, Ctx, Int } from "type-graphql";
 
 import { ProjectType, ProjectInput } from "../schemas/Project";
-import Project from "../models/Project";
 
+import Project from "../models/Project";
 import User from "../models/User";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -75,5 +75,24 @@ export default class ProjectResolver
 
         return Project.create({ ...project, ownerId })
             .then(row => row.toJSON() as ProjectType);
+    }
+
+    @Mutation(returns => ProjectType, { nullable: true })
+    async setActiveProject(
+        @Arg("id", type => Int) id: number,
+        @Ctx() context: IContext,
+    ): Promise<ProjectType>
+    {
+        const ownerId = context.user.id;
+
+        return Project.findOne({ where: { id, ownerId }})
+            .then(project => {
+                if (project) {
+                    return context.user.update({ activeProjectId: project.id })
+                        .then(() => project.toJSON() as ProjectType);
+                }
+
+                return null;
+            });
     }
 }

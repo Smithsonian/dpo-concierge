@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo, HasMany } from "sequelize-typescript";
 import * as bcrypt from "bcrypt";
 
 import Project from "./Project";
@@ -34,8 +34,15 @@ export default class User extends Model<User>
     @Column
     password: string;
 
+    @ForeignKey(() => Project)
     @Column
     activeProjectId: number;
+
+    @BelongsTo(() => Project, { constraints: false })
+    activeProject: Project;
+
+    @HasMany(() => Project)
+    projects: Project[];
 
     static async getPasswordHash(password: string): Promise<string>
     {
