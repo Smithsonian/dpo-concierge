@@ -15,28 +15,26 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, DataType } from "sequelize-typescript";
+import "reflect-metadata";
+import { Field, Int, ObjectType } from "type-graphql";
+
+import { AssetType } from "./Asset";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-@Table
-export default class Asset extends Model<Asset>
+@ObjectType()
+export class SceneType
 {
-    @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, unique: "idVersion" })
-    uuid: string;
+    @Field(type => Int)
+    id: number;
 
-    @Column({ type: DataType.INTEGER, unique: "idVersion" })
-    version: number;
-
-    @Column({ allowNull: false })
-    path: string;
-
-    @Column({ allowNull: false })
+    @Field()
     name: string;
 
-    @Column({ allowNull: false })
-    extension: string;
+    @Field()
+    voyagerDocument: AssetType;
 
-    @Column({ type: DataType.INTEGER })
-    byteSize: number;
+    @Field()
+    voyagerVersion: string;
 }
+

@@ -35,16 +35,18 @@ import Button from "@material-ui/core/Button";
 import { Formik, Field } from "formik";
 import { TextField } from 'formik-material-ui';
 
+import { ALL_PROJECTS_QUERY } from "./ProjectListView";
+
 ////////////////////////////////////////////////////////////////////////////////
 
-const QUERY_PROJECT = gql`
+const PROJECT_QUERY = gql`
 query Project($id: Int!) {
     project(id: $id) {
         id, name, description
     }
 }`;
 
-const UPSERT_PROJECT = gql`
+const UPSERT_PROJECT_MUTATION = gql`
 mutation UpdateProject($project: ProjectInput!) {
     upsertProject(project: $project) {
         id, name, description
@@ -69,10 +71,10 @@ function ProjectEditView(props: IProjectEditViewProps)
 
     let project = { name: "New Project", description: "" };
 
-    const [upsertProject, { loading: loading1, error: error1, data: data1 }] = useMutation(UPSERT_PROJECT);
+    const [upsertProjectMutation, { loading: loading1, error: error1, data: data1 }] = useMutation(UPSERT_PROJECT_MUTATION);
 
     const variables = { id };
-    const { loading: loading0, error: error0, data: data0 } = useQuery(QUERY_PROJECT, { variables });
+    const { loading: loading0, error: error0, data: data0 } = useQuery(PROJECT_QUERY, { variables });
 
     if (loading0 || loading1) {
         return (<CircularProgress className={classes.progress} />)
@@ -112,8 +114,10 @@ function ProjectEditView(props: IProjectEditViewProps)
                 }}
                 onSubmit={values => {
                     Object.assign(project, values);
-                    console.log(project);
-                    upsertProject({ variables: { project } });
+                    upsertProjectMutation({
+                        variables: { project },
+                        refetchQueries: [{ query: ALL_PROJECTS_QUERY }],
+                    });
                 }}
             >
                 {({ handleSubmit }) => (

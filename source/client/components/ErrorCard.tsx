@@ -17,40 +17,40 @@
 
 import * as React from "react";
 
-import { withStyles, StyleRules } from '@material-ui/core/styles';
-
 import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
 import Typography from "@material-ui/core/Typography";
 
-import { ConciergeIcon } from "../icons";
+import { withStyles, StyleRules } from "@material-ui/core/styles";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const styles = theme => ({
-    card: {
-        maxWidth: 360,
-        alignSelf: "center",
-        textAlign: "center",
-    },
-} as StyleRules);
+export interface IErrorCardProps
+{
+    title: string;
+    error: Error;
 
-const NotYetImplementedView = props => (
+    classes: {
+        card: string;
+    }
+}
+
+const ErrorCard = (props: IErrorCardProps) => (
     <Card raised className={props.classes.card}>
         <CardContent>
-            <Typography variant="h4">
-                Oh no!
-            </Typography>
-        </CardContent>
-        <CardContent>
-            <Typography variant="body1">
-                The Concierge is so sorry, but this service is not yet available. Please come back soon!
-            </Typography>
-        </CardContent>
-        <CardContent>
-            <ConciergeIcon color="primary" style={{ fontSize: 32 }} />
+            <Typography variant="h6">{props.title}</Typography>
+            <Typography>{props.error.message}</Typography>
         </CardContent>
     </Card>
 );
 
-export default withStyles(styles)(NotYetImplementedView);
+const styles = theme => ({
+    card: {
+        maxWidth: 480,
+        alignSelf: "center",
+    },
+} as StyleRules);
+
+export default withStyles(styles)(ErrorCard);
+
+

@@ -20,6 +20,12 @@ import * as path from "path";
 import * as GoogleSpreadsheet  from "google-spreadsheet";
 
 ////////////////////////////////////////////////////////////////////////////////
+// ENVIRONMENT VARIABLES
+
+const sheetKey = process.env["MIGRATION_SPREADSHEET_KEY"];
+const googleAccountInfoFile = process.env["GOOGLE_SERVICE_ACCOUNT_INFO"];
+
+////////////////////////////////////////////////////////////////////////////////
 
 export interface Spreadsheet
 {
@@ -50,29 +56,16 @@ export interface WorksheetInfo
 
 export default class MigrationSheet
 {
-    static readonly basePath: string = path.resolve(__dirname, "../../secrets");
-    static readonly sheetFile: string = "migration-sheet.json";
-    static readonly sheetKey: string = "1rrXJ6nna2nij2xracyX5k-sKE13cGR9kgzKaCA4qfDY";
-    static readonly accountFile: string = "smithsonian-concierge-0c07d052dba9.json";
+    static readonly basePath: string = path.resolve(__dirname, "../../../.."); // project root
 
     public data: Spreadsheet = null;
-
-    protected get sheetFilePath() {
-        return path.resolve(MigrationSheet.basePath, MigrationSheet.sheetFile);
-    }
-
-    async load(): Promise<unknown>
-    {
-        return fs.promises.readFile(this.sheetFilePath, "utf8").then(json => {
-            this.data = JSON.parse(json);
-        }).catch(err => this.update);
-    }
 
     async update(): Promise<unknown>
     {
         return new Promise<Promise<unknown>[]>((resolve, reject) => {
-            const document = new GoogleSpreadsheet(MigrationSheet.sheetKey);
-            const accountPath = path.resolve(MigrationSheet.basePath, MigrationSheet.accountFile);
+            const document = new GoogleSpreadsheet(sheetKey);
+            const accountPath = path.resolve(MigrationSheet.basePath, googleAccountInfoFile);
+            console.log(sheetKey, accountPath);
             let tasks;
 
             fs.readFile(accountPath, "utf8", (err, data) => {
@@ -103,8 +96,11 @@ export default class MigrationSheet
 
                         console.log(`MigrationSheet.update - document: ${info.title} by ${info.author.email}`);
 
-                        tasks = this.data.worksheets.map((worksheet, index) =>
-                            this.getRows(document, index, 0, 1000).then(rows => {
+                        tasks = this.data.worksheets.map((worksheet, index) => {
+
+                            console.log(`MigrationSheet.update - worksheet: ${worksheet.info.title}`);
+
+                            return this.getRows(document, index, 0, 1000).then(rows => {
                                 rows.forEach(row => {
                                     delete row["_xml"];
                                     delete row["_links"];
@@ -127,9 +123,8 @@ export default class MigrationSheet
                                     row["mastermodelsizegb"] = parseFloat(row["mastermodelsizegb"]) || null;
                                 });
                                 this.data.worksheets[index].rows = rows;
-                                console.log(`MigrationSheet.update - worksheet: ${worksheet.info.title}`);
-                            })
-                        );
+                            });
+                        });
 
                         resolve(tasks);
                     });
@@ -137,7 +132,6 @@ export default class MigrationSheet
             });
         })
         .then(tasks => Promise.all(tasks))
-        .then(() => fs.promises.writeFile(this.sheetFilePath, JSON.stringify(this.data)))
         .then(() => console.log("MigrationSheet.update - done."));
     }
 
@@ -155,7 +149,7 @@ export default class MigrationSheet
         });
     }
 
-    async getPlayboxIds(document)
+    async writePlayboxIds(document)
     {
         const rows = await this.getRows(document, 0, 0, 1000, "playboxid", "source = \"Play\" or source = \"Legacy -> Play\"");
         const ids = rows.map(row => row["playboxid"]);

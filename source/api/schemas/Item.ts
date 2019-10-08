@@ -18,15 +18,27 @@
 import "reflect-metadata";
 import { Field, Int, ID, ObjectType } from "type-graphql";
 
+import { SubjectType } from "./Subject";
+
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
 export class ItemType
 {
+    @Field(type => Int)
+    id: number;
+
     @Field(type => ID)
     uuid: string;
 
-    @Field(type => String)
+    @Field()
     name: string;
+
+    @Field()
+    description: string;
+
+    @Field()
+    subject: SubjectType;
+
 }
 

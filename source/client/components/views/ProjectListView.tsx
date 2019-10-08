@@ -24,11 +24,7 @@ import gql from "graphql-tag";
 
 import { withStyles, styled, StyleRules } from "@material-ui/core/styles";
 
-import DataTable, { ITableColumn, TableCellFormatter } from "../DataTable";
 import CircularProgress from "@material-ui/core/CircularProgress";
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
-import Typography from "@material-ui/core/Typography";
 import Paper from "@material-ui/core/Paper";
 import Toolbar from "@material-ui/core/Toolbar";
 import Button from "@material-ui/core/Button";
@@ -39,11 +35,29 @@ import UncheckedIcon from "@material-ui/icons/RadioButtonUnchecked";
 import CheckedIcon from "@material-ui/icons/RadioButtonChecked";
 import DeleteIcon from "@material-ui/icons/DeleteForever";
 
+import DataTable, { ITableColumn, TableCellFormatter } from "../DataTable";
+import ErrorCard from "../ErrorCard";
+
 import ProjectEditView from "./ProjectEditView";
 
-import { QUERY_ACTIVE_USER } from "../Header";
+import { ACTIVE_USER_QUERY } from "../Header";
+import { ALL_JOBS_QUERY } from "./JobListView";
 
 ////////////////////////////////////////////////////////////////////////////////
+
+export const ALL_PROJECTS_QUERY = gql`
+query {
+    projects(offset: 0, limit: 0) {
+        id, name, description
+    }
+}`;
+
+const ACTIVATE_PROJECT_MUTATION = gql`
+mutation SetActiveProject($id: Int!) {
+    setActiveProject(id: $id) {
+        id, name, description
+    }
+}`;
 
 const CellIconButton = styled(IconButton)({
     margin: "-16px 0",
@@ -52,7 +66,13 @@ const CellIconButton = styled(IconButton)({
 const createActions: TableCellFormatter = (value, row, column) => (
     <div style={{ display: "flex", flexWrap: "nowrap" }}>
         <CellIconButton onClick={() => {
-            column.data.setActiveProject({ variables: { id: row["id"] }, refetchQueries: () => [{ query: QUERY_ACTIVE_USER }] });
+            column.data.setActiveProject({
+                variables: { id: row["id"] },
+                refetchQueries: [
+                    { query: ACTIVE_USER_QUERY },
+                    { query: ALL_JOBS_QUERY },
+                ]
+            });
         }}>
             {column.data.activeProjectId === row["id"] ? <CheckedIcon/> : <UncheckedIcon/>}
         </CellIconButton>
@@ -70,20 +90,6 @@ const createActions: TableCellFormatter = (value, row, column) => (
     </div>
 );
 
-const QUERY_PROJECTS = gql`
-query {
-    projects(offset: 0, limit: 0) {
-        id, name, description
-    }
-}`;
-
-const ACTIVATE_PROJECT = gql`
-mutation SetActiveProject($id: Int!) {
-    setActiveProject(id: $id) {
-        id, name, description
-    }
-}`;
-
 export interface IProjectListViewProps
 {
     history?: History;
@@ -91,7 +97,6 @@ export interface IProjectListViewProps
 
     classes: {
         paper: string;
-        card: string;
         progress: string;
         toolbar: string;
     }
@@ -101,13 +106,13 @@ function ProjectListView(props: IProjectListViewProps)
 {
     const { classes, history, match } = props;
 
-    const { data: userData } = useQuery(QUERY_ACTIVE_USER);
+    const { data: userData } = useQuery(ACTIVE_USER_QUERY);
     const activeProject = userData && userData.me && userData.me.activeProject;
     const activeProjectId = activeProject && activeProject.id;
 
-    const { loading: loading0, error: error0, data: data0 } = useQuery(QUERY_PROJECTS);
+    const { loading: loading0, error: error0, data: data0 } = useQuery(ALL_PROJECTS_QUERY);
 
-    const [setActiveProject, { error: error1, data: data1 }] = useMutation(ACTIVATE_PROJECT);
+    const [setActiveProject, { error: error1, data: data1 }] = useMutation(ACTIVATE_PROJECT_MUTATION);
 
     const columns: ITableColumn[] = [
         { id: "active", label: "Actions", format: createActions, width: 1, data: { setActiveProject, activeProjectId } },
@@ -118,14 +123,8 @@ function ProjectListView(props: IProjectListViewProps)
     if (loading0) {
         return (<CircularProgress className={classes.progress} />)
     }
-
     if (error0 || error1) {
-        return (<Card raised className={classes.card}>
-            <CardContent>
-                <Typography variant="h6">Query Error</Typography>
-                <Typography>{(error0 || error1).message}</Typography>
-            </CardContent>
-        </Card>)
+        return (<ErrorCard title="Query Error" error={error0 || error1}/>);
     }
 
     const rows = data0.projects;
@@ -160,10 +159,6 @@ function ProjectListView(props: IProjectListViewProps)
 const styles = theme => ({
     paper: {
         alignSelf: "stretch",
-    },
-    card: {
-        maxWidth: 480,
-        alignSelf: "center",
     },
     progress: {
         alignSelf: "center"

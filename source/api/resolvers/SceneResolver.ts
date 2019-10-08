@@ -15,42 +15,36 @@
  * limitations under the License.
  */
 
-import { Arg, Query, Int, Resolver, Ctx } from "type-graphql";
+import { Arg, Int, Query, Resolver } from "type-graphql";
 
-import { JobType } from "../schemas/Job";
-import Job from "../models/Job";
-
-import User from "../models/User";
+import { SceneType } from "../schemas/Scene";
+import Scene from "../models/Scene";
+import Asset from "../models/Asset";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export interface IContext
-{
-    user?: User;
-}
-
 @Resolver()
-export default class JobResolver
+export default class SceneResolver
 {
-    @Query(returns => [ JobType ])
-    async jobs(
+    @Query(returns => [ SceneType ])
+    scenes(
+        @Arg("itemId", type => Int, { nullable: true }) itemId: number,
         @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
         @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
-        @Ctx() context: IContext,
-    ): Promise<JobType[]>
+    ): Promise<SceneType[]>
     {
         limit = limit ? limit : undefined;
-        const projectId = context.user.activeProjectId || 0;
 
-        return Job.findAll({ where: { projectId }, offset, limit })
-            .then(rows => rows.map(row => row.toJSON() as JobType));
+        return Scene.findAll({ include: [ Asset ], offset, limit })
+            .then(rows => rows.map(row => row.toJSON() as SceneType));
     }
 
-    // @Subscription({
-    //     topics: "JOB_STATE"
-    // })
-    // jobStateChange(): Promise<JobType[]>
-    // {
-    //     return Promise.resolve([]);
-    // }
+    @Query(returns => SceneType, { nullable: true })
+    scene(
+        @Arg("id", type => Int) id: number,
+    ): Promise<SceneType | null>
+    {
+        return Scene.findByPk(id, { include: [ Asset ]})
+            .then(row => row ? row.toJSON() as SceneType : null);
+    }
 }

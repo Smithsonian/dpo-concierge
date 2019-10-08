@@ -15,42 +15,36 @@
  * limitations under the License.
  */
 
-import { Arg, Query, Int, Resolver, Ctx } from "type-graphql";
+import { Arg, Int, Query, Resolver } from "type-graphql";
 
-import { JobType } from "../schemas/Job";
-import Job from "../models/Job";
-
-import User from "../models/User";
+import { AssetType } from "../schemas/Asset";
+import Asset from "../models/Asset";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export interface IContext
-{
-    user?: User;
-}
-
 @Resolver()
-export default class JobResolver
+export default class AssetResolver
 {
-    @Query(returns => [ JobType ])
-    async jobs(
+    @Query(returns => [ AssetType ])
+    assets(
+        @Arg("itemId", type => Int, { nullable: true }) itemId: number,
         @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
         @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
-        @Ctx() context: IContext,
-    ): Promise<JobType[]>
+    ): Promise<AssetType[]>
     {
         limit = limit ? limit : undefined;
-        const projectId = context.user.activeProjectId || 0;
 
-        return Job.findAll({ where: { projectId }, offset, limit })
-            .then(rows => rows.map(row => row.toJSON() as JobType));
+        return Asset.findAll({ offset, limit })
+            .then(rows => rows.map(row => row.toJSON() as AssetType));
     }
 
-    // @Subscription({
-    //     topics: "JOB_STATE"
-    // })
-    // jobStateChange(): Promise<JobType[]>
-    // {
-    //     return Promise.resolve([]);
-    // }
+    @Query(returns => AssetType, { nullable: true })
+    asset(
+        @Arg("id", type => Int) id: number,
+        @Arg("uuid") uuid: string,
+    ): Promise<AssetType | null>
+    {
+        return (id ? Asset.findByPk(id) : Asset.findOne({ where: { uuid }}))
+            .then(row => row ? row.toJSON() as AssetType : null);
+    }
 }

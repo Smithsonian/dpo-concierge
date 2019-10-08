@@ -72,38 +72,63 @@ export default class CookJob extends Model<CookJob>
     static async createJob(client: CookClient, options: IJobCreateOptions): Promise<CookJob>
     {
         const job = await CookJob.create(options);
-        await client.createJob(job.uuid, job.recipeId, job.parameters);
-        return job;
+
+        return client.createJob(job.uuid, job.recipeId, job.parameters)
+            .then(() => job)
+            .catch(err => {
+                job.state = "error";
+                job.error = "Cook service failed to create job: " + err.message;
+                return job.save();
+            });
     }
 
     async runJob(client: CookClient)
     {
-        return client.runJob(this.uuid);
+        return client.runJob(this.uuid)
+            .catch(err => {
+                this.state = "error";
+                this.error = "Cook service failed to run job: " + err.message;
+                return this.save();
+            });
     }
 
     async cancelJob(client: CookClient)
     {
-        return client.cancelJob(this.uuid);
+        return client.cancelJob(this.uuid)
+            .catch(err => {
+                this.state = "error";
+                this.error = "Cook service failed to cancel job: " + err.message;
+                return this.save();
+            });
     }
 
     async deleteJob(client: CookClient)
     {
         return client.deleteJob(this.uuid)
-            .then(() => this.destroy());
+            .catch(err => {
+                this.state = "error";
+                this.error = "Cook service failed to delete job: " + err.message;
+                return this.save();
+            });
     }
 
     async updateJob(client: CookClient)
     {
-        const info = await client.jobInfo(this.uuid);
+        return client.jobInfo(this.uuid)
+            .then(async info => {
+                if (info.state === "done" || info.state === "error") {
+                    this.report = await client.jobReport(this.uuid);
+                }
 
-        if (info.state === "done" || info.state === "error") {
-            this.report = await client.jobReport(this.uuid);
-        }
+                this.state = info.state;
+                this.step = info.step;
+                this.error = info.error;
+            })
+            .catch(err => {
+                this.state = "error";
+                this.error = "Cook service failed: " + err.message;
+            })
+            .finally(() => this.save())
 
-        this.state = info.state;
-        this.step = info.step;
-        this.error = info.error;
-
-        return this.save();
     }
 }

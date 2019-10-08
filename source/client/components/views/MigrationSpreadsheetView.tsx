@@ -23,14 +23,18 @@ import { useQuery, useMutation, useApolloClient } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
 import { withStyles, styled, StyleRules } from "@material-ui/core/styles";
+
 import CircularProgress from "@material-ui/core/CircularProgress";
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
 import Paper from "@material-ui/core/Paper";
 import Toolbar from "@material-ui/core/Toolbar";
 import Button from "@material-ui/core/Button";
+import Input from "@material-ui/core/Input";
 import Typography from "@material-ui/core/Typography";
 
+import SearchIcon from "@material-ui/icons/Search";
+import InputIcon from "@material-ui/icons/Input";
+
+import ErrorCard from "../ErrorCard";
 import DataTable, { ITableColumn, TableCellFormatter } from "../DataTable";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -38,7 +42,7 @@ import DataTable, { ITableColumn, TableCellFormatter } from "../DataTable";
 const format = value => value === undefined || value === null ? "" : String(value);
 
 const columns: ITableColumn[] = [
-    { id: "object", label: "Object Name", format, width: 200 },
+    { id: "object", label: "Object Name", format, width: 150 },
     { id: "unitrecordid", label: "Unit Record ID", format, width: 150 },
     { id: "edanrecordid", label: "EDAN Record ID", format, width: 270 },
     { id: "collectingbody", label: "Collecting Body", format },
@@ -69,15 +73,15 @@ const columns: ITableColumn[] = [
 
 const queryColumns = columns.map(column => column.id).join(", ");
 
-const QUERY_MIGRATION_SHEET_ENTRIES = gql`
-{
-    migrationSheetEntries(offset: 0, limit: 0) {
+const ALL_SHEET_ENTRIES_QUERY = gql`
+query MigrationSheetEntries($search: String) {
+    migrationSheetEntries(search: $search, offset: 0, limit: 0) {
         id, ${queryColumns}
     }
 }`;
 
-const FETCH_SPREADSHEET_DATA = gql`
-mutation {
+const FETCH_SPREADSHEET_MUTATION = gql`
+mutation FetchSpreadsheetMutation {
     updateMigrationSheetEntries(offset: 0, limit: 0) {
         id, ${queryColumns}
     }    
@@ -97,6 +101,7 @@ const formatStatus: TableCellFormatter = (value, row, column) => {
                 <FlatButton
                     variant="contained"
                     color="primary"
+                    style={{ minWidth: 150 }}
                 >
                 Migrate Play
                 </FlatButton>
@@ -107,7 +112,7 @@ const formatStatus: TableCellFormatter = (value, row, column) => {
     return value === undefined || value === null ? "\u2014" : String(value);
 };
 
-columns.unshift({ id: "status", label: "Migration", format: formatStatus, width: 150 });
+columns.unshift({ id: "status", label: "Migration", format: formatStatus });
 
 export interface IMigrationSpreadsheetViewProps
 {
@@ -118,6 +123,7 @@ export interface IMigrationSpreadsheetViewProps
         card: string;
         progress: string;
         toolbar: string;
+        grow: string;
     };
 }
 
@@ -125,22 +131,17 @@ function MigrationSpreadsheetView(props: IMigrationSpreadsheetViewProps)
 {
     const { classes, history } = props;
 
-    const { loading: loading0, error: error0, data: data0, client } = useQuery(QUERY_MIGRATION_SHEET_ENTRIES);
-    const [ updateData, { loading: loading1, error: error1, data: data1 }] = useMutation(FETCH_SPREADSHEET_DATA);
+    const [ search, setSearch ] = React.useState("");
+
+    const { loading: loading0, error: error0, data: data0, client } = useQuery(ALL_SHEET_ENTRIES_QUERY, { variables: { search }});
+    const [ updateData, { loading: loading1, error: error1, data: data1 }] = useMutation(FETCH_SPREADSHEET_MUTATION);
 
 
     if (loading0 || loading1) {
         return (<CircularProgress className={classes.progress} />)
     }
-
     if (error0 || error1) {
-        const message = error0 ? error0.message : error1.message;
-        return (<Card raised className={classes.card}>
-            <CardContent>
-                <Typography variant="h6">Query Error</Typography>
-                <Typography>{message}</Typography>
-            </CardContent>
-        </Card>)
+        return (<ErrorCard title="Query Error" error={error0 || error1} />);
     }
 
     let rows;
@@ -150,7 +151,7 @@ function MigrationSpreadsheetView(props: IMigrationSpreadsheetViewProps)
 
         // update GraphQL cache
         client.writeQuery({
-            query: QUERY_MIGRATION_SHEET_ENTRIES,
+            query: ALL_SHEET_ENTRIES_QUERY,
             data: { migrationSheetEntries: rows },
         });
     }
@@ -161,8 +162,17 @@ function MigrationSpreadsheetView(props: IMigrationSpreadsheetViewProps)
     return (
         <Paper className={classes.paper}>
             <Toolbar className={classes.toolbar}>
+                <SearchIcon />
+                <Input
+                    type="search"
+                    defaultValue={search}
+                    onBlur={e => setSearch(e.target.value)}
+                    onKeyDown={(e: any) => e.key === "Enter" && setSearch(e.target.value)}
+                />
+                <Typography className={classes.grow}/>
                 <Button color="primary" onClick={() => updateData()}>
-                    Fetch Spreadsheet Data
+                    <InputIcon style={{ marginRight: 8 }} />
+                    <span>Fetch Spreadsheet Data</span>
                 </Button>
             </Toolbar>
 
@@ -179,10 +189,7 @@ function MigrationSpreadsheetView(props: IMigrationSpreadsheetViewProps)
 const styles = theme => ({
     paper: {
         alignSelf: "stretch",
-    },
-    card: {
-        maxWidth: 480,
-        alignSelf: "center",
+        overflow: "hidden",
     },
     progress: {
         alignSelf: "center"
@@ -191,6 +198,10 @@ const styles = theme => ({
         display: "flex",
         justifyContent: "flex-end",
         padding: theme.spacing(1),
+        backgroundColor: theme.palette.primary.light,
+    },
+    grow: {
+        flexGrow: 1,
     },
 } as StyleRules);
 

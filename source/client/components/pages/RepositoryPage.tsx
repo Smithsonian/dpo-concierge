@@ -17,6 +17,9 @@
 
 import * as React from "react";
 
+import ItemListView from "../views/ItemListView";
+import SceneListView from "../views/SceneListView";
+import AssetListView from "../views/AssetListView";
 import NotYetImplementedView from "../views/NotYetImplementedView";
 
 import Page, { IPageView } from "../Page";
@@ -24,12 +27,12 @@ import Page, { IPageView } from "../Page";
 ////////////////////////////////////////////////////////////////////////////////
 
 const views: IPageView[] = [
-    { title: "Items", component: NotYetImplementedView, route: "/items" },
+    { title: "Items", component: ItemListView, route: "/items" },
     { title: "Models", component: NotYetImplementedView, route: "/models" },
-    { title: "Scenes", component: NotYetImplementedView, route: "/scenes" },
-    { title: "Assets", component: NotYetImplementedView, route: "/assets" },
-    { title: "Units", component: NotYetImplementedView, route: "/units" },
-    { title: "Stakeholders", component: NotYetImplementedView, route: "/stakeholders" },
+    { title: "Scenes", component: SceneListView, route: "/scenes" },
+    { title: "Assets", component: AssetListView, route: "/assets" },
+//    { title: "Units", component: NotYetImplementedView, route: "/units" },
+//    { title: "Stakeholders", component: NotYetImplementedView, route: "/stakeholders" },
 ];
 
 export interface IPageProps

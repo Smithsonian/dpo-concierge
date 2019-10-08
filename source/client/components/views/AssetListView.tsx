@@ -30,9 +30,9 @@ import ErrorCard from "../ErrorCard";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export const ALL_ITEMS_QUERY = gql`
-query {
-    items(offset: 0, limit: 0) {
+export const ALL_ASSETS_QUERY = gql`
+query AllAssets($itemId: Int) {
+    assets(itemId: $itemId, offset: 0, limit: 0) {
         name
     }
 }`;
@@ -41,7 +41,7 @@ const columns: ITableColumn[] = [
     { id: "name", label: "Name" },
 ];
 
-export interface IItemListViewProps
+export interface IAssetListViewProps
 {
     classes: {
         progress: string;
@@ -49,10 +49,10 @@ export interface IItemListViewProps
     }
 }
 
-function ItemListView(props: IItemListViewProps)
+function AssetListView(props: IAssetListViewProps)
 {
     const { classes } = props;
-    const { loading, error, data } = useQuery(ALL_ITEMS_QUERY);
+    const { loading, error, data } = useQuery(ALL_ASSETS_QUERY);
 
     if (loading) {
         return (<CircularProgress className={classes.progress} />);
@@ -61,12 +61,12 @@ function ItemListView(props: IItemListViewProps)
         return (<ErrorCard title="Query Error" error={error}/>);
     }
 
-    const rows = data.items;
+    const rows = data.assets;
 
     return (
         <Paper className={classes.paper}>
             <DataTable
-                storageKey="repository/items"
+                storageKey="repository/assets"
                 rows={rows}
                 columns={columns}
                 history={history}
@@ -84,4 +84,4 @@ const styles = theme => ({
     },
 } as StyleRules);
 
-export default withStyles(styles)(ItemListView);
+export default withStyles(styles)(AssetListView);

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Arg, FieldResolver, Query, Resolver, Root } from "type-graphql";
+import { Arg, Int, Query, Resolver } from "type-graphql";
 
 import { ItemType } from "../schemas/Item";
 import Item from "../models/Item";
@@ -26,23 +26,24 @@ import Item from "../models/Item";
 export default class ItemResolver
 {
     @Query(returns => [ ItemType ])
-    items(): Promise<ItemType[]>
+    items(
+        @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
+        @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
+    ): Promise<ItemType[]>
     {
-        return Item.findAll()
+        limit = limit ? limit : undefined;
+
+        return Item.findAll({ offset, limit })
             .then(rows => rows.map(row => row.toJSON() as ItemType));
     }
 
     @Query(returns => ItemType, { nullable: true })
     item(
-        @Arg("name") name: string,
+        @Arg("id", type => Int) id: number,
         @Arg("uuid") uuid: string,
     ): Promise<ItemType | null>
     {
-        const query: any = {};
-        if (name) query.name = name;
-        if (uuid) query.uud = uuid;
-
-        return Item.findOne({ where: query })
-            .then(row => row ? row.toJSON() as ItemType : null);
+        return (id ? Item.findByPk(id) : Item.findOne({ where: { uuid }}))
+        .then(row => row ? row.toJSON() as ItemType : null);
     }
 }

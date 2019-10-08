@@ -36,16 +36,18 @@ import InputLabel from "@material-ui/core/InputLabel";
 import { Formik, Field } from "formik";
 import { TextField, Switch, Select } from 'formik-material-ui';
 
+import { ALL_JOBS_QUERY } from "./JobListView";
+
 ////////////////////////////////////////////////////////////////////////////////
 
-const QUERY_MIGRATION_SHEET_ENTRY = gql`
+const MIGRATION_SHEET_ENTRY_QUERY = gql`
 query MigrationSheetEntry($id: String!) {
     migrationSheetEntry(id: $id) {
         id, object, unitrecordid, edanrecordid, playboxid, shareddrivefolder, mastermodellocation
     }
 }`;
 
-const CREATE_PLAY_MIGRATION_JOB = gql`
+const CREATE_PLAY_MIGRATION_JOB_MUTATION = gql`
 mutation CreatePlayMigrationJob($job: PlayMigrationJobInput!) {
     createPlayMigrationJob(playMigrationJob: $job) {
         id
@@ -67,7 +69,7 @@ function MigratePlayView(props: IMigratePlayViewProps)
     const params = queryString.parse(location.search);
     const sheetEntryId = params.id || "";
 
-    const [ createPlayMigrationJob, { error } ] = useMutation(CREATE_PLAY_MIGRATION_JOB);
+    const [ createPlayMigrationJobMutation, { error } ] = useMutation(CREATE_PLAY_MIGRATION_JOB_MUTATION);
     if (error) {
         console.warn(error.graphQLErrors);
     }
@@ -76,7 +78,7 @@ function MigratePlayView(props: IMigratePlayViewProps)
 
     if (sheetEntryId) {
         const variables = { id: sheetEntryId };
-        const { loading, error, data } = useQuery(QUERY_MIGRATION_SHEET_ENTRY, { variables });
+        const { loading, error, data } = useQuery(MIGRATION_SHEET_ENTRY_QUERY, { variables });
 
         if (loading) {
             return (<CircularProgress className={classes.progress} />)
@@ -111,8 +113,8 @@ function MigratePlayView(props: IMigratePlayViewProps)
 
     return (
         <Paper className={classes.paper}>
-            <Typography variant="h6">
-                Create Play Scene Migration
+            <Typography variant="h5">
+                Create Play Scene Migration Job
             </Typography>
             <Formik
                 initialValues={formValues}
@@ -125,9 +127,11 @@ function MigratePlayView(props: IMigratePlayViewProps)
                 }}
                 onSubmit={(values, { setSubmitting }) => {
                     const variables = { job: { ...values, sheetEntryId }};
-                    createPlayMigrationJob({ variables });
+                    createPlayMigrationJobMutation({
+                        variables,
+                        refetchQueries: [{ query: ALL_JOBS_QUERY }],
+                    });
                     setSubmitting(false);
-                    console.log(JSON.stringify(variables, null, 2));
                 }}
             >
                 {({ handleSubmit }) => (
@@ -195,6 +199,11 @@ function MigratePlayView(props: IMigratePlayViewProps)
                                     margin="normal"
                                     fullWidth
                                 />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Typography variant="h6">
+                                    Migration Settings
+                                </Typography>
                             </Grid>
                             <Grid item xs={6}>
                                 <InputLabel htmlFor="annotationStyle">Annotation Style</InputLabel>

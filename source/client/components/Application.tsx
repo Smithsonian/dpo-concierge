@@ -20,7 +20,9 @@ import * as React from "react";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 
 import ApolloClient from "apollo-client";
+import { ApolloLink } from "apollo-link";
 import { HttpLink } from "apollo-link-http";
+import { onError } from "apollo-link-error";
 import { InMemoryCache } from "apollo-cache-inmemory";
 import { ApolloProvider } from "@apollo/react-hooks";
 
@@ -77,8 +79,24 @@ class Application extends React.Component<IApplicationProps, IApplicationState>
             isNavigatorOpen: false,
         };
 
+        const link = ApolloLink.from([
+            onError(({ graphQLErrors, networkError }) => {
+                if (graphQLErrors)
+                    graphQLErrors.map(({ message, locations, path }) => {
+                        message && console.warn(`[GraphQL error] Message: ${message}`);
+                        path && console.warn(`[GraphQL error] Path: ${path}`);
+                        locations.forEach(location => console.warn(location));
+                    });
+
+                if (networkError) {
+                    console.log(`[Network error]: ${networkError}`);
+                }
+            }),
+            new HttpLink({ uri: "/graphql" }),
+        ]);
+
         this.client = new ApolloClient({
-            link: new HttpLink({ uri: "/graphql" }),
+            link,
             cache: new InMemoryCache(),
             name: "concierge-web-client",
         });

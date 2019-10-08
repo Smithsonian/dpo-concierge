@@ -30,12 +30,15 @@ import * as LdapStrategy from "passport-ldapauth";
 import * as graphqlHttp from "express-graphql";
 import { buildSchema } from "type-graphql";
 
-import MigrationSheetEntryResolver from "../resolvers/MigrationSheetEntryResolver";
 import ItemResolver from "../resolvers/ItemResolver";
+import AssetResolver from "../resolvers/AssetResolver";
+import SceneResolver from "../resolvers/SceneResolver";
+
 import UserResolver from "../resolvers/UserResolver";
-import JobResolver from "../resolvers/JobResolver";
 import ProjectResolver from "../resolvers/ProjectResolver";
+import JobResolver from "../resolvers/JobResolver";
 import PlayMigrationJobResolver from "../resolvers/PlayMigrationJobResolver";
+import MigrationSheetEntryResolver from "../resolvers/MigrationSheetEntryResolver";
 
 import User from "../models/User";
 import Project from "../models/Project";
@@ -144,12 +147,14 @@ export default class Server
         // GraphQL endpoint
         const schema = await buildSchema({
             resolvers: [
-                MigrationSheetEntryResolver,
                 ItemResolver,
+                AssetResolver,
+                SceneResolver,
                 UserResolver,
                 ProjectResolver,
                 JobResolver,
                 PlayMigrationJobResolver,
+                MigrationSheetEntryResolver,
             ],
             authChecker: ({ root, args, context, info }, roles) => {
                 return true;
@@ -161,7 +166,6 @@ export default class Server
 
         // sign in/sign up page
         app.get(["/login", "/register"], (req, res, next) => {
-            console.log("SEND LOGIN PAGE");
             res.sendFile(`${this.config.staticDir}/auth-dev.html`, err => {
                 if (err) {
                     next(err);

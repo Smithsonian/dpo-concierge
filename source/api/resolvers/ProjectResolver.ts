@@ -34,8 +34,8 @@ export default class ProjectResolver
 {
     @Query(returns => [ ProjectType ])
     async projects(
-        @Arg("offset", { defaultValue: 0 }) offset: number,
-        @Arg("limit", { defaultValue: 50 }) limit: number,
+        @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
+        @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
         @Ctx() context: IContext,
     ): Promise<ProjectType[]>
     {

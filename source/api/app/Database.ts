@@ -27,6 +27,7 @@ export interface IDatabaseConfiguration
     database: string;
     user: string;
     password: string;
+    loggingEnabled: boolean;
 }
 
 export default class Database
@@ -49,7 +50,15 @@ export default class Database
 
         const modelPath = path.resolve(__dirname, "../models");
         console.log(`Database Model Path: ${modelPath}`);
-        this._db = new Sequelize(connectionString, { modelPaths: [ modelPath ]});
+        this._db = new Sequelize(connectionString, {
+            modelPaths: [ modelPath ],
+            define: {
+                charset: 'utf8',
+                collate: 'utf8_general_ci',
+                timestamps: true
+            },
+            logging: config.loggingEnabled,
+        });
     }
 
     async setup()

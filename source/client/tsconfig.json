@@ -6,6 +6,7 @@
         "jsx": "react",
         "resolveJsonModule": true,
         "experimentalDecorators": true,
+        "esModuleInterop": true,
 
         "baseUrl": ".",
         "paths": {

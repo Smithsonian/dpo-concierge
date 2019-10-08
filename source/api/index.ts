@@ -29,12 +29,12 @@ import EDANClient from "./utils/EDANClient";
 // CONFIGURATION
 
 const rootDir = path.resolve(__dirname, "../../..");
-
+const isDevMode = process.env["NODE_ENV"] !== "production";
 
 const serverConfig: IServerConfiguration = {
     port: 8000,
     staticDir: path.resolve(rootDir, "dist/"),
-    isDevMode: process.env["NODE_ENV"] !== "production",
+    isDevMode,
 };
 
 const databaseConfig: IDatabaseConfiguration = {
@@ -42,6 +42,7 @@ const databaseConfig: IDatabaseConfiguration = {
     database: "concierge",
     password: process.env["MYSQL_PASSWORD"],
     user: "concierge",
+    loggingEnabled: isDevMode,
 };
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -15,28 +15,25 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, DataType } from "sequelize-typescript";
+import { Table, Column, Model, ForeignKey, BelongsTo } from "sequelize-typescript";
+
+import Asset from "./Asset";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @Table
-export default class Asset extends Model<Asset>
+export default class Scene extends Model<Scene>
 {
-    @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, unique: "idVersion" })
-    uuid: string;
-
-    @Column({ type: DataType.INTEGER, unique: "idVersion" })
-    version: number;
-
-    @Column({ allowNull: false })
-    path: string;
-
-    @Column({ allowNull: false })
+    @Column
     name: string;
 
-    @Column({ allowNull: false })
-    extension: string;
+    @ForeignKey(() => Asset)
+    @Column
+    voyagerDocumentId: number;
 
-    @Column({ type: DataType.INTEGER })
-    byteSize: number;
+    @BelongsTo(() => Asset)
+    voyagerDocument: Asset;
+
+    @Column
+    voyagerVersion: string;
 }

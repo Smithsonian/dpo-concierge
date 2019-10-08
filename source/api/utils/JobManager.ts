@@ -16,13 +16,13 @@
  */
 
 import { Model } from "sequelize-typescript"
+import { Op } from "sequelize";
 
 import { Dictionary } from "../utils/types";
 
 import Job from "../models/Job";
 
 import PlayMigrationJob from "../models/PlayMigrationJob";
-import { Op } from "sequelize";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -44,7 +44,7 @@ export default class JobManager
     start()
     {
         if (!this.timerHandle) {
-            this.timerHandle = setInterval(() => this.run(), 2000);
+            this.timerHandle = setInterval(() => this.run(), 3000);
         }
     }
 
@@ -72,7 +72,8 @@ export default class JobManager
                     where: {
                         state: { [Op.or]: ["created", "waiting", "running"] }
                     },
-                }]
+                }],
+                logging: false, // logging disabled for this recurring task
             }).then(rows => {
                 this.activeJobs[typeName] = rows;
             });

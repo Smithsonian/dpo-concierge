@@ -34,7 +34,7 @@ import InsertDriveFileIcon from "@material-ui/icons/InsertDriveFile";
 import AssignmentIcon from "@material-ui/icons/Assignment";
 import WorkIcon from "@material-ui/icons/Work";
 import AirportShuttleIcon from "@material-ui/icons/AirportShuttle";
-import ImportIcon from "@material-ui/icons/AssignmentReturned";
+import ImportIcon from "@material-ui/icons/Input";
 import { withStyles } from "@material-ui/core/styles";
 
 import { ConciergeIcon, ModelIcon, SceneIcon } from "./icons";

@@ -77,7 +77,7 @@ function TabLink(props) {
     );
 }
 
-export const QUERY_ACTIVE_USER = gql`
+export const ACTIVE_USER_QUERY = gql`
 query {
     me {
         name
@@ -97,7 +97,7 @@ const UserAvatar = withStyles(theme => ({
     },
 }))((props: any) => {
     const { classes } = props;
-    const { loading, error, data } = useQuery(QUERY_ACTIVE_USER);
+    const { data } = useQuery(ACTIVE_USER_QUERY);
 
     let name = "not logged in";
     let project = "no active project";
@@ -119,11 +119,11 @@ const UserAvatar = withStyles(theme => ({
                     { project }
                 </Typography>
             </div>
-            {/*<IconButton color="inherit" className={classes.iconButtonAvatar}>*/}
-            <Avatar className={classes.avatar}>
-                <PersonIcon />
-            </Avatar>
-            {/*</IconButton>*/}
+            <IconButton color="inherit" className={classes.iconButtonAvatar}>
+                <Avatar className={classes.avatar}>
+                    <PersonIcon />
+                </Avatar>
+            </IconButton>
         </div>
     );
 });

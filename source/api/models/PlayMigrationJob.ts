@@ -29,6 +29,8 @@ const cookClient = new CookClient(
     process.env["COOK_CLIENT_ID"],
 );
 
+export type MigrationJobStep = "process" | "fetch" | "";
+
 @Table
 export default class PlayMigrationJob extends Model<PlayMigrationJob>
 {
@@ -40,6 +42,9 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob>
 
     @BelongsTo(() => Job)
     job: Job;
+
+    @Column({ defaultValue: "" })
+    step: MigrationJobStep;
 
     @Column
     cookJobId: string;
@@ -70,6 +75,10 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob>
 
     async runJob()
     {
+        this.job.state = "running";
+        this.step = "process";
+        await Promise.all([ this.save, this.job.save ]);
+
         const cookJob = await CookJob.createJob(cookClient, {
             name: this.job.name,
             recipeId: "migrate-play",
@@ -80,27 +89,87 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob>
             },
         });
 
-        this.cookJobId = cookJob.id;
-        await this.save();
+        if (cookJob.state === "error") {
+            this.job.state = "error";
+            this.job.error = cookJob.error;
+            this.step = "";
+            return Promise.all([ this.save(), this.job.save(), cookJob.destroy() ]);
+        }
 
-        await cookJob.runJob(cookClient);
+        return cookJob.runJob(cookClient).then(() => {
+            if (cookJob.state === "error") {
+                this.job.state = "error";
+                this.job.error = cookJob.error;
+                this.step = "";
 
-        this.job.state = "running";
-        return this.job.save();
+                return Promise.all([ this.save(), this.job.save(), cookJob.destroy() ]) as Promise<unknown>;
+            }
+
+            this.job.state = "running";
+            this.cookJobId = cookJob.id;
+            this.step = "process";
+            return Promise.all([ this.save(), this.job.save() ]) as Promise<unknown>;
+        });
     }
 
     async updateJob()
     {
         const state = this.job.state;
 
-        if (state === "running" || state === "waiting") {
-            const cookJob = await CookJob.findByPk(this.cookJobId);
-            await cookJob.updateJob(cookClient);
-
-            if (cookJob.state !== state) {
-                this.job.state = cookJob.state;
-                this.job.save();
-            }
+        if (state !== "running") {
+            return Promise.resolve();
         }
+
+        if (this.step === "process") {
+            const cookJob = await CookJob.findByPk(this.cookJobId);
+            if (!cookJob) {
+                this.job.state = "error";
+                this.job.error = "Database error: cook job not found.";
+                this.step = "";
+                return Promise.all([ this.save(), this.job.save() ]);
+            }
+
+            return cookJob.updateJob(cookClient).then(async () => {
+
+                if (cookJob.state === "error") {
+                    this.job.state = "error";
+                    this.job.error = cookJob.error;
+                    this.step = "";
+
+                    return Promise.all([ this.save(), this.job.save() ]);
+                }
+
+                if (cookJob.state === "done") {
+                    this.step = "fetch";
+                    await this.save();
+
+                    return this.postProcessingStep().then(() => {
+                        // all good, entire job is done, update state and delete associated cook job
+                        this.job.state = "done";
+                        this.step = "";
+                        this.cookJobId = null;
+                        return Promise.all([ cookJob.deleteJob(cookClient), this.save(), this.job.save() ]);
+                    })
+                    .catch(err => {
+                        // error during result fetching, set error state and keep associated cook job
+                        this.job.state = "error";
+                        this.job.error = err.message;
+                        this.step = "";
+                    });
+
+                }
+
+                return Promise.resolve();
+            });
+        }
+    }
+
+    protected async postProcessingStep()
+    {
+        // fetch files, create assets
+        // create item
+        // create scene
+
+        return Promise.resolve();
     }
 }

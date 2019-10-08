@@ -26,9 +26,6 @@ import { withStyles, styled, StyleRules } from "@material-ui/core/styles";
 import clsx from "clsx";
 
 import CircularProgress from "@material-ui/core/CircularProgress";
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
-import Typography from "@material-ui/core/Typography";
 import Paper from "@material-ui/core/Paper";
 import IconButton from "@material-ui/core/IconButton";
 
@@ -37,8 +34,16 @@ import StopIcon from "@material-ui/icons/Stop";
 import DeleteIcon from "@material-ui/icons/DeleteForever";
 
 import DataTable, { ITableColumn, TableCellFormatter } from "../DataTable";
+import ErrorCard from "../ErrorCard";
 
 ////////////////////////////////////////////////////////////////////////////////
+
+export const ALL_JOBS_QUERY = gql`
+query {
+    jobs(offset: 0, limit: 0) {
+        name, type, state, error
+    }
+}`;
 
 const CellIconButton = styled(IconButton)({
     margin: "-16px 0",
@@ -82,20 +87,11 @@ const columns: ITableColumn[] = [
     { id: "error", label: "Error", format: formatText },
 ];
 
-const queryJobs = gql`
-{
-    jobs(offset: 0, limit: 0) {
-        name, type, state, error
-    }
-}
-`;
-
 export interface IJobListViewProps
 {
     history?: History;
     classes: {
         paper: string;
-        card: string;
         progress: string;
     }
 }
@@ -103,19 +99,13 @@ export interface IJobListViewProps
 function JobListView(props: IJobListViewProps)
 {
     const { classes, history } = props;
-    const { loading, error, data } = useQuery(queryJobs);
+    const { loading, error, data } = useQuery(ALL_JOBS_QUERY);
 
     if (loading) {
-        return (<CircularProgress className={classes.progress} />)
+        return (<CircularProgress className={classes.progress} />);
     }
-
     if (error) {
-        return (<Card raised className={classes.card}>
-            <CardContent>
-                <Typography variant="h6">Query Error</Typography>
-                <Typography>{error.message}</Typography>
-            </CardContent>
-        </Card>)
+        return (<ErrorCard title="Query Error" error={error}/>);
     }
 
     const rows = data.jobs;
@@ -135,10 +125,6 @@ function JobListView(props: IJobListViewProps)
 const styles = theme => ({
     paper: {
         alignSelf: "stretch",
-    },
-    card: {
-        maxWidth: 480,
-        alignSelf: "center",
     },
     progress: {
         alignSelf: "center",

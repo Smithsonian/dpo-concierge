@@ -15,21 +15,24 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, ForeignKey } from "sequelize-typescript";
-
-import VoyagerScene from "./VoyagerScene";
-import Asset from "./Asset";
+import "reflect-metadata";
+import { Field, Int, ID, ObjectType } from "type-graphql";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-@Table
-export default class VoyagerSceneAsset extends Model<VoyagerSceneAsset>
+@ObjectType()
+export class SubjectType
 {
-    @ForeignKey(() => VoyagerScene)
-    @Column
-    voyagerSceneId: number;
+    @Field(type => Int)
+    id: number;
 
-    @ForeignKey(() => Asset)
-    @Column
-    assetId: number;
+    @Field(type => ID)
+    uuid: string;
+
+    @Field()
+    name: string;
+
+    @Field()
+    description: string;
 }
+

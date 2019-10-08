@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Arg, Query, Mutation, Resolver, Ctx } from "type-graphql";
+import { Arg, Int, Query, Mutation, Resolver, Ctx } from "type-graphql";
 
 import { UserType, UserInput } from "../schemas/User";
 import User from "../models/User";
@@ -30,19 +30,16 @@ export interface IContext
 @Resolver()
 export default class UserResolver
 {
-    @Query(returns => UserType, { nullable: true })
-    async me(
-        @Ctx() context: IContext
-    ): Promise<UserType>
+    @Query(returns => [ UserType ])
+    async users(
+        @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
+        @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
+    ): Promise<UserType[]>
     {
-        const user = context.user;
+        limit = limit ? limit : undefined;
 
-        // if (user) {
-        //     return user.$get("activeProject")
-        //         .then(() => user.toJSON() as UserType);
-        // }
-
-        return Promise.resolve(user ? user.toJSON() as UserType : null);
+        return User.findAll({ offset, limit })
+        .then(rows => rows.map(row => row.toJSON() as UserType));
     }
 
     @Query(returns => UserType)
@@ -53,14 +50,13 @@ export default class UserResolver
         return User.findOne({ where: { id } }).then(row => row.toJSON() as UserType);
     }
 
-    @Query(returns => [ UserType ])
-    async users(
-        @Arg("offset", { defaultValue: 0 }) offset: number,
-        @Arg("limit", { defaultValue: 50 }) limit: number,
-    ): Promise<UserType[]>
+    @Query(returns => UserType, { nullable: true })
+    async me(
+        @Ctx() context: IContext
+    ): Promise<UserType>
     {
-        return User.findAll({ offset, limit: limit ? limit : undefined })
-            .then(rows => rows.map(row => row.toJSON() as UserType));
+        const user = context.user;
+        return Promise.resolve(user ? user.toJSON() as UserType : null);
     }
 
     @Mutation(returns => UserType)

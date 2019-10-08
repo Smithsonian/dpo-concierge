@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { Arg, Query, Resolver, Mutation } from "type-graphql";
+import { Arg, Int, Query, Resolver, Mutation } from "type-graphql";
+import { Op } from "sequelize";
 
 import { MigrationSheetEntryType } from "../schemas/MigrationSheetEntry";
 import MigrationSheetEntry from "../models/MigrationSheetEntry";
@@ -29,11 +30,31 @@ export default class MigrationSheetEntryResolver
 {
     @Query(returns => [ MigrationSheetEntryType ])
     async migrationSheetEntries(
-        @Arg("offset", { defaultValue: 0 }) offset: number,
-        @Arg("limit", { defaultValue: 50 }) limit: number,
+        @Arg("search", { nullable: true }) search: string,
+        @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
+        @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
     ): Promise<MigrationSheetEntryType[]>
     {
-        return MigrationSheetEntry.findAll({ offset, limit: limit ? limit : undefined })
+        limit = limit ? limit : undefined;
+        let where = undefined;
+
+        if (search) {
+            where = {
+                [Op.or]: [
+                    { "object": { [Op.substring]: search } },
+                    { "unitrecordid": { [Op.substring]: search } },
+                    { "edanrecordid": { [Op.substring]: search } },
+                    { "collectingbody": { [Op.substring]: search } },
+                    { "collection": { [Op.substring]: search } },
+                    { "source": { [Op.substring]: search } },
+                    { "playboxid": { [Op.substring]: search } },
+                    { "legacyplayboxid": { [Op.substring]: search } },
+                    { "notes": { [Op.substring]: search } },
+                ]
+            };
+        }
+
+        return MigrationSheetEntry.findAll({ where, offset, limit })
             .then(rows => rows.map(row => row.toJSON() as MigrationSheetEntryType));
     }
 
