@@ -33,6 +33,7 @@ import Paper from "@material-ui/core/Paper";
 import Toolbar from "@material-ui/core/Toolbar";
 import Button from "@material-ui/core/Button";
 import IconButton from "@material-ui/core/IconButton";
+
 import EditIcon from "@material-ui/icons/Edit";
 import UncheckedIcon from "@material-ui/icons/RadioButtonUnchecked";
 import CheckedIcon from "@material-ui/icons/RadioButtonChecked";
@@ -48,7 +49,7 @@ const CellIconButton = styled(IconButton)({
     margin: "-16px 0",
 });
 
-const buttons: TableCellFormatter = (value, row, column) => (
+const createActions: TableCellFormatter = (value, row, column) => (
     <div style={{ display: "flex", flexWrap: "nowrap" }}>
         <CellIconButton onClick={() => {
             column.data.setActiveProject({ variables: { id: row["id"] }, refetchQueries: () => [{ query: QUERY_ACTIVE_USER }] });
@@ -109,7 +110,7 @@ function ProjectListView(props: IProjectListViewProps)
     const [setActiveProject, { error: error1, data: data1 }] = useMutation(ACTIVATE_PROJECT);
 
     const columns: ITableColumn[] = [
-        { id: "active", label: "Actions", format: buttons, width: 1, data: { setActiveProject, activeProjectId } },
+        { id: "active", label: "Actions", format: createActions, width: 1, data: { setActiveProject, activeProjectId } },
         { id: "name", label: "Name" },
         { id: "description", label: "Description" },
     ];

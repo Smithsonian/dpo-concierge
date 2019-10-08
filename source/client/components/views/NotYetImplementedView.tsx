@@ -35,10 +35,10 @@ const NotYetImplementedView = props => (
     <Card raised className={props.classes.card}>
         <CardContent>
             <Typography variant="h6">
-                Patience, please.
+                Concierge Preview
             </Typography>
             <Typography variant="body1">
-                This is a preview. This part of the application hasn't been implemented yet. We're working hard, stay tuned.
+                This part of the application hasn't been implemented yet.
             </Typography>
         </CardContent>
     </Card>

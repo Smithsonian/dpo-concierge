@@ -102,7 +102,7 @@ function MigratePlayView(props: IMigratePlayViewProps)
         object: entry ? entry.object : "",
         playboxId: entry ? entry.playboxid : "",
         edanRecordId: entry ? entry.edanrecordid : "",
-        shardDriveFolder: entry ? entry.shareddrivefolder : "",
+        sharedDriveFolder: entry ? entry.shareddrivefolder : "",
         masterModelGeometry: entry ? entry.mastermodellocation : "",
         masterModelTexture: "",
         annotationStyle: "Circle",
@@ -171,7 +171,7 @@ function MigratePlayView(props: IMigratePlayViewProps)
                             </Grid>
                             <Grid item xs={12}>
                                 <Field
-                                    name="shardDriveFolder"
+                                    name="sharedDriveFolder"
                                     label="Shared Drive Folder"
                                     component={TextField}
                                     margin="normal"

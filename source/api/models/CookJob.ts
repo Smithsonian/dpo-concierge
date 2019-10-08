@@ -17,9 +17,20 @@
 
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
 
-import Project from "./Project";
+import CookClient, { IParameters } from "../utils/CookClient";
 
 ////////////////////////////////////////////////////////////////////////////////
+
+export type JobState = "created" | "waiting" | "running" | "done" | "error" | "cancelled";
+
+export { IParameters };
+
+export interface IJobCreateOptions
+{
+    name: string;
+    recipeId: string;
+    parameters: IParameters;
+}
 
 @Table
 export default class CookJob extends Model<CookJob>
@@ -28,15 +39,71 @@ export default class CookJob extends Model<CookJob>
     uuid: string;
 
     @Column
+    name: string;
+
+    @Column
     recipeId: string;
 
-    @Column({ type: DataType.JSON })
-    parameters: object;
+    @Column({ type: DataType.TEXT })
+    set parameters(value: IParameters) {
+        this.setDataValue("parameters", JSON.stringify(value) as any);
+    }
+    get parameters(): IParameters {
+        return JSON.parse(this.getDataValue("parameters") as any);
+    }
 
-    @ForeignKey(() => Project)
-    @Column
-    projectId: number;
+    @Column({ defaultValue: "created "})
+    state: JobState;
 
-    @BelongsTo(() => Project)
-    project: Project;
+    @Column({ defaultValue: "" })
+    step: string;
+
+    @Column({ type: DataType.TEXT, defaultValue: "" })
+    set report(value: any) {
+        this.setDataValue("report", JSON.stringify(value) as any);
+    }
+    get report() {
+        return JSON.parse(this.getDataValue("report") as any);
+    }
+
+    @Column({ type: DataType.TEXT, defaultValue: "" })
+    error: string;
+
+    static async createJob(client: CookClient, options: IJobCreateOptions): Promise<CookJob>
+    {
+        const job = await CookJob.create(options);
+        await client.createJob(job.uuid, job.recipeId, job.parameters);
+        return job;
+    }
+
+    async runJob(client: CookClient)
+    {
+        return client.runJob(this.uuid);
+    }
+
+    async cancelJob(client: CookClient)
+    {
+        return client.cancelJob(this.uuid);
+    }
+
+    async deleteJob(client: CookClient)
+    {
+        return client.deleteJob(this.uuid)
+            .then(() => this.destroy());
+    }
+
+    async updateJob(client: CookClient)
+    {
+        const info = await client.jobInfo(this.uuid);
+
+        if (info.state === "done" || info.state === "error") {
+            this.report = await client.jobReport(this.uuid);
+        }
+
+        this.state = info.state;
+        this.step = info.step;
+        this.error = info.error;
+
+        return this.save();
+    }
 }

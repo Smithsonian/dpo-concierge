@@ -17,19 +17,32 @@
 
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
 
+import CookJob from "./CookJob";
 import Job from "./Job";
+import CookClient from "../utils/CookClient";
 
 ////////////////////////////////////////////////////////////////////////////////
+
+// TODO: Centralize
+const cookClient = new CookClient(
+    process.env["COOK_MACHINE_ADDRESS"],
+    process.env["COOK_CLIENT_ID"],
+);
 
 @Table
 export default class PlayMigrationJob extends Model<PlayMigrationJob>
 {
+    static readonly typeName: string = "PlayMigrationJob";
+
     @ForeignKey(() => Job)
     @Column
     jobId: number;
 
     @BelongsTo(() => Job)
     job: Job;
+
+    @Column
+    cookJobId: string;
 
     @Column({ allowNull: false })
     object: string;
@@ -39,6 +52,9 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob>
 
     @Column
     edanRecordId: string;
+
+    @Column
+    sharedDriveFolder: string;
 
     @Column
     masterModelGeometry: string;
@@ -51,4 +67,40 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob>
 
     @Column({ defaultValue: false })
     migrateAnnotationColor: boolean;
+
+    async runJob()
+    {
+        const cookJob = await CookJob.createJob(cookClient, {
+            name: this.job.name,
+            recipeId: "migrate-play",
+            parameters: {
+                boxId: parseInt(this.playboxId),
+                annotationStyle: this.annotationStyle,
+                migrateAnnotationColor: !!this.migrateAnnotationColor,
+            },
+        });
+
+        this.cookJobId = cookJob.id;
+        await this.save();
+
+        await cookJob.runJob(cookClient);
+
+        this.job.state = "running";
+        return this.job.save();
+    }
+
+    async updateJob()
+    {
+        const state = this.job.state;
+
+        if (state === "running" || state === "waiting") {
+            const cookJob = await CookJob.findByPk(this.cookJobId);
+            await cookJob.updateJob(cookClient);
+
+            if (cookJob.state !== state) {
+                this.job.state = cookJob.state;
+                this.job.save();
+            }
+        }
+    }
 }

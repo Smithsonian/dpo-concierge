@@ -33,6 +33,7 @@ import { theme } from "./theme";
 
 import RepositoryPage from "./pages/RepositoryPage";
 import WorkflowPage from "./pages/WorkflowPage";
+import IngestPage from "./pages/IngestPage";
 import MigrationPage from "./pages/MigrationPage";
 import AdminPage from "./pages/AdminPage";
 
@@ -100,6 +101,7 @@ class Application extends React.Component<IApplicationProps, IApplicationState>
                             <Switch>
                                 <Route path="/repository" render={props => <RepositoryPage {...props} onNavigatorToggle={this.toggleNavigator}/>} />
                                 <Route path="/workflow" render={props => <WorkflowPage {...props} onNavigatorToggle={this.toggleNavigator}/>} />
+                                <Route path="/ingest" render={props => <IngestPage {...props} onNavigatorToggle={this.toggleNavigator}/>} />
                                 <Route path="/migration" render={props => <MigrationPage {...props} onNavigatorToggle={this.toggleNavigator}/>} />
                                 <Route path="/admin" render={props => <AdminPage {...props} onNavigatorToggle={this.toggleNavigator}/>} />
                             </Switch>

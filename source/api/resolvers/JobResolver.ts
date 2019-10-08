@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Arg, Query, Mutation, Resolver, Ctx } from "type-graphql";
+import { Arg, Query, Mutation, Subscription, Resolver, Ctx } from "type-graphql";
 
 import { JobType } from "../schemas/Job";
 import Job from "../models/Job";
@@ -46,4 +46,11 @@ export default class JobResolver
             .then(rows => rows.map(row => row.toJSON() as JobType));
     }
 
+    // @Subscription({
+    //     topics: "JOB_STATE"
+    // })
+    // jobStateChange(): Promise<JobType[]>
+    // {
+    //     return Promise.resolve([]);
+    // }
 }

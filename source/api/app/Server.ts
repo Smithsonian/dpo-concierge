@@ -21,6 +21,7 @@ import * as memorystore from "memorystore";
 import * as http from "http";
 import * as morgan from "morgan";
 import * as bodyParser from "body-parser";
+import * as colors from "colors/safe";
 
 import * as passport from "passport";
 import * as LocalStrategy from "passport-local";
@@ -173,9 +174,22 @@ export default class Server
         });
 
         // TODO: Must be authorized
-        app.use("/graphql", graphqlHttp({
-            schema: schema,
-            graphiql: this.isDevMode,
+        app.use("/graphql", graphqlHttp(async (req, res, graphQLParams) => {
+
+            return {
+                schema: schema,
+                graphiql: this.isDevMode,
+                customFormatErrorFn: this.isDevMode ? error => {
+                    console.log(colors.red("GRAPHQL ERROR"));
+                    console.log(error.message);
+                    return {
+                        message: error.message,
+                        locations: error.locations,
+                        stack: error.stack ? error.stack.split('\n') : [],
+                        path: error.path,
+                    };
+                } : null,
+            };
         }));
 
         ////////////////////////////////////////////////////////////////////////////////
@@ -214,22 +228,22 @@ export default class Server
         });
 
         // error handling
-        app.use((error, req, res, next) => {
-            console.error(error);
-
-            if (res.headersSent) {
-                return next(error);
-            }
-
-            if (req.accepts("json")) {
-                // send JSON formatted error
-                res.status(500).send({ error: `${error.name}: ${error.message}` });
-            }
-            else {
-                // send generic error page
-                res.status(500).render("errors/500", { error });
-            }
-        });
+        // app.use((error, req, res, next) => {
+        //     console.error(error);
+        //
+        //     if (res.headersSent) {
+        //         return next(error);
+        //     }
+        //
+        //     if (req.accepts("json")) {
+        //         // send JSON formatted error
+        //         res.status(500).send({ error: `${error.name}: ${error.message}` });
+        //     }
+        //     else {
+        //         // send generic error page
+        //         res.status(500).render("errors/500", { error });
+        //     }
+        // });
     }
 
     async start()

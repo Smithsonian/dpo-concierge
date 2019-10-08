@@ -15,29 +15,27 @@
  * limitations under the License.
  */
 
-import "reflect-metadata";
-import { Field, Int, ObjectType, InputType } from "type-graphql";
+import * as React from "react";
+
+import NotYetImplementedView from "../views/NotYetImplementedView";
+
+import Page, { IPageView } from "../Page";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-@ObjectType()
-export class JobType
+const views: IPageView[] = [
+    { title: "Start", component: NotYetImplementedView, route: "/start" },
+];
+
+export interface IPageProps
 {
-    @Field(type => Int)
-    id: number;
-
-    @Field()
-    name: string;
-
-    @Field()
-    type: string;
-
-    @Field()
-    state: string;
-
-    @Field({ nullable: true })
-    error: string;
-
-    @Field(type => Int)
-    projectId: number;
+    onNavigatorToggle: () => void;
 }
+
+export default (props: IPageProps) => (
+    <Page
+        title="Ingest"
+        views={views}
+        {...props}
+    />
+);

@@ -22,8 +22,7 @@ import * as path from "path";
 import Server, { IServerConfiguration } from "./app/Server";
 import Database, { IDatabaseConfiguration } from "./app/Database";
 
-import MigrationSheet from "./utils/MigrationSheet";
-import MigrationSheetEntry from "./models/MigrationSheetEntry";
+import JobManager from "./utils/JobManager";
 import EDANClient from "./utils/EDANClient";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -62,6 +61,7 @@ Smithsonian 3D Foundation Project - Concierge Migration Workflow API
 Port:                    ${serverConfig.port}
 Development Mode:        ${serverConfig.isDevMode}
 Static File Directory:   ${serverConfig.staticDir}
+Cook Server:             ${process.env["COOK_MACHINE_ADDRESS"]}
 --------------------------------------------------------------------
 `);
 
@@ -78,14 +78,10 @@ database.setup()
 .then(() => server.setup())
 .then(() => server.start())
 .then(() => {
-    //const migration = new MigrationSheet();
-    //migration.update()
-    //.then(() => MigrationSheetEntry.importSheet(migration))
-    //.then(() => console.log("SHEET IMPORT DONE."));
-
+    const jobManager = new JobManager();
+    jobManager.start();
 
     //const edanClient = new EDANClient(edanAppId, edanAppKey);
     //edanClient.fetchMdmRecord("edanmdm-nmnhpaleobiology_3446197");
-
 });
 

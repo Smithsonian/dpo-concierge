@@ -15,29 +15,8 @@
  * limitations under the License.
  */
 
-import "reflect-metadata";
-import { Field, Int, ObjectType, InputType } from "type-graphql";
+export type Dictionary<T> = { [id: string]: T };
 
-////////////////////////////////////////////////////////////////////////////////
-
-@ObjectType()
-export class JobType
-{
-    @Field(type => Int)
-    id: number;
-
-    @Field()
-    name: string;
-
-    @Field()
-    type: string;
-
-    @Field()
-    state: string;
-
-    @Field({ nullable: true })
-    error: string;
-
-    @Field(type => Int)
-    projectId: number;
+export interface TypeOf<T> extends Function {
+    new (...args: any[]): T;
 }

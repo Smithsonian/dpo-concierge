@@ -26,6 +26,8 @@ import { IJobOrder, IRecipe, IParameters, IJobInfo, IJobReport, TTaskState } fro
 
 ////////////////////////////////////////////////////////////////////////////////
 
+export { IParameters };
+
 export default class CookClient
 {
     readonly machineAddress: string;
@@ -35,6 +37,10 @@ export default class CookClient
 
     constructor(machineAddress: string, clientId: string)
     {
+        if (!machineAddress || !clientId) {
+            throw new Error("CookClient.constructor - missing machine address and/or client id");
+        }
+
         this.machineAddress = machineAddress;
         this.clientId = clientId;
 

@@ -42,7 +42,6 @@ export default class MigrationSheetEntryResolver
         @Arg("id") id: string
     ): Promise<MigrationSheetEntryType>
     {
-        console.log("MIGRATIONSHEETENTRY");
         return MigrationSheetEntry.findOne({ where: { id } })
             .then(row => row.toJSON() as MigrationSheetEntryType);
     }

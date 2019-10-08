@@ -5,7 +5,7 @@
   "scripts": {
     "start": "npm run api",
     "api": "nodemon services/api/bin/index.js",
-    "watch": "concurrently \"cd source/client; webpack --watch --mode=development --app=all; cd ../..\" \"tsc -b source/api -w\" \"nodemon services/api/bin/index.js\"",
+    "watch": "concurrently --raw --no-color \"cd source/client; webpack --watch --mode=development --app=all; cd ../..\" \"tsc -b source/api -w\" \"nodemon services/api/bin/index.js\"",
     "build": "concurrently \"npm run build-api\" \"npm run build-dev\"",
     "build-api": "tsc -b source/api",
     "build-dev": "cd source/client; webpack --mode=development --app=all; cd ../..",
@@ -41,6 +41,7 @@
     "ajv": "^6.10.2",
     "bcrypt": "^3.0.6",
     "body-parser": "^1.19.0",
+    "colors": "^1.4.0",
     "dataloader-sequelize": "^2.0.1",
     "express": "^4.17.1",
     "express-graphql": "^0.9.0",
