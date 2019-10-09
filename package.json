@@ -10,6 +10,7 @@
     "build-api": "tsc -b source/api",
     "build-dev": "cd source/client; webpack --mode=development --app=all; cd ../..",
     "build-prod": "cd source/client; webpack --mode=production --app=all; cd../..",
+    "clean": "cd services/api && sudo rm -rf bin && mkdir bin && cd ../..",
     "test": "echo \"Error: no test specified\" && exit 1",
     "up": "docker-compose up -d; docker-compose logs -f",
     "down": "docker-compose stop; docker-compose rm -f -v",
@@ -64,6 +65,7 @@
     "sequelize-typescript": "^1.0.0",
     "source-map-support": "^0.5.13",
     "type-graphql": "^0.17.5",
+    "typedi": "^0.8.0",
     "uuidv4": "^5.0.1"
   },
   "devDependencies": {

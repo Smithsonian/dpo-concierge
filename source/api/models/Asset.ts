@@ -21,40 +21,93 @@ import Group from "./Group";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-@Table({ indexes: [ { fields: ["pathName", "version"] }] })
+@Table({ indexes: [ { fields: ["filePath", "version", "groupId"] }] })
 export default class Asset extends Model<Asset>
 {
-    @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, primaryKey: true })
-    uuid: string;
+    static async findAllWithGroup()
+    {
+        return Asset.findAll({ include: [Group] });
+    }
 
-    @Column({ type: DataType.INTEGER, allowNull: false, unique: "pathVersion" })
+    static async findVersion(groupId: string, filePath: string, version: number): Promise<Asset | undefined>
+    {
+        // if version is unspecified, return latest version
+        if (version === undefined) {
+            const where = { groupId, filePath };
+            const order = [ "version", "DESC" ];
+            return Asset.findOne({ where, order }).then(asset => {
+                if (!asset) {
+                    throw new Error(`asset not found: ${filePath} [latest]`);
+                }
+
+                return asset;
+            })
+        }
+
+        // get and return specified version
+        const where = { groupId, filePath, version };
+        return Asset.findOne({ where }).then(asset => {
+            if (!asset) {
+                throw new Error(`asset not found: ${filePath} [${version}]`);
+            }
+
+            return asset;
+        })
+    }
+
+    static async getLatestVersionNumber(groupId: string, filePath: string): Promise<number | undefined>
+    {
+        const where = { groupId, filePath };
+        const order = [ "version", "DESC" ];
+
+        return Asset.findOne({ where, order, attributes: ["version"] })
+            .then(asset => asset ? asset.version : 0);
+    }
+
+    @Column({ type: DataType.INTEGER, allowNull: false, unique: "pathVersionGroup" })
     version: number;
 
-    @Column({ type: DataType.STRING, allowNull: false, unique: "pathVersion" })
-    pathName: string;
-
-    @Column({ allowNull: false })
-    path: string;
-
-    @Column({ allowNull: false })
-    name: string;
-
-    @Column({ allowNull: false })
-    extension: string;
+    @Column({ type: DataType.STRING, allowNull: false, unique: "pathVersionGroup" })
+    filePath: string;
 
     @Column({ type: DataType.INTEGER })
     byteSize: number;
 
     @ForeignKey(() => Group)
-    @Column({ type: DataType.UUID })
+    @Column({ type: DataType.UUID, allowNull: false, unique: "pathVersionGroup" })
     groupId: string;
 
     @BelongsTo(() => Group)
     group: Group;
 
-    getFilePath()
-    {
-        // Asset UUID / Asset Version / Asset Name.Extension
-        return `${this.uuid}/${this.version}/${this.name}.${this.extension}`;
+
+    get path() {
+        const lastSlash = this.filePath.lastIndexOf("/");
+        return this.filePath.substr(0, lastSlash);
+    }
+
+    get name() {
+        const lastSlash = this.filePath.lastIndexOf("/");
+        return this.filePath.substr(lastSlash + 1);
+    }
+
+    get baseName() {
+        const name = this.name;
+        const lastDot = name.lastIndexOf(".");
+        return name.substr(0, lastDot);
+    }
+
+    get extension() {
+        const name = this.name;
+        const lastDot = name.lastIndexOf(".");
+        return name.substr(lastDot + 1);
+    }
+
+    /**
+     * Returns the path where the asset is stored in repository storage
+     */
+    getStoragePath() {
+        // Group UUID / Asset UUID / Asset Name-version.Extension
+        return `${this.groupId}/${this.path}/${this.baseName}-${this.version}.${this.extension}`;
     }
 }

@@ -19,17 +19,32 @@ import * as sourceMapSupport from "source-map-support";
 sourceMapSupport.install();
 
 import * as path from "path";
+import { Container } from "typedi";
+
 import Server, { IServerConfiguration } from "./app/Server";
 import Database, { IDatabaseConfiguration } from "./app/Database";
 
 import JobManager from "./utils/JobManager";
 import EDANClient from "./utils/EDANClient";
+import ManagedRepository from "./utils/ManagedRepository";
+import LocalFileStore from "./utils/LocalFileStore";
+import Job from "./models/Job";
+
+////////////////////////////////////////////////////////////////////////////////
+// ENVIRONMENT VARIABLES
+
+const isDevMode = process.env["NODE_ENV"] !== "production";
+const mySQLPassword = process.env["MYSQL_PASSWORD"];
+
+const fileStoragePath = process.env["FILE_STORAGE_BASEPATH"];
+
+const edanAppId = process.env["EDAN_APP_ID"];
+const edanAppKey = process.env["EDAN_APP_KEY"];
 
 ////////////////////////////////////////////////////////////////////////////////
 // CONFIGURATION
 
 const rootDir = path.resolve(__dirname, "../../..");
-const isDevMode = process.env["NODE_ENV"] !== "production";
 
 const serverConfig: IServerConfiguration = {
     port: 8000,
@@ -40,7 +55,7 @@ const serverConfig: IServerConfiguration = {
 const databaseConfig: IDatabaseConfiguration = {
     host: "db",
     database: "concierge",
-    password: process.env["MYSQL_PASSWORD"],
+    password: mySQLPassword,
     user: "concierge",
     loggingEnabled: isDevMode,
 };
@@ -69,20 +84,23 @@ Cook Server:             ${process.env["COOK_MACHINE_ADDRESS"]}
 ////////////////////////////////////////////////////////////////////////////////
 // INIT AND START
 
-const server = new Server(serverConfig);
 const database = new Database(databaseConfig);
+const jobManager = new JobManager();
+const repository = new ManagedRepository(new LocalFileStore(fileStoragePath));
+const edanClient = new EDANClient(edanAppId, edanAppKey);
 
-const edanAppId = process.env["EDAN_APP_ID"];
-const edanAppKey = process.env["EDAN_APP_KEY"];
+Container.set(Database, database);
+Container.set(JobManager, jobManager);
+Container.set(ManagedRepository, repository);
+Container.set(EDANClient, edanClient);
+
+const server = new Server(serverConfig);
 
 database.setup()
 .then(() => server.setup())
 .then(() => server.start())
-.then(() => {
-    const jobManager = new JobManager();
-    jobManager.start();
+.then(() => jobManager.start());
 
-    //const edanClient = new EDANClient(edanAppId, edanAppKey);
-    //edanClient.fetchMdmRecord("edanmdm-nmnhpaleobiology_3446197");
-});
+//const edanClient = new EDANClient(edanAppId, edanAppKey);
+//edanClient.fetchMdmRecord("edanmdm-nmnhpaleobiology_3446197");
 

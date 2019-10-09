@@ -21,14 +21,23 @@ import { ReadStream, WriteStream } from "fs";
 
 export { ReadStream, WriteStream };
 
-export interface IStorage
-{
-    get(filePath: string, version: number): Promise<ReadStream>;
-    put(filePath: string, version: number): Promise<WriteStream>;
-    delete(filePath: string, version: number): Promise<boolean>;
-}
-
 export interface IFileInfo
 {
+    filePath: string;
+    path: string;
+    name: string;
+    baseName: string;
+    extension: string;
+    byteSize: number;
+}
 
+export interface IFileStore
+{
+    readFile: (filePath: string, targetPath: string) => Promise<unknown>;
+    writeFile: (sourcePath: string, filePath: string) => Promise<unknown>;
+    moveFile: (sourcePath: string, destinationPath: string) => Promise<unknown>;
+    deleteFile: (filePath: string) => Promise<unknown>;
+    getFileInfo: (filePath: string) => Promise<IFileInfo>;
+    createReadStream: (filePath: string) => Promise<ReadStream>;
+    createWriteStream: (filePath: string) => Promise<WriteStream>;
 }

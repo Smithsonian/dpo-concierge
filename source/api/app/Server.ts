@@ -29,6 +29,7 @@ import * as LdapStrategy from "passport-ldapauth";
 
 import * as graphqlHttp from "express-graphql";
 import { buildSchema } from "type-graphql";
+import { Container } from "typedi";
 
 import SubjectResolver from "../resolvers/SubjectResolver";
 import ItemResolver from "../resolvers/ItemResolver";
@@ -43,6 +44,11 @@ import MigrationSheetEntryResolver from "../resolvers/MigrationSheetEntryResolve
 
 import User from "../models/User";
 import Project from "../models/Project";
+
+import Database from "./Database";
+import JobManager from "../utils/JobManager";
+import ManagedRepository from "../utils/ManagedRepository";
+import EDANClient from "../utils/EDANClient";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -161,6 +167,7 @@ export default class Server
             authChecker: ({ root, args, context, info }, roles) => {
                 return true;
             },
+            container: Container,
         });
 
         // static file server
