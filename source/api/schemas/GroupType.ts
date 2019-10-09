@@ -15,21 +15,17 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, ForeignKey } from "sequelize-typescript";
-
-import Part from "./Part";
-import Asset from "./Asset";
+import "reflect-metadata";
+import { Field, ID, ObjectType } from "type-graphql";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-@Table
-export default class ModelAsset extends Model<ModelAsset>
+@ObjectType()
+export class GroupTypeType
 {
-    @ForeignKey(() => Part)
-    @Column
-    partId: number;
+    @Field(type => ID)
+    id: string;
 
-    @ForeignKey(() => Asset)
-    @Column
-    assetId: number;
+    @Field()
+    name: string;
 }

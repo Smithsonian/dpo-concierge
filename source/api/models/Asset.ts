@@ -15,18 +15,23 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, DataType } from "sequelize-typescript";
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
+
+import Group from "./Group";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-@Table
+@Table({ indexes: [ { fields: ["pathName", "version"] }] })
 export default class Asset extends Model<Asset>
 {
-    @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, unique: "idVersion" })
+    @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, primaryKey: true })
     uuid: string;
 
-    @Column({ type: DataType.INTEGER, unique: "idVersion" })
+    @Column({ type: DataType.INTEGER, allowNull: false, unique: "pathVersion" })
     version: number;
+
+    @Column({ type: DataType.STRING, allowNull: false, unique: "pathVersion" })
+    pathName: string;
 
     @Column({ allowNull: false })
     path: string;
@@ -39,4 +44,17 @@ export default class Asset extends Model<Asset>
 
     @Column({ type: DataType.INTEGER })
     byteSize: number;
+
+    @ForeignKey(() => Group)
+    @Column({ type: DataType.UUID })
+    groupId: string;
+
+    @BelongsTo(() => Group)
+    group: Group;
+
+    getFilePath()
+    {
+        // Asset UUID / Asset Version / Asset Name.Extension
+        return `${this.uuid}/${this.version}/${this.name}.${this.extension}`;
+    }
 }

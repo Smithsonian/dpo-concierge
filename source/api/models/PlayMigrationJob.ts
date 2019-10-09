@@ -17,8 +17,10 @@
 
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
 
-import CookJob from "./CookJob";
+import Item from "./Item";
 import Job from "./Job";
+
+import CookJob from "./CookJob";
 import CookClient from "../utils/CookClient";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -35,6 +37,9 @@ export type MigrationJobStep = "process" | "fetch" | "";
 export default class PlayMigrationJob extends Model<PlayMigrationJob>
 {
     static readonly typeName: string = "PlayMigrationJob";
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // SCHEMA
 
     @ForeignKey(() => Job)
     @Column
@@ -72,6 +77,15 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob>
 
     @Column({ defaultValue: false })
     migrateAnnotationColor: boolean;
+
+    @ForeignKey(() => Item)
+    @Column
+    itemId: number;
+
+    @BelongsTo(() => Item)
+    item: Item;
+
+    ////////////////////////////////////////////////////////////////////////////////
 
     async runJob()
     {

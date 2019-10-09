@@ -25,9 +25,18 @@ export default class Subject extends Model<Subject>
     @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, unique: true })
     uuid: string;
 
-    @Column({ type: DataType.STRING })
+    @Column
     name: string;
 
     @Column({ type: DataType.TEXT })
     description: string;
+
+    @Column
+    unitRecordId: string;
+
+    @Column
+    edanRecordId: string;
+
+    @Column({ type: DataType.TEXT })
+    edanRecordCache: string;
 }

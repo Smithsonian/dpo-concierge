@@ -28,7 +28,7 @@ import { ThemeProvider } from "@material-ui/styles";
 import { withStyles, StyleRules } from "@material-ui/core/styles";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import Container from "@material-ui/core/Container";
-import Paper from "@material-ui/core/Paper";
+import Card from "@material-ui/core/Card";
 
 import { theme } from "../theme";
 
@@ -41,7 +41,7 @@ export interface IAuthProps
 {
     classes: {
         root: string;
-        paper: string;
+        card: string;
     }
 }
 
@@ -70,12 +70,12 @@ class Auth extends React.Component<IAuthProps, {}>
                         <div className={classes.root}>
                             <CssBaseline />
                             <Container component="main" maxWidth="xs">
-                                <Paper className={classes.paper}>
+                                <Card className={classes.card} raised>
                                     <Switch>
                                         <Route path="/login" render={props => <Login {...props}/>} />
                                         <Route path="/register" render={props => <Register {...props}/>} />
                                     </Switch>
-                                </Paper>
+                                </Card>
                             </Container>
                         </div>
 
@@ -89,13 +89,22 @@ class Auth extends React.Component<IAuthProps, {}>
 
 const styles = theme => ({
     root: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundImage: "url(\"/static/concierge-background.jpg\")",
+        backgroundPosition: "center",
+        backgroundSize: "cover",
     },
-    paper: {
+    card: {
         marginTop: theme.spacing(8),
         padding: theme.spacing(3),
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
+        background: "rgba(255, 255, 255, 0.9)"
     }
 } as StyleRules);
 

@@ -20,21 +20,33 @@ import { Table, Column, Model, AfterSync } from "sequelize-typescript";
 ////////////////////////////////////////////////////////////////////////////////
 
 @Table
-export default class AssetType extends Model<AssetType>
+export default class GroupType extends Model<GroupType>
 {
     static readonly presets = {
-        voyagerDocument: "voyagerDocument",
+        photogrammetry: "photogrammetry",
+        master: "master",
+        printable: "printable",
+        editorial: "editorial",
+        web: "web",
+        media: "media",
+        processing: "processing",
     };
 
     @AfterSync
     static async populate()
     {
-        const presets = AssetType.presets;
+        const presets = GroupType.presets;
 
-        return AssetType.count().then((count => {
+        return GroupType.count().then((count => {
             if (count === 0) {
-                return AssetType.bulkCreate([
-                    { id: presets.voyagerDocument, name: "Voyager Scene Document" },
+                return GroupType.bulkCreate([
+                    { id: presets.photogrammetry, name: "Photogrammetry" },
+                    { id: presets.master,         name: "Master" },
+                    { id: presets.printable,      name: "Printable" },
+                    { id: presets.editorial,      name: "Editorial" },
+                    { id: presets.web,            name: "Web" },
+                    { id: presets.media,          name: "Media" },
+                    { id: presets.processing,     name: "Processing" },
                 ]);
             }
         }));

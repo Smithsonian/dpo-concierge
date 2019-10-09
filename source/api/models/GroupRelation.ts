@@ -15,12 +15,20 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model as DatabaseModel, DataType } from "sequelize-typescript";
+import { Table, Column, Model, ForeignKey } from "sequelize-typescript";
+
+import Group from "./Group";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @Table
-export default class Model extends DatabaseModel<Model>
+export default class GroupRelation extends Model<GroupRelation>
 {
+    @ForeignKey(() => Group)
+    @Column
+    parentGroupId: number;
 
+    @ForeignKey(() => Group)
+    @Column
+    childGroupId: number;
 }

@@ -30,9 +30,10 @@ import * as LdapStrategy from "passport-ldapauth";
 import * as graphqlHttp from "express-graphql";
 import { buildSchema } from "type-graphql";
 
+import SubjectResolver from "../resolvers/SubjectResolver";
 import ItemResolver from "../resolvers/ItemResolver";
+import GroupResolver from "../resolvers/GroupResolver";
 import AssetResolver from "../resolvers/AssetResolver";
-import SceneResolver from "../resolvers/SceneResolver";
 
 import UserResolver from "../resolvers/UserResolver";
 import ProjectResolver from "../resolvers/ProjectResolver";
@@ -147,9 +148,10 @@ export default class Server
         // GraphQL endpoint
         const schema = await buildSchema({
             resolvers: [
+                SubjectResolver,
                 ItemResolver,
+                GroupResolver,
                 AssetResolver,
-                SceneResolver,
                 UserResolver,
                 ProjectResolver,
                 JobResolver,

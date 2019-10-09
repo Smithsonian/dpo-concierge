@@ -15,9 +15,8 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, DataType, ForeignKey } from "sequelize-typescript";
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
 
-import Part from "./Part";
 import Asset from "./Asset";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -25,13 +24,12 @@ import Asset from "./Asset";
 @Table
 export default class GeometryAsset extends Model<GeometryAsset>
 {
-    @ForeignKey(() => Part)
-    @Column
-    partId: number;
-
     @ForeignKey(() => Asset)
     @Column
     assetId: number;
+
+    @BelongsTo(() => Asset)
+    asset: Asset;
 
     @Column({ type: DataType.INTEGER })
     numFaces: number;

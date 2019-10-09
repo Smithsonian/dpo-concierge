@@ -15,19 +15,40 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model as DatabaseModel, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo, HasMany } from "sequelize-typescript";
 
-import Model from "./Model";
+import Item from "./Item";
+import GroupType from "./GroupType";
+import Asset from "./Asset";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @Table
-export default class Part extends DatabaseModel<Part>
+export default class Group extends Model<Group>
 {
-    @ForeignKey(() => Model)
-    @Column
-    modelId: number;
+    @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, primaryKey: true })
+    uuid: string;
 
-    @BelongsTo(() => Model)
-    model: Model;
+    @Column({ type: DataType.STRING })
+    name: string;
+
+    @Column({ type: DataType.TEXT })
+    description: string;
+
+    @HasMany(() => Asset)
+    assets: Asset[];
+
+    @ForeignKey(() => GroupType)
+    @Column
+    typeId: string;
+
+    @BelongsTo(() => GroupType)
+    type: GroupType;
+
+    @ForeignKey(() => Item)
+    @Column
+    itemId: number;
+
+    @BelongsTo(() => Item)
+    item: Item;
 }

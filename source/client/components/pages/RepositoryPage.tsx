@@ -17,19 +17,19 @@
 
 import * as React from "react";
 
+import SubjectListView from "../views/SubjectListView";
 import ItemListView from "../views/ItemListView";
-import SceneListView from "../views/SceneListView";
+import GroupListView from "../views/GroupListView";
 import AssetListView from "../views/AssetListView";
-import NotYetImplementedView from "../views/NotYetImplementedView";
 
 import Page, { IPageView } from "../Page";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 const views: IPageView[] = [
+    { title: "Subjects", component: SubjectListView, route: "/subjects" },
     { title: "Items", component: ItemListView, route: "/items" },
-    { title: "Models", component: NotYetImplementedView, route: "/models" },
-    { title: "Scenes", component: SceneListView, route: "/scenes" },
+    { title: "Groups", component: GroupListView, route: "/groups" },
     { title: "Assets", component: AssetListView, route: "/assets" },
 //    { title: "Units", component: NotYetImplementedView, route: "/units" },
 //    { title: "Stakeholders", component: NotYetImplementedView, route: "/stakeholders" },

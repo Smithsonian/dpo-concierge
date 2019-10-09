@@ -55,9 +55,9 @@ export interface INavigatorProps
 const categories = [{
     name: "Repository",
     items: [
-        { name: "Items", icon: <DescriptionIcon />, link: "/repository/items", active: true },
-        { name: "Models", icon: <ModelIcon />, link: "/repository/models" },
-        { name: "Scenes", icon: <SceneIcon />, link: "/repository/scenes" },
+        { name: "Subjects", icon: <DescriptionIcon />, link: "/repository/subjects" },
+        { name: "Items", icon: <DescriptionIcon />, link: "/repository/items" },
+        { name: "Groups", icon: <ModelIcon />, link: "/repository/groups" },
         { name: "Assets", icon: <InsertDriveFileIcon />, link: "/repository/assets" },
     ],
 }, {
@@ -76,21 +76,24 @@ const categories = [{
     ],
 }];
 
-const drawerWidth = 220;
+function ListItemLink(props) {
+    const { to, classes, children } = props;
 
-const styles: any = theme => ({
-    root: {
+    const linkRef = React.useMemo(() =>
+        React.forwardRef((props, ref) => (
+            <NavLink to={to} {...props} innerRef={ref} />
+        )), [to]
+    );
 
-    },
-    drawer: {
-        width: drawerWidth,
-        flexShrink: 0,
-        // [theme.breakpoints.up('sm')]: {
-        //     width: drawerWidth,
-        //     flexShrink: 0,
-        // },
-    }
-});
+    return (
+        <ListItem
+            className={classes.item}
+            button
+        >
+            {children}
+        </ListItem>
+    );
+}
 
 const sidebarStyles: any = theme => ({
     title: {
@@ -139,25 +142,6 @@ const sidebarStyles: any = theme => ({
     },
 });
 
-function ListItemLink(props) {
-    const { to, classes, children } = props;
-
-    const linkRef = React.useMemo(() =>
-        React.forwardRef((props, ref) => (
-            <NavLink to={to} {...props} innerRef={ref} />
-        )), [to]
-    );
-
-    return (
-        <ListItem
-            className={classes.item}
-            button
-        >
-            {children}
-        </ListItem>
-    );
-}
-
 const Sidebar = withStyles(sidebarStyles)(function(props: any) {
     const { classes } = props;
 
@@ -176,7 +160,7 @@ const Sidebar = withStyles(sidebarStyles)(function(props: any) {
                             primary={name}
                         />
                     </ListItem>
-                    {items.map(({ name, icon, link, active }) => (
+                    {items.map(({ name, icon, link }) => (
                         <NavLink key={name} to={link} className={classes.link}>
                             <ListItem
                                 className={classes.item}
@@ -197,6 +181,20 @@ const Sidebar = withStyles(sidebarStyles)(function(props: any) {
             ))}
         </List>
     );
+});
+
+////////////////////////////////////////////////////////////////////////////////
+
+const drawerWidth = 200;
+
+const navigatorStyles: any = theme => ({
+    root: {
+
+    },
+    drawer: {
+        width: drawerWidth,
+        flexShrink: 0,
+    }
 });
 
 function Navigator(props: INavigatorProps)
@@ -229,4 +227,4 @@ function Navigator(props: INavigatorProps)
     );
 }
 
-export default withStyles(styles)(Navigator);
+export default withStyles(navigatorStyles)(Navigator);
