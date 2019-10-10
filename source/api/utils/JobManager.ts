@@ -27,6 +27,8 @@ import PlayMigrationJob from "../models/PlayMigrationJob";
 
 export default class JobManager
 {
+    protected static pollingInterval = 3000;
+
     protected static jobTypes = [
         PlayMigrationJob
     ];
@@ -43,7 +45,7 @@ export default class JobManager
     start()
     {
         if (!this.timerHandle) {
-            this.timerHandle = setInterval(() => this.run(), 3000);
+            this.timerHandle = setInterval(() => this.run(), JobManager.pollingInterval);
         }
     }
 
@@ -100,10 +102,13 @@ export default class JobManager
 
         switch (state) {
             case "created":
+            case "started":
+                console.log(`[JobManager] run job (${state}): ${job.job.name}`);
                 return job.runJob();
 
             case "running":
             case "waiting":
+                console.log(`[JobManager] update job (${state}): ${job.job.name}`);
                 return job.updateJob();
         }
 

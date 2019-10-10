@@ -43,8 +43,8 @@ export interface IRegisterProps
     }
 }
 
-const INSERT_USER = gql`
-mutation InsertUser($user: UserInput!) {
+const INSERT_USER_MUTATION = gql`
+mutation InsertUser($user: UserInputSchema!) {
     insertUser(user: $user) {
         id
     }
@@ -55,7 +55,7 @@ function Register(props: IRegisterProps)
 {
     const { classes } = props;
 
-    const [insertUser, { loading, error, data }] = useMutation(INSERT_USER);
+    const [insertUser, { loading, error, data }] = useMutation(INSERT_USER_MUTATION);
 
     if (error) {
         return (

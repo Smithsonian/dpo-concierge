@@ -24,7 +24,7 @@ import gql from "graphql-tag";
 
 import { withStyles, styled, StyleRules } from "@material-ui/core/styles";
 
-import DataTable, { ITableColumn, TableCellFormatter } from "../DataTable";
+import DataTable, { ITableColumn, formatDateTime } from "../DataTable";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
@@ -36,12 +36,13 @@ import Paper from "@material-ui/core/Paper";
 const columns: ITableColumn[] = [
     { id: "name", label: "Name" },
     { id: "email", label: "Email" },
+    { id: "createdAt", label: "Created", format: formatDateTime },
 ];
 
 const queryUsers = gql`
 {
     users(offset: 0, limit: 0) {
-        name, email
+        name, email, createdAt
     }
 }
 `;

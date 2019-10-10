@@ -89,55 +89,74 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob>
 
     ////////////////////////////////////////////////////////////////////////////////
 
+    protected async isCookServiceAvailable()
+    {
+        return cookClient.machineInfo()
+            .then(() => true)
+            .catch(err => {
+                this.job.state = "error";
+                this.job.error = `Cook service not available: ${err.message}`;
+
+            });
+    }
+
     async runJob()
     {
-        if (this.job.state === "running") {
-            return Promise.resolve();
+        const state = this.job.state;
+
+        if (state !== "created" && state !== "started") {
+            throw new Error("can't run job if not created or started");
         }
 
+        // switch state and set step
         this.job.state = "running";
         this.step = "process";
-        await Promise.all([ this.save(), this.job.save() ]);
 
-        const cookJob = await CookTask.createJob(cookClient, {
-            name: this.job.name,
-            recipeId: "migrate-play",
-            parameters: {
-                boxId: parseInt(this.playboxId),
-                annotationStyle: this.annotationStyle,
-                migrateAnnotationColor: !!this.migrateAnnotationColor,
-            },
-        });
+        return Promise.all([ this.save(), this.job.save() ])
+            .then(() => cookClient.machineInfo())
+            .catch(err => {
+                err.message = `Cook service not available: ${err.message}`;
+                throw err;
+            })
+            .then(() => (
+                CookTask.createJob(cookClient, {
+                    name: this.job.name,
+                    recipeId: "migrate-play",
+                    parameters: {
+                        boxId: parseInt(this.playboxId),
+                        annotationStyle: this.annotationStyle,
+                        migrateAnnotationColor: !!this.migrateAnnotationColor,
+                    },
+                })
+            )
+            .then(cookJob => {
+                if (cookJob.state === "error") {
+                    throw new Error(`Cook error: ${cookJob.error}`);
+                }
 
-        if (cookJob.state === "error") {
-            this.job.state = "error";
-            this.job.error = cookJob.error;
-            this.step = "";
-            return Promise.all([ this.save(), this.job.save(), cookJob.destroy() ]);
-        }
+                return cookJob.runJob(cookClient).then(() => {
+                    if (cookJob.state === "error") {
+                        throw new Error(`Cook error: ${cookJob.error}`);
+                    }
 
-        return cookJob.runJob(cookClient).then(() => {
-            if (cookJob.state === "error") {
+                    this.cookJobId = cookJob.id;
+                    return this.save();
+                });
+            }))
+            .catch(err => {
                 this.job.state = "error";
-                this.job.error = cookJob.error;
+                this.job.error = err.message;
                 this.step = "";
-
-                return Promise.all([ this.save(), this.job.save(), cookJob.destroy() ]) as Promise<unknown>;
-            }
-
-            this.job.state = "running";
-            this.cookJobId = cookJob.id;
-            this.step = "process";
-            return Promise.all([ this.save(), this.job.save() ]) as Promise<unknown>;
-        });
+                return Promise.all([ this.save(), this.job.save() ]);
+            });
     }
 
     async updateJob()
     {
         const state = this.job.state;
 
-        if (state !== "running") {
-            return Promise.resolve();
+        if (state !== "running" && state !== "waiting") {
+            throw new Error("can't update job if not running or waiting");
         }
 
         if (this.step === "process") {

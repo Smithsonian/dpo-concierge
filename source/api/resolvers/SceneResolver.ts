@@ -18,7 +18,7 @@
 import { Arg, Int, Query, Resolver } from "type-graphql";
 
 import { SceneSchema } from "../schemas/Scene";
-import SceneBin from "../models/Scene";
+import SceneBin from "../models/SceneBin";
 import Asset from "../models/Asset";
 
 ////////////////////////////////////////////////////////////////////////////////

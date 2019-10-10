@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, ForeignKey, BelongsTo } from "sequelize-typescript";
+import { Table, Column, Model, ForeignKey, BelongsTo, DataType } from "sequelize-typescript";
 
 import Asset from "./Asset";
 import Bin from "./Bin";
@@ -29,14 +29,14 @@ export default class SceneBin extends Model<SceneBin>
     name: string;
 
     @ForeignKey(() => Bin)
-    @Column
-    binId: string;
+    @Column({ type: DataType.INTEGER })
+    binId: number;
 
     @BelongsTo(() => Bin)
     bin: Bin;
 
     @ForeignKey(() => Asset)
-    @Column
+    @Column({ type: DataType.INTEGER })
     voyagerDocumentId: number;
 
     @BelongsTo(() => Asset)

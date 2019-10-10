@@ -33,7 +33,7 @@ import { Container } from "typedi";
 
 import SubjectResolver from "../resolvers/SubjectResolver";
 import ItemResolver from "../resolvers/ItemResolver";
-import BinResolver from "../resolvers/GroupResolver";
+import BinResolver from "../resolvers/BinResolver";
 import AssetResolver from "../resolvers/AssetResolver";
 
 import UserResolver from "../resolvers/UserResolver";
@@ -44,11 +44,6 @@ import MigrationSheetEntryResolver from "../resolvers/MigrationSheetEntryResolve
 
 import User from "../models/User";
 import Project from "../models/Project";
-
-import Database from "./Database";
-import JobManager from "../utils/JobManager";
-import ManagedRepository from "../utils/ManagedRepository";
-import EDANClient from "../utils/EDANClient";
 
 ////////////////////////////////////////////////////////////////////////////////
 

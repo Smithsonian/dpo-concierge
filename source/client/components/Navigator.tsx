@@ -57,7 +57,7 @@ const categories = [{
     items: [
         { name: "Subjects", icon: <DescriptionIcon />, link: "/repository/subjects" },
         { name: "Items", icon: <DescriptionIcon />, link: "/repository/items" },
-        { name: "Groups", icon: <ModelIcon />, link: "/repository/groups" },
+        { name: "Bins", icon: <ModelIcon />, link: "/repository/bins" },
         { name: "Assets", icon: <InsertDriveFileIcon />, link: "/repository/assets" },
     ],
 }, {

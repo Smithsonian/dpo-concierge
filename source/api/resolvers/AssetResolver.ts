@@ -27,14 +27,15 @@ export default class AssetResolver
 {
     @Query(returns => [ AssetSchema ])
     assets(
-        @Arg("itemId", type => Int, { nullable: true }) itemId: number,
+        @Arg("binId", type => Int, { nullable: true }) binId: number,
         @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
         @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
     ): Promise<AssetSchema[]>
     {
         limit = limit ? limit : undefined;
+        const where = binId !== undefined ? { binId } : undefined;
 
-        return Asset.findAll({ offset, limit })
+        return Asset.findAll({ where, offset, limit })
             .then(rows => rows.map(row => row.toJSON() as AssetSchema));
     }
 

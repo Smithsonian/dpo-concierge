@@ -21,7 +21,7 @@ import Bin from "./Bin";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-@Table({ indexes: [ { fields: ["filePath", "version", "groupId"] }] })
+@Table({ indexes: [ { fields: [ "filePath", "binId" ] }] })
 export default class Asset extends Model<Asset>
 {
     static async findAllWithBin()
@@ -64,18 +64,18 @@ export default class Asset extends Model<Asset>
             .then(asset => asset ? asset.version : 0);
     }
 
-    @Column({ type: DataType.STRING, allowNull: false, unique: "pathVersionGroup" })
-    filePath: string;
-
-    @Column({ type: DataType.INTEGER })
-    byteSize: number;
-
     @ForeignKey(() => Bin)
-    @Column({ type: DataType.UUID, allowNull: false, unique: "pathVersionGroup" })
+    @Column({ type: DataType.INTEGER, allowNull: false, unique: "pathBinId" })
     binId: string;
 
     @BelongsTo(() => Bin)
     bin: Bin;
+
+    @Column({ type: DataType.STRING, allowNull: false, unique: "pathBinId" })
+    filePath: string;
+
+    @Column({ type: DataType.INTEGER })
+    byteSize: number;
 
 
     get path() {

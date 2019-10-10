@@ -47,7 +47,7 @@ query Project($id: Int!) {
 }`;
 
 const UPSERT_PROJECT_MUTATION = gql`
-mutation UpdateProject($project: ProjectInput!) {
+mutation UpdateProject($project: ProjectInputSchema!) {
     upsertProject(project: $project) {
         id, name, description
     }

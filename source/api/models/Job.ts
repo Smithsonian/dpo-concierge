@@ -21,7 +21,7 @@ import Project from "./Project";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export type JobState = "created" | "waiting" | "running" | "done" | "error" | "cancelled";
+export type JobState = "created" | "started" | "waiting" | "running" | "done" | "error" | "cancelled";
 
 @Table
 export default class Job extends Model<Job>

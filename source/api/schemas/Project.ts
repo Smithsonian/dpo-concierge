@@ -26,11 +26,17 @@ export class ProjectSchema
     @Field(type => Int)
     id: number;
 
-    @Field(type => String)
+    @Field()
     name: string;
 
-    @Field(type => String)
+    @Field()
     description: string;
+
+    @Field()
+    createdAt: Date;
+
+    @Field()
+    updatedAt: Date;
 }
 
 @InputType()

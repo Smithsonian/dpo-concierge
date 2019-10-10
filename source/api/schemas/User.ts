@@ -36,6 +36,12 @@ export class UserSchema
 
     @Field(type => ProjectSchema, { nullable: true })
     activeProject: ProjectSchema;
+
+    @Field()
+    createdAt: Date;
+
+    @Field()
+    updatedAt: Date;
 }
 
 @InputType()

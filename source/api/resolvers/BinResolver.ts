@@ -29,7 +29,7 @@ import Asset from "../models/Asset";
 export default class BinResolver
 {
     @Query(returns => [ BinSchema ])
-    groups(
+    bins(
         @Arg("itemId", type => Int, { nullable: true }) itemId: number,
         @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
         @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
@@ -43,7 +43,7 @@ export default class BinResolver
     }
 
     @Query(returns => BinSchema, { nullable: true })
-    item(
+    bin(
         @Arg("id", type => Int) id: number,
         @Arg("uuid") uuid: string,
     ): Promise<BinSchema | null>

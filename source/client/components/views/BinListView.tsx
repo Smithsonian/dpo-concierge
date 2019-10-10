@@ -30,9 +30,9 @@ import ErrorCard from "../ErrorCard";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export const ALL_GROUPS_QUERY = gql`
-query AllGroups($itemId: Int) {
-    groups(itemId: $itemId, offset: 0, limit: 0) {
+export const ALL_BINS_QUERY = gql`
+query AllBins($itemId: Int) {
+    bins(itemId: $itemId, offset: 0, limit: 0) {
         name
     }
 }`;
@@ -42,7 +42,7 @@ const columns: ITableColumn[] = [
     { id: "type", label: "Type" },
 ];
 
-export interface IGroupListViewProps
+export interface IBinListViewProps
 {
     classes: {
         progress: string;
@@ -50,10 +50,10 @@ export interface IGroupListViewProps
     }
 }
 
-function GroupListView(props: IGroupListViewProps)
+function BinListView(props: IBinListViewProps)
 {
     const { classes } = props;
-    const { loading, error, data } = useQuery(ALL_GROUPS_QUERY);
+    const { loading, error, data } = useQuery(ALL_BINS_QUERY);
 
     if (loading) {
         return (<CircularProgress className={classes.progress} />);
@@ -62,7 +62,7 @@ function GroupListView(props: IGroupListViewProps)
         return (<ErrorCard title="Query Error" error={error}/>);
     }
 
-    const rows = data.groups;
+    const rows = data.bins;
 
     return (
         <Paper className={classes.paper}>
@@ -85,4 +85,4 @@ const styles = theme => ({
     },
 } as StyleRules);
 
-export default withStyles(styles)(GroupListView);
+export default withStyles(styles)(BinListView);

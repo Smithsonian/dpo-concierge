@@ -20,6 +20,8 @@ import * as React from "react";
 import * as queryString from "query-string";
 import { History } from "react-router-dom";
 
+import moment from "moment";
+
 import { withStyles, StyleRules } from "@material-ui/core/styles";
 import Table from "@material-ui/core/Table";
 import TableHead from "@material-ui/core/TableHead";
@@ -34,6 +36,12 @@ import { getStorageObject, setStorageObject } from "../utils/LocalStorage";
 ////////////////////////////////////////////////////////////////////////////////
 
 export type TableCellFormatter<T extends {} = {}> = (value: any, row: T, column: ITableColumn<T>) => any;
+
+export const formatText: TableCellFormatter = value => value === undefined || value === null ? "" : String(value);
+export const formatDateTime: TableCellFormatter = value => moment(value).format("YYYY-MM-DD HH:mm:ss");
+export const  formatDate: TableCellFormatter = value => moment(value).format("YYYY-MM-DD");
+export const formatTime: TableCellFormatter = value => moment(value).format("HH:mm:ss");
+
 
 export interface ITableColumn<T extends {} = {}>
 {

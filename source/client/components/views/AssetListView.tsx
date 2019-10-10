@@ -31,8 +31,8 @@ import ErrorCard from "../ErrorCard";
 ////////////////////////////////////////////////////////////////////////////////
 
 export const ALL_ASSETS_QUERY = gql`
-query AllAssets($itemId: Int) {
-    assets(itemId: $itemId, offset: 0, limit: 0) {
+query AllAssets($binId: Int) {
+    assets(binId: $binId, offset: 0, limit: 0) {
         name
     }
 }`;

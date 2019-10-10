@@ -35,7 +35,7 @@ import UncheckedIcon from "@material-ui/icons/RadioButtonUnchecked";
 import CheckedIcon from "@material-ui/icons/RadioButtonChecked";
 import DeleteIcon from "@material-ui/icons/DeleteForever";
 
-import DataTable, { ITableColumn, TableCellFormatter } from "../DataTable";
+import DataTable, { formatDateTime, ITableColumn, TableCellFormatter } from "../DataTable";
 import ErrorCard from "../ErrorCard";
 
 import ProjectEditView from "./ProjectEditView";
@@ -48,7 +48,7 @@ import { ALL_JOBS_QUERY } from "./JobListView";
 export const ALL_PROJECTS_QUERY = gql`
 query {
     projects(offset: 0, limit: 0) {
-        id, name, description
+        id, name, description, createdAt
     }
 }`;
 
@@ -118,6 +118,7 @@ function ProjectListView(props: IProjectListViewProps)
         { id: "active", label: "Actions", format: createActions, width: 1, data: { setActiveProject, activeProjectId } },
         { id: "name", label: "Name" },
         { id: "description", label: "Description" },
+        { id: "createdAt", label: "Created", format: formatDateTime },
     ];
 
     if (loading0) {

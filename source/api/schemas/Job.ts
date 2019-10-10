@@ -37,4 +37,10 @@ export class JobSchema
 
     @Field({ nullable: true })
     error: string;
+
+    @Field()
+    createdAt: Date;
+
+    @Field()
+    updatedAt: Date;
 }

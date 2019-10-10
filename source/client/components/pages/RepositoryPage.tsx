@@ -19,7 +19,7 @@ import * as React from "react";
 
 import SubjectListView from "../views/SubjectListView";
 import ItemListView from "../views/ItemListView";
-import GroupListView from "../views/GroupListView";
+import BinListView from "../views/BinListView";
 import AssetListView from "../views/AssetListView";
 
 import Page, { IPageView } from "../Page";
@@ -29,7 +29,7 @@ import Page, { IPageView } from "../Page";
 const views: IPageView[] = [
     { title: "Subjects", component: SubjectListView, route: "/subjects" },
     { title: "Items", component: ItemListView, route: "/items" },
-    { title: "Groups", component: GroupListView, route: "/groups" },
+    { title: "Bins", component: BinListView, route: "/bins" },
     { title: "Assets", component: AssetListView, route: "/assets" },
 //    { title: "Units", component: NotYetImplementedView, route: "/units" },
 //    { title: "Stakeholders", component: NotYetImplementedView, route: "/stakeholders" },

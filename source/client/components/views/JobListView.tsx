@@ -22,6 +22,8 @@ import { History } from "react-router-dom";
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
+import moment from "moment";
+
 import { withStyles, styled, StyleRules } from "@material-ui/core/styles";
 import clsx from "clsx";
 
@@ -33,7 +35,7 @@ import PlayIcon from "@material-ui/icons/PlayArrow";
 import StopIcon from "@material-ui/icons/Stop";
 import DeleteIcon from "@material-ui/icons/DeleteForever";
 
-import DataTable, { ITableColumn, TableCellFormatter } from "../DataTable";
+import DataTable, { ITableColumn, TableCellFormatter, formatText, formatDateTime } from "../DataTable";
 import ErrorCard from "../ErrorCard";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -41,7 +43,7 @@ import ErrorCard from "../ErrorCard";
 export const ALL_JOBS_QUERY = gql`
 query {
     jobs(offset: 0, limit: 0) {
-        name, type, state, error
+        name, type, state, createdAt, error
     }
 }`;
 
@@ -77,10 +79,9 @@ const StateBadge = withStyles(theme => ({
 
 const createLabel: TableCellFormatter = (value, row, column) => (<StateBadge state={value} />);
 
-const formatText: TableCellFormatter = value => value === undefined || value === null ? "" : String(value);
-
 const columns: ITableColumn[] = [
     { id: "actions", label: "Actions", format: createActions, width: 1 },
+    { id: "createdAt", label: "Created", format: formatDateTime },
     { id: "state", label: "State", format: createLabel, width: 120 },
     { id: "name", label: "Name" },
     { id: "type", label: "Type" },
@@ -109,6 +110,9 @@ function JobListView(props: IJobListViewProps)
     }
 
     const rows = data.jobs;
+
+    console.log(rows[0].createdAt);
+    console.log(typeof rows[0].createdAt);
 
     return (
         <Paper className={classes.paper}>
