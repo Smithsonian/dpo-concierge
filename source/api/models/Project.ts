@@ -24,7 +24,7 @@ import User from "./User";
 @Table
 export default class Project extends Model<Project>
 {
-    @Column({ type: DataType.STRING })
+    @Column
     name: string;
 
     @Column({ type: DataType.TEXT })

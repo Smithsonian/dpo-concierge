@@ -17,7 +17,7 @@
 
 import { Arg, Int, Query, Resolver } from "type-graphql";
 
-import { SubjectType } from "../schemas/Subject";
+import { SubjectSchema } from "../schemas/Subject";
 import Subject from "../models/Subject";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -25,25 +25,25 @@ import Subject from "../models/Subject";
 @Resolver()
 export default class ItemResolver
 {
-    @Query(returns => [ SubjectType ])
+    @Query(returns => [ SubjectSchema ])
     subjects(
         @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
         @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
-    ): Promise<SubjectType[]>
+    ): Promise<SubjectSchema[]>
     {
         limit = limit ? limit : undefined;
 
         return Subject.findAll({ offset, limit })
-        .then(rows => rows.map(row => row.toJSON() as SubjectType));
+        .then(rows => rows.map(row => row.toJSON() as SubjectSchema));
     }
 
-    @Query(returns => SubjectType, { nullable: true })
+    @Query(returns => SubjectSchema, { nullable: true })
     subject(
         @Arg("id", type => Int) id: number,
         @Arg("uuid") uuid: string,
-    ): Promise<SubjectType | null>
+    ): Promise<SubjectSchema | null>
     {
         return (id ? Subject.findByPk(id) : Subject.findOne({ where: { uuid }}))
-        .then(row => row ? row.toJSON() as SubjectType : null);
+        .then(row => row ? row.toJSON() as SubjectSchema : null);
     }
 }

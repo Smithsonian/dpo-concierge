@@ -18,12 +18,12 @@
 import "reflect-metadata";
 import { Field, Int, ObjectType, InputType } from "type-graphql";
 
-import { ProjectType } from "./Project";
+import { ProjectSchema } from "./Project";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
-export class UserType
+export class UserSchema
 {
     @Field(type => Int)
     id: number;
@@ -34,12 +34,12 @@ export class UserType
     @Field(type => String)
     email: string;
 
-    @Field(type => ProjectType, { nullable: true })
-    activeProject: ProjectType;
+    @Field(type => ProjectSchema, { nullable: true })
+    activeProject: ProjectSchema;
 }
 
 @InputType()
-export class UserInput
+export class UserInputSchema
 {
     @Field(type => Int, { nullable: true })
     id: number;

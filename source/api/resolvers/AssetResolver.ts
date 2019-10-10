@@ -17,7 +17,7 @@
 
 import { Arg, Int, Query, Resolver } from "type-graphql";
 
-import { AssetType } from "../schemas/Asset";
+import { AssetSchema } from "../schemas/Asset";
 import Asset from "../models/Asset";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -25,26 +25,26 @@ import Asset from "../models/Asset";
 @Resolver()
 export default class AssetResolver
 {
-    @Query(returns => [ AssetType ])
+    @Query(returns => [ AssetSchema ])
     assets(
         @Arg("itemId", type => Int, { nullable: true }) itemId: number,
         @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
         @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
-    ): Promise<AssetType[]>
+    ): Promise<AssetSchema[]>
     {
         limit = limit ? limit : undefined;
 
         return Asset.findAll({ offset, limit })
-            .then(rows => rows.map(row => row.toJSON() as AssetType));
+            .then(rows => rows.map(row => row.toJSON() as AssetSchema));
     }
 
-    @Query(returns => AssetType, { nullable: true })
+    @Query(returns => AssetSchema, { nullable: true })
     asset(
         @Arg("id", type => Int) id: number,
         @Arg("uuid") uuid: string,
-    ): Promise<AssetType | null>
+    ): Promise<AssetSchema | null>
     {
         return (id ? Asset.findByPk(id) : Asset.findOne({ where: { uuid }}))
-            .then(row => row ? row.toJSON() as AssetType : null);
+            .then(row => row ? row.toJSON() as AssetSchema : null);
     }
 }

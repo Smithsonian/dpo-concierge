@@ -17,7 +17,7 @@
 
 import { Arg, Query, Mutation, Resolver, Ctx, Int } from "type-graphql";
 
-import { ProjectType, ProjectInput } from "../schemas/Project";
+import { ProjectSchema, ProjectInputSchema } from "../schemas/Project";
 
 import Project from "../models/Project";
 import User from "../models/User";
@@ -32,37 +32,37 @@ export interface IContext
 @Resolver()
 export default class ProjectResolver
 {
-    @Query(returns => [ ProjectType ])
+    @Query(returns => [ ProjectSchema ])
     async projects(
         @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
         @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
         @Ctx() context: IContext,
-    ): Promise<ProjectType[]>
+    ): Promise<ProjectSchema[]>
     {
         limit = limit ? limit : undefined;
         const ownerId = context.user.id;
 
         return Project.findAll({ where: { ownerId }, offset, limit })
-            .then(rows => rows.map(row => row.toJSON() as ProjectType));
+            .then(rows => rows.map(row => row.toJSON() as ProjectSchema));
     }
 
-    @Query(returns => ProjectType, { nullable: true })
+    @Query(returns => ProjectSchema, { nullable: true })
     async project(
         @Arg("id", type => Int) id: number,
         @Ctx() context: IContext,
-    ): Promise<ProjectType>
+    ): Promise<ProjectSchema>
     {
         const ownerId = context.user.id;
 
         return Project.findOne({ where: { id, ownerId }})
-            .then(row => row ? row.toJSON() as ProjectType : null);
+            .then(row => row ? row.toJSON() as ProjectSchema : null);
     }
 
-    @Mutation(returns => ProjectType, { nullable: true })
+    @Mutation(returns => ProjectSchema, { nullable: true })
     async upsertProject(
-        @Arg("project") project: ProjectInput,
+        @Arg("project") project: ProjectInputSchema,
         @Ctx() context: IContext,
-    ): Promise<ProjectType>
+    ): Promise<ProjectSchema>
     {
         const id = project.id;
         const ownerId = context.user.id;
@@ -70,18 +70,18 @@ export default class ProjectResolver
         if (id) {
             return Project.update(project, { where: { id, ownerId }})
                 .then(() => Project.findOne({ where: { id, ownerId }}))
-                .then(row => row ? row.toJSON() as ProjectType : null);
+                .then(row => row ? row.toJSON() as ProjectSchema : null);
         }
 
         return Project.create({ ...project, ownerId })
-            .then(row => row.toJSON() as ProjectType);
+            .then(row => row.toJSON() as ProjectSchema);
     }
 
-    @Mutation(returns => ProjectType, { nullable: true })
+    @Mutation(returns => ProjectSchema, { nullable: true })
     async setActiveProject(
         @Arg("id", type => Int) id: number,
         @Ctx() context: IContext,
-    ): Promise<ProjectType>
+    ): Promise<ProjectSchema>
     {
         const ownerId = context.user.id;
 
@@ -89,7 +89,7 @@ export default class ProjectResolver
             .then(project => {
                 if (project) {
                     return context.user.update({ activeProjectId: project.id })
-                        .then(() => project.toJSON() as ProjectType);
+                        .then(() => project.toJSON() as ProjectSchema);
                 }
 
                 return null;

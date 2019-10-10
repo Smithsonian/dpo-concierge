@@ -15,25 +15,26 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo, HasMany } from "sequelize-typescript";
 
-import Subject from "./Subject";
-import Bin from "./Bin";
+import BinType from "./BinType";
 import Asset from "./Asset";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-@Table
-export default class Item extends Model<Item>
+@Table({ indexes: [ { fields: ["uuid", "version"] } ] })
+export default class Bin extends Model<Bin>
 {
-    static async findBins(includeAssets: boolean)
+    static async findOneWithAssets(options)
     {
-        //return Bin.findAll({ where: { }})
-        return Promise.reject(new Error("not implemented yet"));
+        return this.findOne({ ...options, include: [Asset] });
     }
 
-    @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, unique: true })
+    @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, unique: "uuidVersion" })
     uuid: string;
+
+    @Column({ type: DataType.INTEGER, unique: "uuidVersion" })
+    version: number;
 
     @Column({ type: DataType.STRING })
     name: string;
@@ -41,11 +42,17 @@ export default class Item extends Model<Item>
     @Column({ type: DataType.TEXT })
     description: string;
 
-    @ForeignKey(() => Subject)
+    @HasMany(() => Asset)
+    assets: Asset[];
+
+    @ForeignKey(() => BinType)
     @Column
-    subjectId: number;
+    typeId: string;
 
-    @BelongsTo(() => Subject)
-    subject: Subject;
+    @BelongsTo(() => BinType)
+    type: BinType;
 
+    getStoragePath() {
+        return `${this.uuid}/v${this.version}`;
+    }
 }

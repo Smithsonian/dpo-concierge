@@ -16,12 +16,12 @@
  */
 
 import "reflect-metadata";
-import { Field, Int, ObjectType, InputType } from "type-graphql";
+import { Field, Int, ObjectType } from "type-graphql";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
-export class JobType
+export class JobSchema
 {
     @Field(type => Int)
     id: number;
@@ -37,7 +37,4 @@ export class JobType
 
     @Field({ nullable: true })
     error: string;
-
-    @Field(type => Int)
-    projectId: number;
 }

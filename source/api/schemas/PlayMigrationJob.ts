@@ -21,7 +21,7 @@ import { Field, Int, ID, ObjectType, InputType } from "type-graphql";
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
-export class PlayMigrationJobType
+export class PlayMigrationJobSchema
 {
     @Field(type => Int)
     id: number;

@@ -17,8 +17,8 @@
 
 import { Arg, Query, Mutation, Resolver, Ctx, Int } from "type-graphql";
 
-import { PlayMigrationJobType, PlayMigrationJobInput } from "../schemas/PlayMigrationJob";
-import { JobType } from "../schemas/Job";
+import { PlayMigrationJobSchema, PlayMigrationJobInput } from "../schemas/PlayMigrationJob";
+import { JobSchema } from "../schemas/Job";
 
 import PlayMigrationJob from "../models/PlayMigrationJob";
 import Job from "../models/Job";
@@ -34,11 +34,11 @@ export interface IContext
 @Resolver()
 export default class PlayMigrationJobResolver
 {
-    @Mutation(returns => PlayMigrationJobType, { nullable: true })
+    @Mutation(returns => PlayMigrationJobSchema, { nullable: true })
     async createPlayMigrationJob(
         @Arg("playMigrationJob") playMigrationJob: PlayMigrationJobInput,
         @Ctx() context: IContext,
-    ): Promise<PlayMigrationJobType>
+    ): Promise<PlayMigrationJobSchema>
     {
         const projectId = context.user.activeProjectId;
         if (!projectId) {
@@ -55,7 +55,7 @@ export default class PlayMigrationJobResolver
         const playMigrationJobEntry = await PlayMigrationJob.create(playMigrationJob);
         await playMigrationJobEntry.$set("job", jobEntry);
 
-        return playMigrationJobEntry.toJSON() as PlayMigrationJobType;
+        return playMigrationJobEntry.toJSON() as PlayMigrationJobSchema;
     }
 
 }

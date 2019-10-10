@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, DataType, ForeignKey, BelongsTo, HasMany } from "sequelize-typescript";
+import { Table, Column, Model, ForeignKey, BelongsTo, HasMany } from "sequelize-typescript";
 import * as bcrypt from "bcrypt";
 
 import Project from "./Project";

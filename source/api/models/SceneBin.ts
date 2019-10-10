@@ -15,17 +15,33 @@
  * limitations under the License.
  */
 
-import "reflect-metadata";
-import { Field, ID, ObjectType } from "type-graphql";
+import { Table, Column, Model, ForeignKey, BelongsTo } from "sequelize-typescript";
+
+import Asset from "./Asset";
+import Bin from "./Bin";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-@ObjectType()
-export class GroupTypeType
+@Table
+export default class SceneBin extends Model<SceneBin>
 {
-    @Field(type => ID)
-    id: string;
-
-    @Field()
+    @Column
     name: string;
+
+    @ForeignKey(() => Bin)
+    @Column
+    binId: string;
+
+    @BelongsTo(() => Bin)
+    bin: Bin;
+
+    @ForeignKey(() => Asset)
+    @Column
+    voyagerDocumentId: number;
+
+    @BelongsTo(() => Asset)
+    voyagerDocument: Asset;
+
+    @Column
+    voyagerVersion: string;
 }

@@ -18,6 +18,7 @@
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
 
 import CookClient, { IParameters } from "../utils/CookClient";
+import Task from "./Task";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -33,10 +34,17 @@ export interface IJobCreateOptions
 }
 
 @Table
-export default class CookJob extends Model<CookJob>
+export default class CookTask extends Model<CookTask>
 {
     @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, unique: true })
-    uuid: string;
+    jobId: string;
+
+    @ForeignKey(() => Task)
+    @Column
+    taskId: number;
+
+    @BelongsTo(() => Task)
+    task: Task;
 
     @Column
     name: string;
@@ -58,7 +66,7 @@ export default class CookJob extends Model<CookJob>
     @Column({ defaultValue: "" })
     step: string;
 
-    @Column({ type: DataType.TEXT, defaultValue: "" })
+    @Column({ type: DataType.TEXT })
     set report(value: any) {
         this.setDataValue("report", JSON.stringify(value) as any);
     }
@@ -69,22 +77,22 @@ export default class CookJob extends Model<CookJob>
     @Column({ type: DataType.TEXT, defaultValue: "" })
     error: string;
 
-    static async createJob(client: CookClient, options: IJobCreateOptions): Promise<CookJob>
+    static async createJob(client: CookClient, options: IJobCreateOptions): Promise<CookTask>
     {
-        const job = await CookJob.create(options);
+        const task = await CookTask.create(options);
 
-        return client.createJob(job.uuid, job.recipeId, job.parameters)
-            .then(() => job)
+        return client.createJob(task.jobId, task.recipeId, task.parameters)
+            .then(() => task)
             .catch(err => {
-                job.state = "error";
-                job.error = "Cook service failed to create job: " + err.message;
-                return job.save();
+                task.state = "error";
+                task.error = "Cook service failed to create job: " + err.message;
+                return task.save();
             });
     }
 
     async runJob(client: CookClient)
     {
-        return client.runJob(this.uuid)
+        return client.runJob(this.jobId)
             .catch(err => {
                 this.state = "error";
                 this.error = "Cook service failed to run job: " + err.message;
@@ -94,7 +102,7 @@ export default class CookJob extends Model<CookJob>
 
     async cancelJob(client: CookClient)
     {
-        return client.cancelJob(this.uuid)
+        return client.cancelJob(this.jobId)
             .catch(err => {
                 this.state = "error";
                 this.error = "Cook service failed to cancel job: " + err.message;
@@ -104,7 +112,7 @@ export default class CookJob extends Model<CookJob>
 
     async deleteJob(client: CookClient)
     {
-        return client.deleteJob(this.uuid)
+        return client.deleteJob(this.jobId)
             .catch(err => {
                 this.state = "error";
                 this.error = "Cook service failed to delete job: " + err.message;
@@ -114,10 +122,10 @@ export default class CookJob extends Model<CookJob>
 
     async updateJob(client: CookClient)
     {
-        return client.jobInfo(this.uuid)
+        return client.jobInfo(this.jobId)
             .then(async info => {
                 if (info.state === "done" || info.state === "error") {
-                    this.report = await client.jobReport(this.uuid);
+                    this.report = await client.jobReport(this.jobId);
                 }
 
                 this.state = info.state;

@@ -17,7 +17,7 @@
 
 import { Arg, Int, Query, Resolver } from "type-graphql";
 
-import { ItemType } from "../schemas/Item";
+import { ItemSchema } from "../schemas/Item";
 import Item from "../models/Item";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -25,25 +25,25 @@ import Item from "../models/Item";
 @Resolver(of => Item)
 export default class ItemResolver
 {
-    @Query(returns => [ ItemType ])
+    @Query(returns => [ ItemSchema ])
     items(
         @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
         @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
-    ): Promise<ItemType[]>
+    ): Promise<ItemSchema[]>
     {
         limit = limit ? limit : undefined;
 
         return Item.findAll({ offset, limit })
-            .then(rows => rows.map(row => row.toJSON() as ItemType));
+            .then(rows => rows.map(row => row.toJSON() as ItemSchema));
     }
 
-    @Query(returns => ItemType, { nullable: true })
+    @Query(returns => ItemSchema, { nullable: true })
     item(
         @Arg("id", type => Int) id: number,
         @Arg("uuid") uuid: string,
-    ): Promise<ItemType | null>
+    ): Promise<ItemSchema | null>
     {
         return (id ? Item.findByPk(id) : Item.findOne({ where: { uuid }}))
-        .then(row => row ? row.toJSON() as ItemType : null);
+        .then(row => row ? row.toJSON() as ItemSchema : null);
     }
 }

@@ -33,7 +33,7 @@ import { Container } from "typedi";
 
 import SubjectResolver from "../resolvers/SubjectResolver";
 import ItemResolver from "../resolvers/ItemResolver";
-import GroupResolver from "../resolvers/GroupResolver";
+import BinResolver from "../resolvers/GroupResolver";
 import AssetResolver from "../resolvers/AssetResolver";
 
 import UserResolver from "../resolvers/UserResolver";
@@ -156,7 +156,7 @@ export default class Server
             resolvers: [
                 SubjectResolver,
                 ItemResolver,
-                GroupResolver,
+                BinResolver,
                 AssetResolver,
                 UserResolver,
                 ProjectResolver,

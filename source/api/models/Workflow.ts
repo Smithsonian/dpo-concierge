@@ -15,21 +15,13 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, ForeignKey } from "sequelize-typescript";
-
-import Scene from "./Scene";
-import Asset from "./Asset";
+import { Table, Column, Model } from "sequelize-typescript";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @Table
-export default class SceneAsset extends Model<SceneAsset>
+export default class Workflow extends Model<Workflow>
 {
-    @ForeignKey(() => Scene)
     @Column
-    sceneId: number;
-
-    @ForeignKey(() => Asset)
-    @Column
-    assetId: number;
+    name: string;
 }

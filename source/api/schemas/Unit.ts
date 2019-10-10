@@ -21,7 +21,7 @@ import { Field, ObjectType } from "type-graphql";
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
-export default class Unit
+export class UnitSchema
 {
     @Field(type => String)
     isni: string;

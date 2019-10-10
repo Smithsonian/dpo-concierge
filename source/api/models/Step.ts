@@ -15,21 +15,13 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, ForeignKey } from "sequelize-typescript";
-
-import Scene from "./Scene";
-import Item from "./Item";
+import { Table, Column, Model } from "sequelize-typescript";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @Table
-export default class SceneItem extends Model<SceneItem>
+export default class Step extends Model<Step>
 {
-    @ForeignKey(() => Scene)
     @Column
-    sceneId: number;
-
-    @ForeignKey(() => Item)
-    @Column
-    itemId: number;
+    name: string;
 }

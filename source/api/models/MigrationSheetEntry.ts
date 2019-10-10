@@ -37,14 +37,7 @@ export default class MigrationSheetEntry extends Model<MigrationSheetEntry>
         return p;
     }
 
-    @ForeignKey(() => Job)
-    @Column
-    jobId: number;
-
-    @BelongsTo(() => Job)
-    job: Job;
-
-    @Column({ type: DataType.STRING, primaryKey: true })
+    @Column({ primaryKey: true })
     id: string;
 
     @Column

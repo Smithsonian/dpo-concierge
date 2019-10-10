@@ -21,7 +21,7 @@ import { Field, Int, ID, ObjectType } from "type-graphql";
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
-export class MigrationSheetEntryType
+export class MigrationSheetEntrySchema
 {
     @Field(type => ID)
     id: string;

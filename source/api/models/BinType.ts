@@ -20,7 +20,7 @@ import { Table, Column, Model, AfterSync } from "sequelize-typescript";
 ////////////////////////////////////////////////////////////////////////////////
 
 @Table
-export default class GroupType extends Model<GroupType>
+export default class BinType extends Model<BinType>
 {
     static readonly presets = {
         photogrammetry: "photogrammetry",
@@ -35,11 +35,11 @@ export default class GroupType extends Model<GroupType>
     @AfterSync
     static async populate()
     {
-        const presets = GroupType.presets;
+        const presets = BinType.presets;
 
-        return GroupType.count().then((count => {
+        return BinType.count().then((count => {
             if (count === 0) {
-                return GroupType.bulkCreate([
+                return BinType.bulkCreate([
                     { id: presets.photogrammetry, name: "Photogrammetry" },
                     { id: presets.master,         name: "Master" },
                     { id: presets.printable,      name: "Printable" },

@@ -17,23 +17,23 @@
 
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
 
-import Group from "./Group";
+import Bin from "./Bin";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @Table({ indexes: [ { fields: ["filePath", "version", "groupId"] }] })
 export default class Asset extends Model<Asset>
 {
-    static async findAllWithGroup()
+    static async findAllWithBin()
     {
-        return Asset.findAll({ include: [Group] });
+        return Asset.findAll({ include: [Bin] });
     }
 
-    static async findVersion(groupId: string, filePath: string, version: number): Promise<Asset | undefined>
+    static async findVersion(binId: string, filePath: string, version: number): Promise<Asset | undefined>
     {
         // if version is unspecified, return latest version
         if (version === undefined) {
-            const where = { groupId, filePath };
+            const where = { binId, filePath };
             const order = [ "version", "DESC" ];
             return Asset.findOne({ where, order }).then(asset => {
                 if (!asset) {
@@ -45,7 +45,7 @@ export default class Asset extends Model<Asset>
         }
 
         // get and return specified version
-        const where = { groupId, filePath, version };
+        const where = { binId, filePath, version };
         return Asset.findOne({ where }).then(asset => {
             if (!asset) {
                 throw new Error(`asset not found: ${filePath} [${version}]`);
@@ -64,21 +64,18 @@ export default class Asset extends Model<Asset>
             .then(asset => asset ? asset.version : 0);
     }
 
-    @Column({ type: DataType.INTEGER, allowNull: false, unique: "pathVersionGroup" })
-    version: number;
-
     @Column({ type: DataType.STRING, allowNull: false, unique: "pathVersionGroup" })
     filePath: string;
 
     @Column({ type: DataType.INTEGER })
     byteSize: number;
 
-    @ForeignKey(() => Group)
+    @ForeignKey(() => Bin)
     @Column({ type: DataType.UUID, allowNull: false, unique: "pathVersionGroup" })
-    groupId: string;
+    binId: string;
 
-    @BelongsTo(() => Group)
-    group: Group;
+    @BelongsTo(() => Bin)
+    bin: Bin;
 
 
     get path() {
@@ -107,7 +104,7 @@ export default class Asset extends Model<Asset>
      * Returns the path where the asset is stored in repository storage
      */
     getStoragePath() {
-        // Group UUID / Asset UUID / Asset Name-version.Extension
-        return `${this.groupId}/${this.path}/${this.baseName}-${this.version}.${this.extension}`;
+        // bin UUID / bin version / asset file path
+        return `${this.bin.getStoragePath()}/${this.filePath}`;
     }
 }

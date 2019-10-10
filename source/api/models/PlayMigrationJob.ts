@@ -20,7 +20,7 @@ import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize
 import Item from "./Item";
 import Job from "./Job";
 
-import CookJob from "./CookJob";
+import CookTask from "./CookTask";
 import CookClient from "../utils/CookClient";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -41,6 +41,7 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob>
     ////////////////////////////////////////////////////////////////////////////////
     // SCHEMA
 
+    // the base job
     @ForeignKey(() => Job)
     @Column
     jobId: number;
@@ -48,7 +49,15 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob>
     @BelongsTo(() => Job)
     job: Job;
 
-    @Column({ defaultValue: "" })
+    // the item generated from this job
+    @ForeignKey(() => Item)
+    @Column
+    itemId: number;
+
+    @BelongsTo(() => Item)
+    item: Item;
+
+    @Column({ type: DataType.STRING, defaultValue: "" })
     step: MigrationJobStep;
 
     @Column
@@ -78,22 +87,19 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob>
     @Column({ defaultValue: false })
     migrateAnnotationColor: boolean;
 
-    @ForeignKey(() => Item)
-    @Column
-    itemId: number;
-
-    @BelongsTo(() => Item)
-    item: Item;
-
     ////////////////////////////////////////////////////////////////////////////////
 
     async runJob()
     {
+        if (this.job.state === "running") {
+            return Promise.resolve();
+        }
+
         this.job.state = "running";
         this.step = "process";
-        await Promise.all([ this.save, this.job.save ]);
+        await Promise.all([ this.save(), this.job.save() ]);
 
-        const cookJob = await CookJob.createJob(cookClient, {
+        const cookJob = await CookTask.createJob(cookClient, {
             name: this.job.name,
             recipeId: "migrate-play",
             parameters: {
@@ -135,7 +141,7 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob>
         }
 
         if (this.step === "process") {
-            const cookJob = await CookJob.findByPk(this.cookJobId);
+            const cookJob = await CookTask.findByPk(this.cookJobId);
             if (!cookJob) {
                 this.job.state = "error";
                 this.job.error = "Database error: cook job not found.";

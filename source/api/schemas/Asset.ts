@@ -21,7 +21,7 @@ import { Field, Int, ID, ObjectType } from "type-graphql";
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
-export class AssetType
+export class AssetSchema
 {
     @Field(type => Int)
     id: number;
@@ -29,8 +29,11 @@ export class AssetType
     @Field(type => ID)
     uuid: string;
 
-    @Field(type => Int)
-    version: number;
+    @Field()
+    binId: string;
+
+    @Field()
+    filePath: string;
 
     @Field()
     path: string;

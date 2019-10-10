@@ -18,12 +18,12 @@
 import "reflect-metadata";
 import { Field, Int, ObjectType } from "type-graphql";
 
-import { AssetType } from "./Asset";
+import { AssetSchema } from "./Asset";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
-export class SceneType
+export class SceneSchema
 {
     @Field(type => Int)
     id: number;
@@ -32,7 +32,7 @@ export class SceneType
     name: string;
 
     @Field()
-    voyagerDocument: AssetType;
+    voyagerDocument: AssetSchema;
 
     @Field()
     voyagerVersion: string;

@@ -17,7 +17,7 @@
 
 import { Arg, Int, Query, Mutation, Resolver, Ctx } from "type-graphql";
 
-import { UserType, UserInput } from "../schemas/User";
+import { UserSchema, UserInputSchema } from "../schemas/User";
 import User from "../models/User";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -30,39 +30,39 @@ export interface IContext
 @Resolver()
 export default class UserResolver
 {
-    @Query(returns => [ UserType ])
+    @Query(returns => [ UserSchema ])
     async users(
         @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
         @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
-    ): Promise<UserType[]>
+    ): Promise<UserSchema[]>
     {
         limit = limit ? limit : undefined;
 
         return User.findAll({ offset, limit })
-        .then(rows => rows.map(row => row.toJSON() as UserType));
+        .then(rows => rows.map(row => row.toJSON() as UserSchema));
     }
 
-    @Query(returns => UserType)
+    @Query(returns => UserSchema)
     async user(
         @Arg("id") id: string
-    ): Promise<UserType>
+    ): Promise<UserSchema>
     {
-        return User.findOne({ where: { id } }).then(row => row.toJSON() as UserType);
+        return User.findOne({ where: { id } }).then(row => row.toJSON() as UserSchema);
     }
 
-    @Query(returns => UserType, { nullable: true })
+    @Query(returns => UserSchema, { nullable: true })
     async me(
         @Ctx() context: IContext
-    ): Promise<UserType>
+    ): Promise<UserSchema>
     {
         const user = context.user;
-        return Promise.resolve(user ? user.toJSON() as UserType : null);
+        return Promise.resolve(user ? user.toJSON() as UserSchema : null);
     }
 
-    @Mutation(returns => UserType)
+    @Mutation(returns => UserSchema)
     async insertUser(
-        @Arg("user", { nullable: false }) user: UserInput
-    ): Promise<UserType>
+        @Arg("user", { nullable: false }) user: UserInputSchema
+    ): Promise<UserSchema>
     {
         return User.findOne({ where: { email: user.email }})
             .then(user => {
@@ -72,12 +72,12 @@ export default class UserResolver
             })
             .then(() => User.getPasswordHash(user.password))
             .then(hash => User.create({ name: user.name, email: user.email, password: hash }))
-            .then(user => user.toJSON() as UserType);
+            .then(user => user.toJSON() as UserSchema);
     }
 
-    @Mutation(returns => UserType)
+    @Mutation(returns => UserSchema)
     async updateUser(
-        @Arg("user", { nullable: false }) user: UserInput
+        @Arg("user", { nullable: false }) user: UserInputSchema
     ): Promise<unknown>
     {
         return User.update(user, { where: { id: user.id }}).then(() =>

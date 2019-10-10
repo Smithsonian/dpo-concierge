@@ -18,10 +18,9 @@
 import { Model } from "sequelize-typescript"
 import { Op } from "sequelize";
 
-import { Dictionary } from "../utils/types";
+import { Dictionary } from "./types";
 
 import Job from "../models/Job";
-
 import PlayMigrationJob from "../models/PlayMigrationJob";
 
 ////////////////////////////////////////////////////////////////////////////////

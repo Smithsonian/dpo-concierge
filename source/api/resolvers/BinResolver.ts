@@ -17,41 +17,41 @@
 
 import { Arg, Int, Query, Resolver } from "type-graphql";
 
-import GroupModel from "../models/Group";
-import { GroupType } from "../schemas/Group";
+import Bin from "../models/Bin";
+import { BinSchema } from "../schemas/Bin";
 
-import GroupTypeModel from "../models/GroupType";
-import AssetModel from "../models/Asset";
+import BinType from "../models/BinType";
+import Asset from "../models/Asset";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @Resolver()
-export default class GroupResolver
+export default class BinResolver
 {
-    @Query(returns => [ GroupType ])
+    @Query(returns => [ BinSchema ])
     groups(
         @Arg("itemId", type => Int, { nullable: true }) itemId: number,
         @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
         @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
-    ): Promise<GroupType[]>
+    ): Promise<BinSchema[]>
     {
         limit = limit ? limit : undefined;
         const where = itemId !== undefined ? { itemId } : undefined;
 
-        return GroupModel.findAll({ offset, limit, where, include: [GroupTypeModel] })
-        .then(rows => rows.map(row => row.toJSON() as GroupType));
+        return Bin.findAll({ offset, limit, where, include: [BinType] })
+        .then(rows => rows.map(row => row.toJSON() as BinSchema));
     }
 
-    @Query(returns => GroupType, { nullable: true })
+    @Query(returns => BinSchema, { nullable: true })
     item(
         @Arg("id", type => Int) id: number,
         @Arg("uuid") uuid: string,
-    ): Promise<GroupType | null>
+    ): Promise<BinSchema | null>
     {
         return (id ?
-            GroupModel.findByPk(id, { include: [GroupTypeModel, AssetModel] }) :
-            GroupModel.findOne({ where: { uuid }, include: [GroupTypeModel, AssetModel] })
+            Bin.findByPk(id, { include: [BinType, Asset] }) :
+            Bin.findOne({ where: { uuid }, include: [BinType, Asset] })
         )
-        .then(row => row ? row.toJSON() as GroupType : null);
+        .then(row => row ? row.toJSON() as BinSchema : null);
     }
 }

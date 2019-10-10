@@ -17,8 +17,8 @@
 
 import { Arg, Int, Query, Resolver } from "type-graphql";
 
-import { SceneType } from "../schemas/Scene";
-import Scene from "../models/Scene";
+import { SceneSchema } from "../schemas/Scene";
+import SceneBin from "../models/Scene";
 import Asset from "../models/Asset";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -26,25 +26,25 @@ import Asset from "../models/Asset";
 @Resolver()
 export default class SceneResolver
 {
-    @Query(returns => [ SceneType ])
+    @Query(returns => [ SceneSchema ])
     scenes(
         @Arg("itemId", type => Int, { nullable: true }) itemId: number,
         @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
         @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
-    ): Promise<SceneType[]>
+    ): Promise<SceneSchema[]>
     {
         limit = limit ? limit : undefined;
 
-        return Scene.findAll({ include: [ Asset ], offset, limit })
-            .then(rows => rows.map(row => row.toJSON() as SceneType));
+        return SceneBin.findAll({ include: [ Asset ], offset, limit })
+            .then(rows => rows.map(row => row.toJSON() as SceneSchema));
     }
 
-    @Query(returns => SceneType, { nullable: true })
+    @Query(returns => SceneSchema, { nullable: true })
     scene(
         @Arg("id", type => Int) id: number,
-    ): Promise<SceneType | null>
+    ): Promise<SceneSchema | null>
     {
-        return Scene.findByPk(id, { include: [ Asset ]})
-            .then(row => row ? row.toJSON() as SceneType : null);
+        return SceneBin.findByPk(id, { include: [ Asset ]})
+            .then(row => row ? row.toJSON() as SceneSchema : null);
     }
 }

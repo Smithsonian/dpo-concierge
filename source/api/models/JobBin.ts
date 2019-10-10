@@ -17,18 +17,19 @@
 
 import { Table, Column, Model, ForeignKey } from "sequelize-typescript";
 
-import Group from "./Group";
+import Job from "./Job";
+import Bin from "./Bin";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @Table
-export default class GroupRelation extends Model<GroupRelation>
+export default class JobBin extends Model<JobBin>
 {
-    @ForeignKey(() => Group)
+    @ForeignKey(() => Job)
     @Column
-    parentGroupId: number;
+    jobId: number;
 
-    @ForeignKey(() => Group)
+    @ForeignKey(() => Bin)
     @Column
-    childGroupId: number;
+    binId: number;
 }

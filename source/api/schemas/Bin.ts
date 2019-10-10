@@ -18,14 +18,14 @@
 import "reflect-metadata";
 import { Field, Int, ObjectType } from "type-graphql";
 
-import { GroupTypeType } from "./GroupType";
-import { ItemType } from "./Item";
-import { AssetType } from "./Asset";
+import { BinTypeSchema } from "./BinType";
+import { ItemSchema } from "./Item";
+import { AssetSchema } from "./Asset";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
-export class GroupType
+export class BinSchema
 {
     @Field(type => Int)
     id: number;
@@ -37,12 +37,12 @@ export class GroupType
     description: string;
 
     @Field()
-    item: ItemType;
+    item: ItemSchema;
 
     @Field()
-    type: GroupTypeType;
+    type: BinTypeSchema;
 
-    @Field(type => [AssetType])
-    assets: AssetType[];
+    @Field(type => [AssetSchema])
+    assets: AssetSchema[];
 }
 

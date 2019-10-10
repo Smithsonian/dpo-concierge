@@ -18,7 +18,7 @@
 import { Arg, Int, Query, Resolver, Mutation } from "type-graphql";
 import { Op } from "sequelize";
 
-import { MigrationSheetEntryType } from "../schemas/MigrationSheetEntry";
+import { MigrationSheetEntrySchema } from "../schemas/MigrationSheetEntry";
 import MigrationSheetEntry from "../models/MigrationSheetEntry";
 
 import MigrationSheet from "../utils/MigrationSheet";
@@ -28,12 +28,12 @@ import MigrationSheet from "../utils/MigrationSheet";
 @Resolver()
 export default class MigrationSheetEntryResolver
 {
-    @Query(returns => [ MigrationSheetEntryType ])
+    @Query(returns => [ MigrationSheetEntrySchema ])
     async migrationSheetEntries(
         @Arg("search", { nullable: true }) search: string,
         @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
         @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
-    ): Promise<MigrationSheetEntryType[]>
+    ): Promise<MigrationSheetEntrySchema[]>
     {
         limit = limit ? limit : undefined;
         let where = undefined;
@@ -55,29 +55,29 @@ export default class MigrationSheetEntryResolver
         }
 
         return MigrationSheetEntry.findAll({ where, offset, limit })
-            .then(rows => rows.map(row => row.toJSON() as MigrationSheetEntryType));
+            .then(rows => rows.map(row => row.toJSON() as MigrationSheetEntrySchema));
     }
 
-    @Query(returns => MigrationSheetEntryType)
+    @Query(returns => MigrationSheetEntrySchema)
     async migrationSheetEntry(
         @Arg("id") id: string
-    ): Promise<MigrationSheetEntryType>
+    ): Promise<MigrationSheetEntrySchema>
     {
         return MigrationSheetEntry.findOne({ where: { id } })
-            .then(row => row.toJSON() as MigrationSheetEntryType);
+            .then(row => row.toJSON() as MigrationSheetEntrySchema);
     }
 
-    @Mutation(returns => [ MigrationSheetEntryType ])
+    @Mutation(returns => [ MigrationSheetEntrySchema ])
     async updateMigrationSheetEntries(
         @Arg("offset", { defaultValue: 0 }) offset: number,
         @Arg("limit", { defaultValue: 50 }) limit: number,
-    ): Promise<MigrationSheetEntryType[]>
+    ): Promise<MigrationSheetEntrySchema[]>
     {
         const migration = new MigrationSheet();
         return migration.update()
             .then(() => MigrationSheetEntry.importSheet(migration))
             .then(() => MigrationSheetEntry.findAll({ offset, limit: limit ? limit : undefined }))
-            .then(rows => rows.map(row => row.toJSON() as MigrationSheetEntryType));
+            .then(rows => rows.map(row => row.toJSON() as MigrationSheetEntrySchema));
     }
 }
 
