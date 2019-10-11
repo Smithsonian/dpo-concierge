@@ -21,7 +21,7 @@ import { withStyles, StyleRules } from '@material-ui/core/styles';
 import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
-import Card from "@material-ui/core/Card";
+import Link from '@material-ui/core/Link';
 import CardContent from "@material-ui/core/CardContent";
 import PersonIcon from "@material-ui/icons/Person";
 
@@ -40,22 +40,22 @@ export interface IRegisterProps
         avatar: string;
         form: string;
         submit: string;
+        message: string;
     }
 }
 
-const INSERT_USER_MUTATION = gql`
-mutation InsertUser($user: UserInputSchema!) {
-    insertUser(user: $user) {
-        id
+const REGISTER_USER_MUTATION = gql`
+mutation CreateUser($user: UserInputSchema!) {
+    createUser(user: $user) {
+        ok, message
     }
-}
-`;
+}`;
 
 function Register(props: IRegisterProps)
 {
     const { classes } = props;
 
-    const [insertUser, { loading, error, data }] = useMutation(INSERT_USER_MUTATION);
+    const [insertUser, { error, data }] = useMutation(REGISTER_USER_MUTATION);
 
     if (error) {
         return (
@@ -66,7 +66,7 @@ function Register(props: IRegisterProps)
         );
     }
 
-    if (data) {
+    if (data && data.createUser.ok) {
         window.location.href = "/workflow/projects";
         return null;
     }
@@ -140,6 +140,19 @@ function Register(props: IRegisterProps)
                     </form>
                 )}
             </Formik>
+            { data && !data.createUser.ok ? (<React.Fragment>
+                <CardContent className={classes.message}>
+                    <Typography variant="h6" color="secondary">Registration failed</Typography>
+                    <Typography color="secondary">{data.createUser.message}</Typography>
+                </CardContent>
+                <CardContent>
+                    <Link href="/login">
+                        <Typography>
+                            {"Would you like to sign in instead?"}
+                        </Typography>
+                    </Link>
+                </CardContent>
+            </React.Fragment>) : null }
         </React.Fragment>
     );
 }
@@ -156,6 +169,9 @@ const styles = theme => ({
     submit: {
         margin: theme.spacing(3, 0, 2),
     },
+    message: {
+        textAlign: "center",
+    }
 } as StyleRules);
 
 export default withStyles(styles)(Register);

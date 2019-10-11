@@ -19,30 +19,64 @@ import { Table, Column, Model, ForeignKey, BelongsTo, HasMany } from "sequelize-
 import * as bcrypt from "bcrypt";
 
 import Project from "./Project";
+import Role from "./Role";
+import Permission from "./Permission";
+import { UserSchema } from "../schemas/User";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @Table
 export default class User extends Model<User>
 {
-    @Column
-    name: string;
+    static async findWithPermissions(id: string)
+    {
+        return this.findByPk(id, {
+            attributes: ["id", "name", "activeProjectId"],
+            include: [
+                { model: Project, as: "activeProject" },
+                { model: Role, include: [ Permission ], attributes: ["id"] },
+            ]
+        });
+    }
 
-    @Column
-    email: string;
+    static async createWithProject(name: string, email: string, password: string)
+    {
+        return User.findOne({ where: { email }})
+        .then(user => {
+            if (user) {
+                throw new Error(`User with email '${user.email}' already registered.`);
+            }
+        })
+        .then(() => User.getPasswordHash(password))
+        .then(hash => User.create({ name, email, password: hash }))
+        .then(user => (
+            Project.create({ ownerId: user.id, name: "My First Project" })
+                .then(project => {
+                    user.activeProjectId = project.id;
+                    return user.save().then(user => user.toJSON() as UserSchema);
+                })
+        ));
+    }
 
-    @Column
-    password: string;
+    static async login(email: string, password: string): Promise<{ ok: boolean, user?: User, message?: string }>
+    {
+        return User.findOne({ where: { email }}).then(user => {
+            if (!user) {
+                console.log(`[Passport.LocalStrategy] user email not found: ${email}`);
+                return { ok: false, message: `Can't find user with email '${email}'.` };
+            }
 
-    @ForeignKey(() => Project)
-    @Column
-    activeProjectId: number;
-
-    @BelongsTo(() => Project, { constraints: false })
-    activeProject: Project;
-
-    @HasMany(() => Project)
-    projects: Project[];
+            return user.isValidPassword(password).then(result => {
+                if (result) {
+                    console.log(`[Passport.LocalStrategy] authenticated user: ${email}`);
+                    return { ok: true, user };
+                } else {
+                    console.log(`[Passport.LocalStrategy] - password mismatch for user: ${email}`);
+                    return { ok: false, message: `Incorrect password.` };
+                }
+            });
+        });
+    }
 
     static async getPasswordHash(password: string): Promise<string>
     {
@@ -53,4 +87,30 @@ export default class User extends Model<User>
     {
         return await bcrypt.compare(password, this.password);
     }
+
+    @Column
+    name: string;
+
+    @Column
+    email: string;
+
+    @Column
+    password: string;
+
+    @ForeignKey(() => Role)
+    @Column({ allowNull: false, defaultValue: Role.presets.admin })
+    roleId: string;
+
+    @BelongsTo(() => Role)
+    role: Role;
+
+    @ForeignKey(() => Project)
+    @Column
+    activeProjectId: number;
+
+    @BelongsTo(() => Project, { constraints: false })
+    activeProject: Project;
+
+    @HasMany(() => Project)
+    projects: Project[];
 }

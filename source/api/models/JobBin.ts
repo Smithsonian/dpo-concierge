@@ -30,6 +30,6 @@ export default class JobBin extends Model<JobBin>
     jobId: number;
 
     @ForeignKey(() => Bin)
-    @Column
+    @Column({ unique: true })
     binId: number;
 }

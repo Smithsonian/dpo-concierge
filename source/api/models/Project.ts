@@ -24,10 +24,10 @@ import User from "./User";
 @Table
 export default class Project extends Model<Project>
 {
-    @Column
+    @Column({ allowNull: false })
     name: string;
 
-    @Column({ type: DataType.TEXT })
+    @Column({ type: DataType.TEXT, defaultValue: "" })
     description: string;
 
     @ForeignKey(() => User)

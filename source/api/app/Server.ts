@@ -43,6 +43,8 @@ import PlayMigrationJobResolver from "../resolvers/PlayMigrationJobResolver";
 import MigrationSheetEntryResolver from "../resolvers/MigrationSheetEntryResolver";
 
 import User from "../models/User";
+import Role from "../models/Role";
+import Permission from "../models/Permission";
 import Project from "../models/Project";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -101,6 +103,19 @@ export default class Server
             usernameField: "email",
             passwordField: "password",
         },(email, password, done) => {
+            User.login(email, password)
+            .then(status => {
+                if (status.ok) {
+                    return done(null, status.user);
+                }
+
+                return done(null, false, status.message);
+            })
+            .catch(error => (
+                done(null, false, { message: error.message })
+            ));
+
+
             User.findOne({ where: { email }}).then(user => {
                 if (!user) {
                     console.log(`LocalStrategy - user email not found: ${email}`);
@@ -132,11 +147,12 @@ export default class Server
         });
 
         passport.deserializeUser((id: string, done) => {
-            User.findByPk(id, { include: [ { model: Project, as: "activeProject" } ] }).then(user => {
-                done(null, user);
-            }).catch(err => {
-                done(err, null);
-            });
+            User.findWithPermissions(id)
+            .then(user => {
+                //console.log("[Server] - logged in: ", user.toJSON());
+                done(null, user)
+            })
+            .catch(err => done(err, null));
         });
 
         passport.use(localStrategy);

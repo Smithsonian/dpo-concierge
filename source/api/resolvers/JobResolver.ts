@@ -32,6 +32,12 @@ export interface IContext
 @Resolver()
 export default class JobResolver
 {
+    /**
+     * Returns the jobs for the active project.
+     * @param offset
+     * @param limit
+     * @param context
+     */
     @Query(returns => [ JobSchema ])
     async jobs(
         @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
@@ -40,7 +46,11 @@ export default class JobResolver
     ): Promise<JobSchema[]>
     {
         limit = limit ? limit : undefined;
-        const projectId = context.user.activeProjectId || 0;
+        const projectId = context.user.activeProjectId;
+
+        if (projectId === null) {
+            return Promise.resolve([]);
+        }
 
         return Job.findAll({ where: { projectId }, offset, limit })
             .then(rows => rows.map(row => row.toJSON() as JobSchema));

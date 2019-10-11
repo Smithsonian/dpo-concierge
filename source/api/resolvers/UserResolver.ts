@@ -18,7 +18,11 @@
 import { Arg, Int, Query, Mutation, Resolver, Ctx } from "type-graphql";
 
 import { UserSchema, UserInputSchema } from "../schemas/User";
+import { StatusSchema } from "../schemas/Status";
+
 import User from "../models/User";
+import Role from "../models/Role";
+import Permission from "../models/Permission";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -38,7 +42,7 @@ export default class UserResolver
     {
         limit = limit ? limit : undefined;
 
-        return User.findAll({ offset, limit })
+        return User.findAll({ offset, limit, include: [ Role ] })
         .then(rows => rows.map(row => row.toJSON() as UserSchema));
     }
 
@@ -47,7 +51,9 @@ export default class UserResolver
         @Arg("id") id: string
     ): Promise<UserSchema>
     {
-        return User.findOne({ where: { id } }).then(row => row.toJSON() as UserSchema);
+        console.log("[UserResolver] - query user");
+        return User.findByPk(id, { include: [Role, Permission] })
+            .then(row => row ? row.toJSON() as UserSchema : null);
     }
 
     @Query(returns => UserSchema, { nullable: true })
@@ -59,20 +65,14 @@ export default class UserResolver
         return Promise.resolve(user ? user.toJSON() as UserSchema : null);
     }
 
-    @Mutation(returns => UserSchema)
-    async insertUser(
+    @Mutation(returns => StatusSchema)
+    async createUser(
         @Arg("user", { nullable: false }) user: UserInputSchema
-    ): Promise<UserSchema>
+    ): Promise<StatusSchema>
     {
-        return User.findOne({ where: { email: user.email }})
-            .then(user => {
-                if (user) {
-                    throw new Error(`User with email '${user.email} already registered.`);
-                }
-            })
-            .then(() => User.getPasswordHash(user.password))
-            .then(hash => User.create({ name: user.name, email: user.email, password: hash }))
-            .then(user => user.toJSON() as UserSchema);
+        return User.createWithProject(user.name, user.email, user.password)
+            .then(user => ({ ok: true, message: null }))
+            .catch(error => ({ ok: false, message: error.message }));
     }
 
     @Mutation(returns => UserSchema)
@@ -81,7 +81,7 @@ export default class UserResolver
     ): Promise<unknown>
     {
         return User.update(user, { where: { id: user.id }}).then(() =>
-            User.findOne({ where: { id: user.id }}).then(user => user.toJSON())
+            User.findByPk(user.id).then(user => user.toJSON())
         );
     }
 }

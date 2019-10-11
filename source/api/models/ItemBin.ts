@@ -30,6 +30,6 @@ export default class ItemBin extends Model<ItemBin>
     itemId: number;
 
     @ForeignKey(() => Bin)
-    @Column
+    @Column({ unique: true })
     binId: number;
 }

@@ -48,6 +48,6 @@ export class ProjectInputSchema
     @Field(type => String)
     name: string;
 
-    @Field(type => String)
+    @Field(type => String, { nullable: true })
     description: string;
 }

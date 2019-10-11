@@ -16,50 +16,16 @@
  */
 
 import "reflect-metadata";
-import { Field, Int, ObjectType, InputType } from "type-graphql";
-
-import { ProjectSchema } from "./Project";
-import { RoleSchema } from "./Role";
+import { Field, ObjectType } from "type-graphql";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
-export class UserSchema
+export class RoleSchema
 {
-    @Field(type => Int)
-    id: number;
+    @Field()
+    id: string;
 
     @Field()
     name: string;
-
-    @Field()
-    email: string;
-
-    @Field()
-    role: RoleSchema;
-
-    @Field(type => ProjectSchema, { nullable: true })
-    activeProject: ProjectSchema;
-
-    @Field()
-    createdAt: Date;
-
-    @Field()
-    updatedAt: Date;
-}
-
-@InputType()
-export class UserInputSchema
-{
-    @Field(type => Int, { nullable: true })
-    id: number;
-
-    @Field()
-    name: string;
-
-    @Field()
-    email: string;
-
-    @Field()
-    password: string;
 }

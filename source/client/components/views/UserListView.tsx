@@ -36,13 +36,19 @@ import Paper from "@material-ui/core/Paper";
 const columns: ITableColumn[] = [
     { id: "name", label: "Name" },
     { id: "email", label: "Email" },
+    { id: "role", label: "Role", format: role => role.name },
     { id: "createdAt", label: "Created", format: formatDateTime },
 ];
 
 const queryUsers = gql`
 {
     users(offset: 0, limit: 0) {
-        name, email, createdAt
+        name
+        email
+        createdAt
+        role {
+            name
+        }
     }
 }
 `;

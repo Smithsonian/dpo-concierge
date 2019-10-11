@@ -85,7 +85,7 @@ class Application extends React.Component<IApplicationProps, IApplicationState>
                     graphQLErrors.map(({ message, locations, path }) => {
                         message && console.warn(`[GraphQL error] Message: ${message}`);
                         path && console.warn(`[GraphQL error] Path: ${path}`);
-                        locations.forEach(location => console.warn(location));
+                        //locations.forEach(location => console.warn(location));
                     });
 
                 if (networkError) {

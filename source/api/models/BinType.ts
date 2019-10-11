@@ -37,7 +37,7 @@ export default class BinType extends Model<BinType>
     {
         const presets = BinType.presets;
 
-        return BinType.count().then((count => {
+        return BinType.count().then(count => {
             if (count === 0) {
                 return BinType.bulkCreate([
                     { id: presets.photogrammetry, name: "Photogrammetry" },
@@ -49,7 +49,7 @@ export default class BinType extends Model<BinType>
                     { id: presets.processing,     name: "Processing" },
                 ]);
             }
-        }));
+        });
     }
 
     @Column({ primaryKey: true })

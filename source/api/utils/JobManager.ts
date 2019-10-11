@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-import { Model } from "sequelize-typescript"
-import { Op } from "sequelize";
+import { Op, Model } from "sequelize";
 
 import { Dictionary } from "./types";
 
 import Job from "../models/Job";
-import PlayMigrationJob from "../models/PlayMigrationJob";
+
+import Services from "../app/Services";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -30,7 +30,7 @@ export default class JobManager
     protected static pollingInterval = 3000;
 
     protected static jobTypes = [
-        PlayMigrationJob
+        "PlayMigrationJob"
     ];
 
     protected activeJobs: Dictionary<Model[]>;
@@ -57,7 +57,7 @@ export default class JobManager
         }
     }
 
-    async run()
+    protected async run()
     {
         await this.fetchActiveJobs();
         await this.updateActiveJobs();
@@ -65,9 +65,9 @@ export default class JobManager
 
     protected async fetchActiveJobs()
     {
-        const tasks = JobManager.jobTypes.map(jobType => {
-            const typeName = jobType.typeName;
-            return jobType.findAll({
+        const tasks = JobManager.jobTypes.map(jobModelName => {
+            const jobModel = Services.database.db.models[jobModelName];
+            return jobModel.findAll({
                 include: [{
                     model: Job,
                     where: {
@@ -76,7 +76,7 @@ export default class JobManager
                 }],
                 logging: false, // logging disabled for this recurring task
             }).then(rows => {
-                this.activeJobs[typeName] = rows;
+                this.activeJobs[jobModelName] = rows;
             });
         });
 
@@ -96,7 +96,7 @@ export default class JobManager
         return Promise.all(tasks);
     }
 
-    protected async updateActiveJob(job: PlayMigrationJob)
+    protected async updateActiveJob(job)
     {
         const state = job.job.state;
 

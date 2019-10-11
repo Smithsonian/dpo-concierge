@@ -100,7 +100,7 @@ export interface IJobListViewProps
 function JobListView(props: IJobListViewProps)
 {
     const { classes, history } = props;
-    const { loading, error, data } = useQuery(ALL_JOBS_QUERY);
+    const { loading, error, data } = useQuery(ALL_JOBS_QUERY, { errorPolicy: "all" });
 
     if (loading) {
         return (<CircularProgress className={classes.progress} />);
@@ -110,9 +110,6 @@ function JobListView(props: IJobListViewProps)
     }
 
     const rows = data.jobs;
-
-    console.log(rows[0].createdAt);
-    console.log(typeof rows[0].createdAt);
 
     return (
         <Paper className={classes.paper}>

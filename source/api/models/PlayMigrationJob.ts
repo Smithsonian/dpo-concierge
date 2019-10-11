@@ -21,22 +21,17 @@ import Item from "./Item";
 import Job from "./Job";
 
 import CookTask from "./CookTask";
-import CookClient from "../utils/CookClient";
+
+import { cookClient }  from "../app/Services";
 
 ////////////////////////////////////////////////////////////////////////////////
-
-// TODO: Centralize
-const cookClient = new CookClient(
-    process.env["COOK_MACHINE_ADDRESS"],
-    process.env["COOK_CLIENT_ID"],
-);
 
 export type MigrationJobStep = "process" | "fetch" | "";
 
 @Table
 export default class PlayMigrationJob extends Model<PlayMigrationJob>
 {
-    static readonly typeName: string = "PlayMigrationJob";
+    //static readonly typeName: string = "PlayMigrationJob";
 
     ////////////////////////////////////////////////////////////////////////////////
     // SCHEMA

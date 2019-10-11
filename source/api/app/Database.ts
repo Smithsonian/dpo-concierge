@@ -19,6 +19,8 @@ import * as path from "path";
 
 import { Sequelize } from "sequelize-typescript";
 
+import Role from "../models/Role";
+
 ////////////////////////////////////////////////////////////////////////////////
 
 export interface IDatabaseConfiguration
@@ -63,6 +65,7 @@ export default class Database
 
     async setup()
     {
-        return this._db.sync();
+        return this.db.sync()
+            .then(() => Role.populateDefaultPermissions());
     }
 }

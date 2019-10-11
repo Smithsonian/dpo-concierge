@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
+import { Table, Column, Model, ForeignKey, BelongsTo, BelongsToMany } from "sequelize-typescript";
 
 import Project from "./Project";
+import Bin from "./Bin";
+import JobBin from "./JobBin";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -44,4 +46,7 @@ export default class Job extends Model<Job>
 
     @BelongsTo(() => Project)
     project: Project;
+
+    @BelongsToMany(() => Bin, () => JobBin, "jobId", "binId")
+    bins: Bin[];
 }

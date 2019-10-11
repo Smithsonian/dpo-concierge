@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo, BelongsToMany } from "sequelize-typescript";
 
 import Subject from "./Subject";
 import Bin from "./Bin";
-import Asset from "./Asset";
+import ItemBin from "./ItemBin";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -48,4 +48,6 @@ export default class Item extends Model<Item>
     @BelongsTo(() => Subject)
     subject: Subject;
 
+    @BelongsToMany(() => Bin, () => ItemBin, "itemId", "binId")
+    bins: Bin[];
 }
