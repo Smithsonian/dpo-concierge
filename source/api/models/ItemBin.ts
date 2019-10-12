@@ -25,11 +25,11 @@ import Bin from "./Bin";
 @Table
 export default class ItemBin extends Model<ItemBin>
 {
-    @ForeignKey(() => Item)
-    @Column
-    itemId: number;
-
     @ForeignKey(() => Bin)
     @Column({ unique: true })
     binId: number;
+
+    @ForeignKey(() => Item)
+    @Column
+    itemId: number;
 }

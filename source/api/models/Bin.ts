@@ -15,10 +15,14 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, DataType, ForeignKey, BelongsTo, HasMany, AfterSync } from "sequelize-typescript";
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo, HasMany, HasOne, AfterSync } from "sequelize-typescript";
 
 import BinType from "./BinType";
 import Asset from "./Asset";
+import Item from "./Item";
+import ItemBin from "./ItemBin";
+import Job from "./Job";
+import JobBin from "./JobBin";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -78,6 +82,12 @@ export default class Bin extends Model<Bin>
 
     @BelongsTo(() => BinType)
     type: BinType;
+
+    @HasOne(() => ItemBin)
+    itemBin: ItemBin;
+
+    @HasOne(() => JobBin)
+    jobBin: JobBin;
 
     getStoragePath() {
         return `${this.uuid}/v${this.version}`;

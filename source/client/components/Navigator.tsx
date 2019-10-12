@@ -19,6 +19,8 @@ import * as React from "react";
 
 import { NavLink } from "react-router-dom";
 
+import { withStyles } from "@material-ui/core/styles";
+
 import Hidden from "@material-ui/core/Hidden";
 import Drawer from "@material-ui/core/Drawer";
 import List from "@material-ui/core/List";
@@ -29,15 +31,12 @@ import Divider from "@material-ui/core/Divider";
 
 import PersonIcon from "@material-ui/icons/Person";
 import GroupIcon from "@material-ui/icons/Group";
-import DescriptionIcon from "@material-ui/icons/Description";
-import InsertDriveFileIcon from "@material-ui/icons/InsertDriveFile";
 import AssignmentIcon from "@material-ui/icons/Assignment";
 import WorkIcon from "@material-ui/icons/Work";
 import AirportShuttleIcon from "@material-ui/icons/AirportShuttle";
 import ImportIcon from "@material-ui/icons/Input";
-import { withStyles } from "@material-ui/core/styles";
 
-import { ConciergeIcon, ModelIcon, SceneIcon } from "./icons";
+import { ConciergeIcon, BookIcon, CabinetIcon, BoneIcon, FilesIcon } from "./icons";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -55,10 +54,10 @@ export interface INavigatorProps
 const categories = [{
     name: "Repository",
     items: [
-        { name: "Subjects", icon: <DescriptionIcon />, link: "/repository/subjects" },
-        { name: "Items", icon: <DescriptionIcon />, link: "/repository/items" },
-        { name: "Bins", icon: <ModelIcon />, link: "/repository/bins" },
-        { name: "Assets", icon: <InsertDriveFileIcon />, link: "/repository/assets" },
+        { name: "Subjects", icon: <BookIcon />, link: "/repository/subjects" },
+        { name: "Items", icon: <BoneIcon />, link: "/repository/items" },
+        { name: "Bins", icon: <CabinetIcon />, link: "/repository/bins" },
+        { name: "Assets", icon: <FilesIcon />, link: "/repository/assets" },
     ],
 }, {
     name: "Workflow",

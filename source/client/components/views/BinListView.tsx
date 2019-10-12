@@ -19,22 +19,32 @@ import * as React from "react";
 
 import { useHistory } from "react-router-dom";
 
-import { useQuery } from "@apollo/react-hooks";
+import * as queryString from "query-string";
+
+import { useQuery, useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
-import { withStyles, StyleRules } from "@material-ui/core/styles";
+import { withStyles, styled, StyleRules } from "@material-ui/core/styles";
 
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Paper from "@material-ui/core/Paper";
+import Toolbar from "@material-ui/core/Toolbar";
+import Typography from "@material-ui/core/Typography";
+import IconButton from "@material-ui/core/IconButton";
+
+import EditIcon from "@material-ui/icons/Edit";
+import DeleteIcon from "@material-ui/icons/DeleteForever";
+
+import { FilesIcon } from "../icons";
 
 import DataTable, { ITableColumn, TableCellFormatter } from "../DataTable";
 import ErrorCard from "../ErrorCard";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export const ALL_BINS_QUERY = gql`
-query AllBins($itemId: Int) {
-    bins(itemId: $itemId, offset: 0, limit: 0) {
+export const BINS_QUERY = gql`
+query Bins($itemId: Int, $jobId: Int) {
+    bins(itemId: $itemId, jobId: $jobId, offset: 0, limit: 0) {
         name, uuid, version
         type {
             name
@@ -42,27 +52,66 @@ query AllBins($itemId: Int) {
     }
 }`;
 
-const columns: ITableColumn[] = [
-    { id: "name", label: "Name" },
-    { id: "type", label: "Type", format: value => value.name },
-    { id: "uuid", label: "UUID" },
-    { id: "version", label: "version" },
-];
+export const EDIT_BIN_MUTATION = gql`
+mutation EditBin($binId: Int!) {
+    editBin(binId: $binId) {
+        id
+    }
+}`;
+
+export const DELETE_BIN_MUTATION = gql`
+mutation DeleteBin($binId: Int!) {
+    deleteBin(binId: $binId) {
+        id
+    }
+}`;
+
+////////////////////////////////////////////////////////////////////////////////
+
+const CellIconButton = styled(IconButton)({
+    margin: "-16px 0",
+});
+
+const actionButtons: TableCellFormatter = (value, row, column) => (
+    <div style={{ display: "flex", flexWrap: "nowrap" }}>
+        <CellIconButton onClick={() => {}} title="View Asset List">
+            <FilesIcon fontSize="small" />
+        </CellIconButton>
+        <CellIconButton onClick={() => {}} title="Edit Bin Details">
+            <EditIcon fontSize="small" />
+        </CellIconButton>
+        <CellIconButton onClick={() => {
+            if (confirm("Delete bin and all assets. Are you sure?")) {
+                const variables = { binId: row["id"] };
+                column.data.deleteBinMutation({ variables });
+            }
+        }} title="Delete Bin and Assets">
+            <DeleteIcon  fontSize="small" />
+        </CellIconButton>
+    </div>
+);
 
 export interface IBinListViewProps
 {
     classes: {
         progress: string;
         paper: string;
+        toolbar: string;
     }
 }
 
 function BinListView(props: IBinListViewProps)
 {
     const { classes } = props;
+
+    const params = queryString.parse(location.search);
+    const itemId = parseInt(params.itemId as string) || 0;
+    const jobId = parseInt(params.jobId as string) || 0;
+
     const history = useHistory();
 
-    const { loading, error, data } = useQuery(ALL_BINS_QUERY);
+    const [ deleteBinMutation ] = useMutation(DELETE_BIN_MUTATION);
+    const { loading, error, data } = useQuery(BINS_QUERY, { variables: { itemId, jobId }});
 
     if (loading) {
         return (<CircularProgress className={classes.progress} />);
@@ -71,12 +120,29 @@ function BinListView(props: IBinListViewProps)
         return (<ErrorCard title="Query Error" error={error}/>);
     }
 
+    const columns: ITableColumn[] = [
+        { id: "actions", label: "Actions", format: actionButtons, width: 1, data: {
+                deleteBinMutation
+            }},
+        { id: "name", label: "Name" },
+        { id: "type", label: "Type", format: value => value.name },
+        { id: "uuid", label: "UUID" },
+        { id: "version", label: "version" },
+    ];
+
     const rows = data.bins;
+    const item = data.item;
 
     return (
         <Paper className={classes.paper}>
+            <Toolbar className={classes.toolbar}>
+                <Typography variant="subtitle2">
+                    { itemId ? `Bins in Item ${itemId}` : (jobId ? `Bins in Job ${jobId}` : "All Bins") }
+                </Typography>
+                <div style={{ flex: 1 }}/>
+            </Toolbar>
             <DataTable
-                storageKey="repository/subjects"
+                storageKey="repository/bins"
                 rows={rows}
                 columns={columns}
                 history={history}
@@ -92,6 +158,12 @@ const styles = theme => ({
     progress: {
         alignSelf: "center",
     },
+    toolbar: {
+        display: "flex",
+        justifyContent: "flex-end",
+        paddingLeft: theme.spacing(2),
+        backgroundColor: theme.palette.primary.light,
+    }
 } as StyleRules);
 
 export default withStyles(styles)(BinListView);

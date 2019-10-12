@@ -22,6 +22,7 @@ import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize
 import Asset from "./Asset";
 import Bin from "./Bin";
 import Item from "./Item";
+import ItemBin from "./ItemBin";
 import Subject from "./Subject";
 
 import Job, { IJobImplementation } from "./Job";
@@ -228,15 +229,31 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
 
                 return Subject.findByNameOrCreate(subject);
             })
-            .then(subject => Item.findByNameAndSubjectOrCreate({
-                name: this.object,
-                subjectId: subject.id,
-            }))
-            .then(item => Bin.create({
-                name: this.object,
-                typeId: BinType.presets.voyagerScene,
-            }))
-            .then(bin => {
+            .then(subject =>
+                Item.findByNameAndSubjectOrCreate({
+                    name: this.object,
+                    subjectId: subject.id,
+                })
+            )
+            .then(item =>
+                Promise.all([
+                    Bin.create({
+                        name: this.job.name,
+                        typeId: BinType.presets.voyagerScene,
+                    }).then(bin => ItemBin.create({
+                        binId: bin.id,
+                        itemId: item.id,
+                    })),
+                    Bin.create({
+                        name: this.job.name,
+                        typeId: BinType.presets.processing,
+                    }).then(bin => ItemBin.create({
+                        binId: bin.id,
+                        itemId: item.id,
+                    })),
+                ])
+            )
+            .then(([sceneItemBin, tempItemBin]) => {
                 const deliveryStep = report.steps["delivery"];
                 if (!deliveryStep) {
                     throw new Error("job has no delivery step");
@@ -247,11 +264,13 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
                     throw new Error("job delivery contains no files");
                 }
 
-                const files = Object.keys(fileMap).map(key => fileMap[key]);
-                return Promise.all(files.map(filePath => (
-                    repo.createWriteStream(filePath, bin.id, true)
+                return Promise.all(Object.keys(fileMap).map(fileKey => {
+                    const binId = sceneItemBin.binId;
+                    const filePath = fileMap[fileKey];
+
+                    return repo.createWriteStream(filePath, binId, true)
                         .then(stream => cookClient.downloadFile(this.cookJobId, filePath, stream))
-                )));
+                }));
             })
             .then(() => {
                 this.step = "";

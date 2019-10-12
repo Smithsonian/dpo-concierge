@@ -40,10 +40,9 @@ export default class ItemResolver
     @Query(returns => ItemSchema, { nullable: true })
     item(
         @Arg("id", type => Int) id: number,
-        @Arg("uuid") uuid: string,
     ): Promise<ItemSchema | null>
     {
-        return (id ? Item.findByPk(id) : Item.findOne({ where: { uuid }}))
-        .then(row => row ? row.toJSON() as ItemSchema : null);
+        return Item.findByPk(id)
+            .then(row => row ? row.toJSON() as ItemSchema : null);
     }
 }

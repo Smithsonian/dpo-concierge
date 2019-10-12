@@ -37,6 +37,7 @@ import DeleteIcon from "@material-ui/icons/DeleteForever";
 
 import DataTable, { ITableColumn, TableCellFormatter, formatText, formatDateTime } from "../DataTable";
 import ErrorCard from "../ErrorCard";
+import { FilesIcon } from "client/components/icons";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -68,31 +69,33 @@ mutation DeleteJob($jobId: Int!) {
     }
 }`;
 
+////////////////////////////////////////////////////////////////////////////////
+
 const CellIconButton = styled(IconButton)({
     margin: "-16px 0",
 });
 
-const createActions: TableCellFormatter = (value, row, column) => (
+const actionButtons: TableCellFormatter = (value, row, column) => (
     <div style={{ display: "flex", flexWrap: "nowrap" }}>
         <CellIconButton onClick={() => {
             const variables = { jobId: row["id"] };
             column.data.runJobMutation({ variables, refetchQueries: [{ query: ALL_JOBS_QUERY }] });
         }} title="Run Job">
-            <PlayIcon/>
+            <PlayIcon  fontSize="small" />
         </CellIconButton>
         <CellIconButton onClick={() => {
             const variables = { jobId: row["id"] };
             column.data.cancelJobMutation({ variables, refetchQueries: [{ query: ALL_JOBS_QUERY }] });
         }} title="Cancel Job">
-            <StopIcon/>
+            <StopIcon  fontSize="small" />
         </CellIconButton>
         <CellIconButton onClick={() => {
-            if (confirm("Are you sure?")) {
+            if (confirm("Delete job. Are you sure?")) {
                 const variables = { jobId: row["id"] };
                 column.data.deleteJobMutation({ variables, refetchQueries: [{ query: ALL_JOBS_QUERY }] });
             }
         }} title="Delete Job">
-            <DeleteIcon/>
+            <DeleteIcon fontSize="small" />
         </CellIconButton>
     </div>
 );
@@ -133,7 +136,7 @@ function JobListView(props: IJobListViewProps)
     const [ deleteJobMutation ] = useMutation(DELETE_JOB_MUTATION);
 
     const columns: ITableColumn[] = [
-        { id: "actions", label: "Actions", format: createActions, width: 1, data: {
+        { id: "actions", label: "Actions", format: actionButtons, width: 1, data: {
             runJobMutation, cancelJobMutation, deleteJobMutation
         }},
         { id: "createdAt", label: "Created", format: formatDateTime },

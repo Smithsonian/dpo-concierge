@@ -63,7 +63,7 @@ const CellIconButton = styled(IconButton)({
     margin: "-16px 0",
 });
 
-const createActions: TableCellFormatter = (value, row, column) => (
+const actionButtons: TableCellFormatter = (value, row, column) => (
     <div style={{ display: "flex", flexWrap: "nowrap" }}>
         <CellIconButton onClick={() => {
             column.data.setActiveProject({
@@ -115,7 +115,7 @@ function ProjectListView(props: IProjectListViewProps)
     const [setActiveProject, { error: error1, data: data1 }] = useMutation(ACTIVATE_PROJECT_MUTATION);
 
     const columns: ITableColumn[] = [
-        { id: "active", label: "Actions", format: createActions, width: 1, data: { setActiveProject, activeProjectId } },
+        { id: "active", label: "Actions", format: actionButtons, width: 1, data: { setActiveProject, activeProjectId } },
         { id: "name", label: "Name" },
         { id: "description", label: "Description" },
         { id: "createdAt", label: "Created", format: formatDateTime },
@@ -168,6 +168,7 @@ const styles = theme => ({
         display: "flex",
         justifyContent: "flex-end",
         padding: theme.spacing(1),
+        backgroundColor: theme.palette.primary.light,
     }
 } as StyleRules);
 

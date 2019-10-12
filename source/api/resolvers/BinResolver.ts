@@ -20,6 +20,8 @@ import { Arg, Int, Query, Resolver } from "type-graphql";
 import Bin from "../models/Bin";
 import { BinSchema } from "../schemas/Bin";
 
+import ItemBin from "../models/ItemBin";
+import Item from "../models/Item";
 import BinType from "../models/BinType";
 import Asset from "../models/Asset";
 
@@ -31,27 +33,44 @@ export default class BinResolver
     @Query(returns => [ BinSchema ])
     bins(
         @Arg("itemId", type => Int, { nullable: true }) itemId: number,
+        @Arg("jobId", type => Int, { nullable: true }) jobId: number,
         @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
         @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
-    ): Promise<BinSchema[]>
+    )
     {
         limit = limit ? limit : undefined;
-        const where = itemId !== undefined ? { itemId } : undefined;
 
-        return Bin.findAll({ offset, limit, where, include: [BinType] })
-        .then(rows => rows.map(row => row.toJSON() as BinSchema));
+        if (itemId) {
+            return Bin.findAll({
+                offset,
+                limit,
+                // where: {
+                //     include: [{ model: ItemBin, where: { itemId }}]
+                // },
+                include: [{
+                    model: ItemBin,
+                    attributes: [],
+                    where: { itemId },
+                }],
+            })
+            .then(rows =>
+                rows.map(row => row.toJSON() as BinSchema)
+            );
+        }
+        else if (jobId) {
+
+        }
+
+        return Bin.findAll({ offset, limit, include: [BinType] })
+            .then(rows => rows.map(row => row.toJSON() as BinSchema));
     }
 
     @Query(returns => BinSchema, { nullable: true })
     bin(
         @Arg("id", type => Int) id: number,
-        @Arg("uuid") uuid: string,
     ): Promise<BinSchema | null>
     {
-        return (id ?
-            Bin.findByPk(id, { include: [BinType, Asset] }) :
-            Bin.findOne({ where: { uuid }, include: [BinType, Asset] })
-        )
-        .then(row => row ? row.toJSON() as BinSchema : null);
+        return Bin.findByPk(id, { include: [BinType, Asset] })
+            .then(row => row ? row.toJSON() as BinSchema : null);
     }
 }
