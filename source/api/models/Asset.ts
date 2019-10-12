@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
+import * as mime from "mime";
+
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo, AfterSync } from "sequelize-typescript";
 
 import Bin from "./Bin";
 
@@ -24,36 +26,54 @@ import Bin from "./Bin";
 @Table({ indexes: [ { fields: [ "filePath", "binId" ] }] })
 export default class Asset extends Model<Asset>
 {
-    static async findAllWithBin()
+    // TODO: For testing only
+    @AfterSync
+    static async populate()
     {
-        return Asset.findAll({ include: [Bin] });
+        return Asset.count().then(count => {
+            if (count === 0) {
+                return Asset.bulkCreate([
+                    { id: 1, binId: 1, filePath: "image.jpg" },
+                    { id: 2, binId: 1, filePath: "documents/document.pdf" },
+                ]);
+            }
+        });
     }
 
-    static async findVersion(binId: string, filePath: string, version: number): Promise<Asset | undefined>
+    static async findByBinId(filePath: string, binId: number): Promise<Asset | undefined>
     {
-        // if version is unspecified, return latest version
-        if (version === undefined) {
-            const where = { binId, filePath };
-            const order = [ "version", "DESC" ];
-            return Asset.findOne({ where, order }).then(asset => {
-                if (!asset) {
-                    throw new Error(`asset not found: ${filePath} [latest]`);
-                }
-
-                return asset;
-            })
-        }
-
-        // get and return specified version
-        const where = { binId, filePath, version };
-        return Asset.findOne({ where }).then(asset => {
+        return Asset.findOne({
+            where: { filePath, binId }
+        })
+        .then(asset => {
             if (!asset) {
-                throw new Error(`asset not found: ${filePath} [${version}]`);
+                console.log(`[Asset.findByBinId] Asset not found in bin ${binId}: ${filePath}`);
             }
 
             return asset;
-        })
+        });
     }
+
+    static async findByBinVersion(filePath: string, binUuid: string, binVersion?: number): Promise<Asset | undefined>
+    {
+        let binIncludeOptions = binVersion ?
+            { model: Bin, attributes: [ "id", "uuid", "version" ], where: { uuid: binUuid, version: binVersion } } :
+            { model: Bin, attributes: [ "id", "uuid", "version" ], where: { uuid: binUuid }, order: [ "version", "DESC" ] };
+
+        return Asset.findOne({
+            where: { filePath },
+            include: [ binIncludeOptions ],
+        })
+        .then(asset => {
+            if (!asset) {
+                console.log(`[Asset.findByBinVersion] Asset not found: ${binUuid}/${filePath}`);
+            }
+
+            return asset;
+        });
+    }
+
+
 
     static async getLatestVersionNumber(groupId: string, filePath: string): Promise<number | undefined>
     {
@@ -63,6 +83,8 @@ export default class Asset extends Model<Asset>
         return Asset.findOne({ where, order, attributes: ["version"] })
             .then(asset => asset ? asset.version : 0);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////
 
     @ForeignKey(() => Bin)
     @Column({ type: DataType.INTEGER, allowNull: false, unique: "pathBinId" })
@@ -74,7 +96,7 @@ export default class Asset extends Model<Asset>
     @Column({ type: DataType.STRING, allowNull: false, unique: "pathBinId" })
     filePath: string;
 
-    @Column({ type: DataType.INTEGER })
+    @Column({ type: DataType.INTEGER, defaultValue: 0 })
     byteSize: number;
 
 
@@ -98,6 +120,10 @@ export default class Asset extends Model<Asset>
         const name = this.name;
         const lastDot = name.lastIndexOf(".");
         return name.substr(lastDot + 1);
+    }
+
+    get mimeType() {
+        return mime.getType(this.filePath);
     }
 
     /**

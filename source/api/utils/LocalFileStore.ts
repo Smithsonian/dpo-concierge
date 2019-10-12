@@ -22,11 +22,6 @@ import * as mkdirp from "mkdirp";
 import { IFileStore, IFileInfo, ReadStream, WriteStream } from "./FileStore";
 
 ////////////////////////////////////////////////////////////////////////////////
-// ENVIRONMENT VARIABLES
-
-//const fileStorePath = process.env["FILE_STORE_BASEPATH"];
-
-////////////////////////////////////////////////////////////////////////////////
 
 export default class LocalFileStore implements IFileStore
 {
@@ -34,6 +29,10 @@ export default class LocalFileStore implements IFileStore
 
     constructor(storePath: string)
     {
+        if (!storePath) {
+            throw new Error("LocalFileStore.constructor - missing store path");
+        }
+
         this.storePath = storePath;
     }
 

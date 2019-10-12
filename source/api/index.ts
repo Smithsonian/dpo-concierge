@@ -36,7 +36,7 @@ const isDevMode = process.env["NODE_ENV"] !== "production";
 
 const mySQLPassword = process.env["MYSQL_PASSWORD"];
 
-const fileStoragePath = process.env["FILE_STORAGE_BASEPATH"];
+const fileStorePath = process.env["FILE_STORE_BASEPATH"];
 
 const cookMachineAddress = process.env["COOK_MACHINE_ADDRESS"];
 const cookClientId = process.env["COOK_CLIENT_ID"];
@@ -92,7 +92,7 @@ const database = new Database(databaseConfig);
 
 Container.set(Server, server);
 Container.set(Database, database);
-Container.set(ManagedRepository, new ManagedRepository(new LocalFileStore(fileStoragePath)));
+Container.set(ManagedRepository, new ManagedRepository(new LocalFileStore(fileStorePath)));
 Container.set(CookClient, new CookClient(cookMachineAddress, cookClientId));
 Container.set(EDANClient, new EDANClient(edanAppId, edanAppKey));
 

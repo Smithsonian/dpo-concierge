@@ -16,8 +16,9 @@
  */
 
 import Asset from "../models/Asset";
+import Bin from "../models/Bin";
 
-import { IFileStore } from "./FileStore";
+import { IFileStore, ReadStream } from "./FileStore";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -30,54 +31,78 @@ export default class ManagedRepository
         this.fileStore = fileStore;
     }
 
-    async readFile(targetFilePath: string, groupId: string, filePath: string, version?: number)
+    async readFile(targetFilePath: string, filePath: string, binUuid: string, binVersion?: number)
     {
-        return Asset.findVersion(groupId, filePath, version)
-            .then(asset => this.fileStore.readFile(asset.getStoragePath(), targetFilePath));
-    }
-
-    async createReadStream(groupId: string, filePath: string, version?: number)
-    {
-        return Asset.findVersion(groupId, filePath, version)
-            .then(asset => this.fileStore.createReadStream(asset.getStoragePath()));
-    }
-
-    async writeFile(sourceFilePath: string, groupId: string, filePath: string, overwrite?: boolean)
-    {
-        let asset: Asset = undefined;
-        let storageFilePath: string = undefined;
-
-        return Asset.getLatestVersionNumber(groupId, filePath)
-            .then(latestVersion => Asset.create({
-                filePath,
-                groupId,
-                version: overwrite ? latestVersion : latestVersion + 1
-            }))
-            .then(_asset => {
-                asset = _asset;
-                storageFilePath = asset.getStoragePath();
-                return this.fileStore.writeFile(sourceFilePath, storageFilePath);
-            })
-            .then(() => this.fileStore.getFileInfo(storageFilePath))
-            .then(stats => {
-                asset.byteSize = stats.byteSize;
-                return asset.save();
-            })
-            .catch(error => {
-                if (asset) {
-                    asset.destroy().then(() => { throw error; });
+        return Asset.findByBinVersion(filePath, binUuid, binVersion)
+            .then(asset => {
+                if (!asset) {
+                    return null;
                 }
+
+                return this.fileStore.readFile(asset.getStoragePath(), targetFilePath)
             });
     }
 
-    async createWriteStream(groupId: string, filePath: string, overwrite?: boolean)
+    async createReadStream(filePath: string, binUuid: string, binVersion?: number): Promise<ReadStream>
     {
-        return Asset.getLatestVersionNumber(groupId, filePath)
-        .then(latestVersion => Asset.create({
-            filePath,
-            groupId,
-            version: overwrite ? latestVersion : latestVersion + 1
-        }))
-        .then(asset => this.fileStore.createWriteStream(asset.getStoragePath()));
+        return Asset.findByBinVersion(filePath, binUuid, binVersion)
+            .then(asset => {
+                if (!asset) {
+                    return null;
+                }
+
+                return this.fileStore.createReadStream(asset.getStoragePath())
+            });
+    }
+
+    async writeFile(sourceFilePath: string, filePath: string, binId: number, overwrite?: boolean)
+    {
+        let bin: Bin = undefined;
+        let asset: Asset = undefined;
+
+        let storageFilePath: string = undefined;
+
+        return Bin.findByPk(binId)
+        .then(_bin => {
+            bin = _bin;
+            return Asset.create({
+                filePath,
+                binId: bin.id,
+            });
+        })
+        .then(_asset => {
+            asset = _asset;
+            asset.bin = bin;
+            storageFilePath = asset.getStoragePath();
+            return this.fileStore.writeFile(sourceFilePath, storageFilePath)
+        })
+        .then(() => this.fileStore.getFileInfo(storageFilePath))
+        .then(stats => {
+            asset.byteSize = stats.byteSize;
+            return asset.save();
+        })
+        .catch(error => {
+            if (asset) {
+                return asset.destroy().then(() => { throw error; });
+            }
+        });
+    }
+
+    async createWriteStream(filePath: string, binId: number, overwrite?: boolean)
+    {
+        let bin: Bin = undefined;
+
+        return Bin.findByPk(binId)
+        .then(_bin => {
+            bin = _bin;
+            return Asset.create({
+                filePath,
+                binId: bin.id
+            });
+        })
+        .then(asset => {
+            asset.bin = bin;
+            return this.fileStore.createWriteStream(asset.getStoragePath());
+        });
     }
 }

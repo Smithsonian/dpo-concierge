@@ -31,6 +31,12 @@ export class BinSchema
     id: number;
 
     @Field()
+    uuid: string;
+
+    @Field(type => Int)
+    version: number;
+
+    @Field()
     name: string;
 
     @Field()

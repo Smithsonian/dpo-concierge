@@ -71,6 +71,9 @@ export class PlayMigrationJobInput
     edanRecordId: string;
 
     @Field()
+    unitRecordId: string;
+
+    @Field()
     sharedDriveFolder: string;
 
     @Field()

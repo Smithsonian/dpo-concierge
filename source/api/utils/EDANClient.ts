@@ -75,7 +75,8 @@ export default class EDANClient
 
         const api = metadataSearch ? EDANClient.metadataSearchApi : EDANClient.collectionsSearchApi;
         const url = EDANClient.edanBaseUrl + api + queryString;
-        console.log("EDANClient.search - ", url);
+
+        console.log(`[EDANClient] search: ${url}`);
 
         return fetch(url, {
             method: "GET",

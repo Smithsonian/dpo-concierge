@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, DataType, ForeignKey, BelongsTo, HasMany } from "sequelize-typescript";
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo, HasMany, AfterSync } from "sequelize-typescript";
 
 import BinType from "./BinType";
 import Asset from "./Asset";
@@ -25,15 +25,42 @@ import Asset from "./Asset";
 @Table({ indexes: [ { fields: ["uuid", "version"] } ] })
 export default class Bin extends Model<Bin>
 {
-    static async findOneWithAssets(options)
+    @AfterSync
+    static async populate()
     {
-        return this.findOne({ ...options, include: [Asset] });
+        return Bin.count().then(count => {
+            if (count === 0) {
+                return Bin.bulkCreate([
+                    { id: 1, version: 1, name: "My first bin", typeId: "processing" }
+                ]);
+            }
+        });
     }
+
+    static async getLatestVersion(binUuid: string)
+    {
+        return Bin.findOne({
+            where: { uuid: binUuid },
+            order: [ "version", "DESC" ],
+        });
+    }
+
+    static async getLatestVersionNumber(binUuid: string)
+    {
+        return Bin.findOne({
+            where: { uuid: binUuid },
+            order: [ "version", "DESC" ],
+            attributes: [ "version" ]
+        })
+        .then(bin => bin ? bin.version : 0);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
 
     @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, unique: "uuidVersion" })
     uuid: string;
 
-    @Column({ type: DataType.INTEGER, unique: "uuidVersion" })
+    @Column({ type: DataType.INTEGER, defaultValue: 1, unique: "uuidVersion" })
     version: number;
 
     @Column({ type: DataType.STRING })

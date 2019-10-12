@@ -44,7 +44,16 @@ export class AssetSchema
     @Field()
     extension: string;
 
+    @Field()
+    mimeType: string;
+
     @Field(type => Int)
     byteSize: number;
+
+    @Field()
+    createdAt: Date;
+
+    @Field()
+    updatedAt: Date;
 }
 

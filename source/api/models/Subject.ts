@@ -37,6 +37,6 @@ export default class Subject extends Model<Subject>
     @Column
     edanRecordId: string;
 
-    @Column({ type: DataType.TEXT })
-    edanRecordCache: string;
+    @Column({ type: DataType.JSON })
+    edanRecordCache: object;
 }

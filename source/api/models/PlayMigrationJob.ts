@@ -19,11 +19,17 @@ import { Container } from "typedi";
 
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
 
+import Asset from "./Asset";
+import Bin from "./Bin";
 import Item from "./Item";
+import Subject from "./Subject";
+
 import Job, { IJobImplementation } from "./Job";
 
-import CookTask from "./CookTask";
 import CookClient, { IParameters } from "../utils/CookClient";
+import { IJobReport } from "../utils/cookTypes";
+import EDANClient from "../utils/EDANClient";
+import BinType from "./BinType";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -70,6 +76,9 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
     edanRecordId: string;
 
     @Column
+    unitRecordId: string;
+
+    @Column
     sharedDriveFolder: string;
 
     @Column
@@ -94,25 +103,22 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
             throw new Error(`job id mismatch: Job ${job.id } !== ${this.jobId}`);
         }
 
-        let client: CookClient = null;
+        const cookClient = Container.get(CookClient);
 
         this.job = job;
         this.step = "process";
 
         return this.save()
-        .then(() => this.getCookClient())
-        .then(_client => {
-            client = _client;
-
+        .then(() => {
             const params: IParameters = {
                 boxId: parseInt(this.playboxId),
                 annotationStyle: this.annotationStyle,
                 migrateAnnotationColor: !!this.migrateAnnotationColor,
             };
 
-            return client.createJob(this.cookJobId, "migrate-play", params);
+            return cookClient.createJob(this.cookJobId, "migrate-play", params);
         })
-        .then(() => client.runJob(this.cookJobId))
+        .then(() => cookClient.runJob(this.cookJobId))
         .then(() => {
             this.timerHandle = setInterval(() => this.monitor(job), PlayMigrationJob.cookPollingInterval);
         })
@@ -124,23 +130,25 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
 
     async cancel()
     {
+        const cookClient = Container.get(CookClient);
+
         const step = this.step;
         this.step = "";
 
         return this.save()
         .then(() => {
             if (step === "process") {
-                return this.getCookClient()
-                    .then(client => client.cancelJob(this.cookJobId));
+                return cookClient.cancelJob(this.cookJobId);
             }
         });
     }
 
     async delete()
     {
+        const cookClient = Container.get(CookClient);
+
         if (this.step === "process") {
-            return this.getCookClient()
-                .then(client => client.deleteJob(this.cookJobId))
+            return cookClient.deleteJob(this.cookJobId)
                 .finally(() => this.destroy());
         }
         else if (this.step === "fetch") {
@@ -159,12 +167,15 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
             return;
         }
 
-        return this.getCookClient()
-        .then(client => client.jobInfo(this.cookJobId))
+        const cookClient = Container.get(CookClient);
+
+        return cookClient.jobInfo(this.cookJobId)
         .then(jobInfo => {
             if (jobInfo.state === "done") {
                 clearInterval(this.timerHandle);
-                return this.postProcessingStep(job);
+                this.step = "fetch";
+                return this.save()
+                    .then(() => this.postProcessingStep(job));
             }
             if (!jobInfo || jobInfo.state !== "running") {
                 const message = jobInfo ? jobInfo.error || "Cook job not running" : "Cook job not found";
@@ -182,22 +193,48 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
 
     protected async postProcessingStep(job: Job)
     {
-        // fetch files, create assets
-        // create item
-        // create scene
+        const cookClient = Container.get(CookClient);
+        const edanClient = Container.get(EDANClient);
 
-        job.state = "done";
-        return job.save();
-    }
+        let report: IJobReport = undefined;
+        let record = undefined;
 
-    protected async getCookClient()
-    {
-        const client = Container.get(CookClient);
+        return cookClient.jobReport(this.cookJobId)
+            .then(_report => {
+                report = _report;
 
-        return client.machineInfo()
-            .then(() => client)
-            .catch(error => {
-                throw new Error(`Cook service not available: ${error.message}`);
+                return edanClient.fetchMdmRecord(this.edanRecordId)
+                    .then(_record => record = _record)
+                    .catch(() => {});
+            })
+            .then(() => {
+                const subject: any = {
+                    name: this.object,
+                    edanRecordId: this.edanRecordId,
+                    unitRecordId: this.unitRecordId,
+                };
+                if (record) {
+                    subject.edanRecordCache = record;
+                }
+
+                return Subject.create(subject);
+            })
+            .then(subject => Item.create({
+                name: this.object,
+                subjectId: subject.id,
+            }))
+            .then(item => Bin.create({
+                name: this.object,
+                typeId: BinType.presets.voyager,
+            }))
+            .then(bin => {
+
+            })
+            .then(() => {
+                this.step = "";
+                job.state = "done";
+
+                return Promise.all([ this.save(), job.save() ]);
             });
     }
 }

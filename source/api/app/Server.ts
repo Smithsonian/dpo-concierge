@@ -22,6 +22,7 @@ import * as http from "http";
 import * as morgan from "morgan";
 import * as bodyParser from "body-parser";
 import * as colors from "colors/safe";
+import * as mime from "mime";
 
 import * as passport from "passport";
 import * as LocalStrategy from "passport-local";
@@ -43,9 +44,7 @@ import PlayMigrationJobResolver from "../resolvers/PlayMigrationJobResolver";
 import MigrationSheetEntryResolver from "../resolvers/MigrationSheetEntryResolver";
 
 import User from "../models/User";
-import Role from "../models/Role";
-import Permission from "../models/Permission";
-import Project from "../models/Project";
+import ManagedRepository from "../utils/ManagedRepository";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -182,6 +181,28 @@ export default class Server
 
         // static file server
         app.use("/static", express.static(this.config.staticDir));
+
+        // repo file server
+        app.get("/files/:bin/*", (req, res, next) => {
+            const bin = req.params.bin;
+            const path = req.params[0];
+
+            if (!bin || !path) {
+                return res.status(404).send();
+            }
+
+            Container.get(ManagedRepository).createReadStream(path, bin)
+            .then(stream => {
+                if (!stream) {
+                    return res.status(404).send();
+                }
+                res.setHeader("content-type", mime.getType(path));
+                return stream.pipe(res);
+            })
+            .catch(err => {
+                res.status(500).send(err);
+            });
+        });
 
         // sign in/sign up page
         app.get(["/login", "/register"], (req, res, next) => {

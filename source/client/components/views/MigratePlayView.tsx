@@ -104,6 +104,7 @@ function MigratePlayView(props: IMigratePlayViewProps)
         object: entry ? entry.object : "",
         playboxId: entry ? entry.playboxid : "",
         edanRecordId: entry ? entry.edanrecordid : "",
+        unitRecordId: entry ? entry.unitrecordid : "",
         sharedDriveFolder: entry ? entry.shareddrivefolder : "",
         masterModelGeometry: entry ? entry.mastermodellocation : "",
         masterModelTexture: "",
@@ -164,10 +165,19 @@ function MigratePlayView(props: IMigratePlayViewProps)
                                     fullWidth
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid item xs={6} sm={6}>
                                 <Field
                                     name="edanRecordId"
                                     label="EDAN Record ID"
+                                    component={TextField}
+                                    margin="normal"
+                                    fullWidth
+                                />
+                            </Grid>
+                            <Grid item xs={6} sm={6}>
+                                <Field
+                                    name="unitRecordId"
+                                    label="Unit Record ID"
                                     component={TextField}
                                     margin="normal"
                                     fullWidth

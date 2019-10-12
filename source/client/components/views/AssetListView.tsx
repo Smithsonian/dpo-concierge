@@ -25,7 +25,7 @@ import { withStyles, StyleRules } from "@material-ui/core/styles";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Paper from "@material-ui/core/Paper";
 
-import DataTable, { ITableColumn, TableCellFormatter } from "../DataTable";
+import DataTable, { ITableColumn, formatDateTime } from "../DataTable";
 import ErrorCard from "../ErrorCard";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -33,12 +33,15 @@ import ErrorCard from "../ErrorCard";
 export const ALL_ASSETS_QUERY = gql`
 query AllAssets($binId: Int) {
     assets(binId: $binId, offset: 0, limit: 0) {
-        name
+        name, path, mimeType, createdAt
     }
 }`;
 
 const columns: ITableColumn[] = [
     { id: "name", label: "Name" },
+    { id: "path", label: "Path" },
+    { id: "mimeType", label: "Type" },
+    { id: "createdAt", label: "Created", format: formatDateTime },
 ];
 
 export interface IAssetListViewProps

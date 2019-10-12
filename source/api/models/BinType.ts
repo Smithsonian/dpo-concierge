@@ -27,6 +27,7 @@ export default class BinType extends Model<BinType>
         master: "master",
         printable: "printable",
         editorial: "editorial",
+        voyager: "voyager",
         web: "web",
         media: "media",
         processing: "processing",

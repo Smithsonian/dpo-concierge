@@ -36,7 +36,14 @@ export default class AssetResolver
         const where = binId !== undefined ? { binId } : undefined;
 
         return Asset.findAll({ where, offset, limit })
-            .then(rows => rows.map(row => row.toJSON() as AssetSchema));
+            .then(rows => rows.map(row => {
+                const asset = row.toJSON() as AssetSchema;
+                asset.path = row.path;
+                asset.name = row.name;
+                asset.extension = row.extension;
+                asset.mimeType = row.mimeType;
+                return asset;
+            }));
     }
 
     @Query(returns => AssetSchema, { nullable: true })

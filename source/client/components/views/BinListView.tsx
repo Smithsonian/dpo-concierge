@@ -33,13 +33,18 @@ import ErrorCard from "../ErrorCard";
 export const ALL_BINS_QUERY = gql`
 query AllBins($itemId: Int) {
     bins(itemId: $itemId, offset: 0, limit: 0) {
-        name
+        name, uuid, version
+        type {
+            name
+        }
     }
 }`;
 
 const columns: ITableColumn[] = [
     { id: "name", label: "Name" },
-    { id: "type", label: "Type" },
+    { id: "type", label: "Type", format: value => value.name },
+    { id: "uuid", label: "UUID" },
+    { id: "version", label: "version" },
 ];
 
 export interface IBinListViewProps
