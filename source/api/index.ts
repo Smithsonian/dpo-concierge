@@ -19,14 +19,30 @@ import * as sourceMapSupport from "source-map-support";
 sourceMapSupport.install();
 
 import * as path from "path";
+import { Container } from "typedi";
 
 import Server, { IServerConfiguration } from "./app/Server";
-import Services from "./app/Services";
+import Database, { IDatabaseConfiguration } from "./app/Database";
+
+import ManagedRepository from "./utils/ManagedRepository";
+import LocalFileStore from "./utils/LocalFileStore";
+import CookClient from "./utils/CookClient";
+import EDANClient from "./utils/EDANClient";
 
 ////////////////////////////////////////////////////////////////////////////////
 // ENVIRONMENT VARIABLES
 
 const isDevMode = process.env["NODE_ENV"] !== "production";
+
+const mySQLPassword = process.env["MYSQL_PASSWORD"];
+
+const fileStoragePath = process.env["FILE_STORAGE_BASEPATH"];
+
+const cookMachineAddress = process.env["COOK_MACHINE_ADDRESS"];
+const cookClientId = process.env["COOK_CLIENT_ID"];
+
+const edanAppId = process.env["EDAN_APP_ID"];
+const edanAppKey = process.env["EDAN_APP_KEY"];
 
 ////////////////////////////////////////////////////////////////////////////////
 // CONFIGURATION
@@ -37,6 +53,14 @@ const serverConfig: IServerConfiguration = {
     port: 8000,
     staticDir: path.resolve(rootDir, "dist/"),
     isDevMode,
+};
+
+const databaseConfig: IDatabaseConfiguration = {
+    host: "db",
+    database: "concierge",
+    password: mySQLPassword,
+    user: "concierge",
+    loggingEnabled: isDevMode,
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -61,13 +85,19 @@ Cook Server:             ${process.env["COOK_MACHINE_ADDRESS"]}
 `);
 
 ////////////////////////////////////////////////////////////////////////////////
-// INIT AND START
+// INIT SERVICES AND START
 
 const server = new Server(serverConfig);
+const database = new Database(databaseConfig);
 
-Services.database.setup()
+Container.set(Server, server);
+Container.set(Database, database);
+Container.set(ManagedRepository, new ManagedRepository(new LocalFileStore(fileStoragePath)));
+Container.set(CookClient, new CookClient(cookMachineAddress, cookClientId));
+Container.set(EDANClient, new EDANClient(edanAppId, edanAppKey));
+
+database.setup()
     .then(() => server.setup())
-    .then(() => server.start())
-    .then(() => Services.jobManager.start());
+    .then(() => server.start());
 
 

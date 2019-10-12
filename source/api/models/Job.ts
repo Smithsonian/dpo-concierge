@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { Model as BaseModel } from "sequelize";
 import { Table, Column, Model, ForeignKey, BelongsTo, BelongsToMany } from "sequelize-typescript";
 
 import Project from "./Project";
@@ -23,7 +24,14 @@ import JobBin from "./JobBin";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export type JobState = "created" | "started" | "waiting" | "running" | "done" | "error" | "cancelled";
+export interface IJobImplementation extends BaseModel
+{
+    run: (job: Job) => Promise<unknown>;
+    cancel: (job: Job) => Promise<unknown>;
+    delete: (job: Job) => Promise<unknown>;
+}
+
+export type JobState = "created" | "running" | "done" | "error" | "cancelled";
 
 @Table
 export default class Job extends Model<Job>
@@ -49,4 +57,69 @@ export default class Job extends Model<Job>
 
     @BelongsToMany(() => Bin, () => JobBin, "jobId", "binId")
     bins: Bin[];
+
+    async run()
+    {
+        console.log(`[Job] - run job ${this.id} (${this.state}): ${this.name}`);
+
+        if (this.state !== "created") {
+            return Promise.resolve();
+        }
+
+        this.state = "running";
+
+        this.save()
+            .then(() => this.getJobImplementation())
+            .then(impl => impl.run(this))
+            .catch(error => {
+                this.state = "error";
+                this.error = error.message;
+                return this.save();
+            });
+    }
+
+    async cancel()
+    {
+        console.log(`[Job] - cancel job ${this.id} (${this.state}): ${this.name}`);
+
+        if (this.state !== "running") {
+            return Promise.resolve();
+        }
+
+        this.state = "cancelled";
+
+        this.save()
+            .then(() => this.getJobImplementation())
+            .then(impl => impl.cancel(this))
+            .catch(error => {
+                this.state = "error";
+                this.error = error.message;
+                return this.save();
+            });
+    }
+
+    async delete()
+    {
+        console.log(`[Job] - delete job ${this.id} (${this.state}): ${this.name}`);
+
+        this.getJobImplementation()
+            .then(impl => impl.delete(this))
+            .then(() => this.destroy());
+    }
+
+    protected async getJobImplementation(): Promise<IJobImplementation>
+    {
+        const ImplementationModel = Job.sequelize.models[this.type];
+        if (!ImplementationModel) {
+            throw new Error(`Can't find model for job type '${this.type}'`);
+        }
+        return ImplementationModel.findOne({ where: { jobId: this.id }})
+            .then(impl => {
+                if (!impl) {
+                    throw new Error(`Can't find implementation for job id ${this.id}`);
+                }
+
+                return impl as IJobImplementation;
+            });
+    }
 }

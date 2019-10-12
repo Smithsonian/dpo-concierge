@@ -158,10 +158,6 @@ export default class Server
         passport.use(localStrategy);
         // passport.use(ldapStrategy);
 
-        app.use(bodyParser.json());
-        app.use(passport.initialize());
-        app.use(passport.session());
-
         // GraphQL endpoint
         const schema = await buildSchema({
             resolvers: [
@@ -181,6 +177,9 @@ export default class Server
             container: Container,
         });
 
+        ////////////////////////////////////////////////////////////////////////////////
+        // ROUTES
+
         // static file server
         app.use("/static", express.static(this.config.staticDir));
 
@@ -193,9 +192,15 @@ export default class Server
             });
         });
 
+        // retrieve user from session
+        app.use(bodyParser.json());
+        app.use(passport.initialize());
+        app.use(passport.session());
+
         app.post("/login", passport.authenticate("local"), (req, res) => {
             res.json({ status: "ok" });
         });
+
 
         // TODO: Must be authorized
         app.use("/graphql", graphqlHttp(async (req, res, graphQLParams) => {

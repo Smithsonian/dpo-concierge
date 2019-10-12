@@ -117,7 +117,7 @@ export default class CookClient
         });
     }
 
-    async createJob(jobId: string, recipeId: string, parameters: IParameters): Promise<void>
+    async createJob(jobId: string, recipeId: string, parameters: IParameters): Promise<unknown>
     {
         return this.getRecipe(recipeId)
         .then(recipe => {
@@ -137,17 +137,17 @@ export default class CookClient
         });
     }
 
-    async runJob(jobId: string): Promise<void>
+    async runJob(jobId: string): Promise<unknown>
     {
         return this.fetchJson(this.clientPath + "/jobs/" + jobId + "/run", "PATCH");
     }
 
-    async cancelJob(jobId: string): Promise<void>
+    async cancelJob(jobId: string): Promise<unknown>
     {
         return this.fetchJson(this.clientPath + "/jobs/" + jobId + "/cancel", "PATCH");
     }
 
-    async deleteJob(jobId: string): Promise<void>
+    async deleteJob(jobId: string): Promise<unknown>
     {
         return this.fetchJson(this.clientPath + "/jobs/" + jobId, "DELETE");
     }
@@ -212,18 +212,20 @@ export default class CookClient
 
     protected async fetchJson(endpoint: string, method: string, data?: any): Promise<any>
     {
+        const body = data ? JSON.stringify(data) : undefined;
+
         return fetch(endpoint, {
             method,
-            body: JSON.stringify(data),
-            headers: { "Content-Type": "application/json" }
+            body,
+            headers: { "Content-Type": "application/json" },
+            timeout: 2000,
         })
         .then(result => {
             if (result.ok) {
                 return result.json();
             }
-            else {
-                throw new Error(`HTTP error ${result.status}: ${result.statusText}`);
-            }
+
+            throw new Error(`HTTP error ${result.status}: ${result.statusText}`);
         });
     }
 }

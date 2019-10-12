@@ -19,7 +19,7 @@ import * as React from "react";
 
 import { History } from "react-router-dom";
 
-import { useQuery } from "@apollo/react-hooks";
+import { useQuery, useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
 import moment from "moment";
@@ -29,6 +29,8 @@ import clsx from "clsx";
 
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Paper from "@material-ui/core/Paper";
+import Toolbar from "@material-ui/core/Toolbar";
+import Button from "@material-ui/core/Button";
 import IconButton from "@material-ui/core/IconButton";
 
 import PlayIcon from "@material-ui/icons/PlayArrow";
@@ -43,7 +45,28 @@ import ErrorCard from "../ErrorCard";
 export const ALL_JOBS_QUERY = gql`
 query {
     jobs(offset: 0, limit: 0) {
-        name, type, state, createdAt, error
+        id, name, type, state, createdAt, error
+    }
+}`;
+
+export const RUN_JOB_MUTATION = gql`
+mutation RunJob($jobId: Int!) {
+    runJob(jobId: $jobId) {
+        ok, message
+    }
+}`;
+
+export const CANCEL_JOB_MUTATION = gql`
+mutation CancelJob($jobId: Int!) {
+    cancelJob(jobId: $jobId) {
+        ok, message
+    }
+}`;
+
+export const DELETE_JOB_MUTATION = gql`
+mutation DeleteJob($jobId: Int!) {
+    deleteJob(jobId: $jobId) {
+        ok, message
     }
 }`;
 
@@ -53,13 +76,24 @@ const CellIconButton = styled(IconButton)({
 
 const createActions: TableCellFormatter = (value, row, column) => (
     <div style={{ display: "flex", flexWrap: "nowrap" }}>
-        <CellIconButton>
+        <CellIconButton onClick={() => {
+            const variables = { jobId: row["id"] };
+            column.data.runJobMutation({ variables, refetchQueries: [{ query: ALL_JOBS_QUERY }] });
+        }} title="Run Job">
             <PlayIcon/>
         </CellIconButton>
-        <CellIconButton>
+        <CellIconButton onClick={() => {
+            const variables = { jobId: row["id"] };
+            column.data.cancelJobMutation({ variables, refetchQueries: [{ query: ALL_JOBS_QUERY }] });
+        }} title="Cancel Job">
             <StopIcon/>
         </CellIconButton>
-        <CellIconButton>
+        <CellIconButton onClick={() => {
+            if (confirm("Are you sure?")) {
+                const variables = { jobId: row["id"] };
+                column.data.deleteJobMutation({ variables, refetchQueries: [{ query: ALL_JOBS_QUERY }] });
+            }
+        }} title="Delete Job">
             <DeleteIcon/>
         </CellIconButton>
     </div>
@@ -79,21 +113,13 @@ const StateBadge = withStyles(theme => ({
 
 const createLabel: TableCellFormatter = (value, row, column) => (<StateBadge state={value} />);
 
-const columns: ITableColumn[] = [
-    { id: "actions", label: "Actions", format: createActions, width: 1 },
-    { id: "createdAt", label: "Created", format: formatDateTime },
-    { id: "state", label: "State", format: createLabel, width: 120 },
-    { id: "name", label: "Name" },
-    { id: "type", label: "Type" },
-    { id: "error", label: "Error", format: formatText },
-];
-
 export interface IJobListViewProps
 {
     history?: History;
     classes: {
         paper: string;
         progress: string;
+        toolbar: string;
     }
 }
 
@@ -101,6 +127,21 @@ function JobListView(props: IJobListViewProps)
 {
     const { classes, history } = props;
     const { loading, error, data } = useQuery(ALL_JOBS_QUERY, { errorPolicy: "all" });
+
+    const [ runJobMutation ] = useMutation(RUN_JOB_MUTATION);
+    const [ cancelJobMutation ] = useMutation(CANCEL_JOB_MUTATION);
+    const [ deleteJobMutation ] = useMutation(DELETE_JOB_MUTATION);
+
+    const columns: ITableColumn[] = [
+        { id: "actions", label: "Actions", format: createActions, width: 1, data: {
+            runJobMutation, cancelJobMutation, deleteJobMutation
+        }},
+        { id: "createdAt", label: "Created", format: formatDateTime },
+        { id: "state", label: "State", format: createLabel, width: 120 },
+        { id: "name", label: "Name" },
+        { id: "type", label: "Type" },
+        { id: "error", label: "Error", format: formatText },
+    ];
 
     if (loading) {
         return (<CircularProgress className={classes.progress} />);
@@ -113,6 +154,11 @@ function JobListView(props: IJobListViewProps)
 
     return (
         <Paper className={classes.paper}>
+            <Toolbar className={classes.toolbar}>
+                <Button color="primary" onClick={() => {}}>
+                    Refresh
+                </Button>
+            </Toolbar>
             <DataTable
                 storageKey="workflow/jobs"
                 rows={rows}
@@ -129,6 +175,12 @@ const styles = theme => ({
     },
     progress: {
         alignSelf: "center",
+    },
+    toolbar: {
+        display: "flex",
+        justifyContent: "flex-end",
+        padding: theme.spacing(1),
+        backgroundColor: theme.palette.primary.light,
     },
 } as StyleRules);
 

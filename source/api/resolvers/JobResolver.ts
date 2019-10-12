@@ -15,11 +15,12 @@
  * limitations under the License.
  */
 
-import { Arg, Query, Int, Resolver, Ctx } from "type-graphql";
+import { Arg, Query, Mutation, Int, Resolver, Ctx } from "type-graphql";
 
 import { JobSchema } from "../schemas/Job";
-import Job from "../models/Job";
+import { StatusSchema } from "../schemas/Status";
 
+import Job from "../models/Job";
 import User from "../models/User";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -54,6 +55,39 @@ export default class JobResolver
 
         return Job.findAll({ where: { projectId }, offset, limit })
             .then(rows => rows.map(row => row.toJSON() as JobSchema));
+    }
+
+    @Mutation(returns => StatusSchema)
+    async runJob(
+        @Arg("jobId", type => Int) jobId: number
+    ): Promise<StatusSchema>
+    {
+        return Job.findByPk(jobId)
+            .then(job => job.run())
+            .then(() => ({ ok: true, message: null }))
+            .catch(err => ({ ok: false, message: err.message }));
+    }
+
+    @Mutation(returns => StatusSchema)
+    async cancelJob(
+        @Arg("jobId", type => Int) jobId: number
+    ): Promise<StatusSchema>
+    {
+        return Job.findByPk(jobId)
+        .then(job => job.cancel())
+        .then(() => ({ ok: true, message: null }))
+        .catch(err => ({ ok: false, message: err.message }));
+    }
+
+    @Mutation(returns => StatusSchema)
+    async deleteJob(
+        @Arg("jobId", type => Int) jobId: number
+    ): Promise<StatusSchema>
+    {
+        return Job.findByPk(jobId)
+        .then(job => job.delete())
+        .then(() => ({ ok: true, message: null }))
+        .catch(err => ({ ok: false, message: err.message }));
     }
 
     // @Subscription({

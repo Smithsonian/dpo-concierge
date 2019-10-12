@@ -35,7 +35,8 @@ export default class User extends Model<User>
             include: [
                 { model: Project, as: "activeProject" },
                 { model: Role, include: [ Permission ], attributes: ["id"] },
-            ]
+            ],
+            logging: () => console.log(`[User] -logging in ID ${id}`),
         });
     }
 

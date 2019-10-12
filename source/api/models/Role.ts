@@ -52,8 +52,6 @@ export default class Role extends Model<Role>
 
     static async populateDefaultPermissions()
     {
-        console.log("[AfterBulkSync] - populate default permissions");
-
         return Role.findAll().then(roles => Promise.all(roles.map(role => {
             role.$set("permissions", Role.permissions[role.id]);
             return role.save();
