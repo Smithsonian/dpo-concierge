@@ -22,6 +22,16 @@ import { Table, Column, Model, DataType } from "sequelize-typescript";
 @Table
 export default class Subject extends Model<Subject>
 {
+    static async findByNameOrCreate(values: any)
+    {
+        if (values.name) {
+            return this.findOne({ where: { name: values.name }})
+                .then(row => row ? row.update(values).then(() => row) : this.create(values));
+        }
+
+        return this.create(values);
+    }
+
     @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, unique: true })
     uuid: string;
 

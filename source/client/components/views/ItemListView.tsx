@@ -17,6 +17,8 @@
 
 import * as React from "react";
 
+import { useHistory } from "react-router-dom";
+
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
@@ -52,6 +54,8 @@ export interface IItemListViewProps
 function ItemListView(props: IItemListViewProps)
 {
     const { classes } = props;
+    const history = useHistory();
+
     const { loading, error, data } = useQuery(ALL_ITEMS_QUERY);
 
     if (loading) {

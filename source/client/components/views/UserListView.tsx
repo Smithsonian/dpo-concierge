@@ -17,7 +17,7 @@
 
 import * as React from "react";
 
-import { History } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
@@ -55,7 +55,6 @@ const queryUsers = gql`
 
 export interface IUserListViewProps
 {
-    history?: History;
     classes: {
         paper: string;
         card: string;
@@ -65,7 +64,9 @@ export interface IUserListViewProps
 
 function UserListView(props: IUserListViewProps)
 {
-    const { classes, history } = props;
+    const { classes } = props;
+    const history = useHistory();
+
     const { loading, error, data } = useQuery(queryUsers);
 
     if (loading) {

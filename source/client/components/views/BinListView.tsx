@@ -17,6 +17,8 @@
 
 import * as React from "react";
 
+import { useHistory } from "react-router-dom";
+
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
@@ -58,6 +60,8 @@ export interface IBinListViewProps
 function BinListView(props: IBinListViewProps)
 {
     const { classes } = props;
+    const history = useHistory();
+
     const { loading, error, data } = useQuery(ALL_BINS_QUERY);
 
     if (loading) {

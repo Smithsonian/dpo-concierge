@@ -30,6 +30,7 @@ import CookClient, { IParameters } from "../utils/CookClient";
 import { IJobReport } from "../utils/cookTypes";
 import EDANClient from "../utils/EDANClient";
 import BinType from "./BinType";
+import ManagedRepository from "../utils/ManagedRepository";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -184,6 +185,9 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
 
         })
         .catch(error => {
+            console.log("[PlayMigrationJob] - ERROR");
+            console.log(error);
+
             this.step = "";
             job.state = "error";
             job.error = error.message;
@@ -195,9 +199,10 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
     {
         const cookClient = Container.get(CookClient);
         const edanClient = Container.get(EDANClient);
+        const repo = Container.get(ManagedRepository);
 
         let report: IJobReport = undefined;
-        let record = undefined;
+        let record, name, description;
 
         return cookClient.jobReport(this.cookJobId)
             .then(_report => {
@@ -208,8 +213,12 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
                     .catch(() => {});
             })
             .then(() => {
+                name = this.object;
+                description = `Play Scene Migration: Box ID #${this.playboxId}`;
+
                 const subject: any = {
-                    name: this.object,
+                    name,
+                    description,
                     edanRecordId: this.edanRecordId,
                     unitRecordId: this.unitRecordId,
                 };
@@ -217,18 +226,32 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
                     subject.edanRecordCache = record;
                 }
 
-                return Subject.create(subject);
+                return Subject.findByNameOrCreate(subject);
             })
-            .then(subject => Item.create({
+            .then(subject => Item.findByNameAndSubjectOrCreate({
                 name: this.object,
                 subjectId: subject.id,
             }))
             .then(item => Bin.create({
                 name: this.object,
-                typeId: BinType.presets.voyager,
+                typeId: BinType.presets.voyagerScene,
             }))
             .then(bin => {
+                const deliveryStep = report.steps["delivery"];
+                if (!deliveryStep) {
+                    throw new Error("job has no delivery step");
+                }
 
+                const fileMap = deliveryStep.result["files"];
+                if (!fileMap) {
+                    throw new Error("job delivery contains no files");
+                }
+
+                const files = Object.keys(fileMap).map(key => fileMap[key]);
+                return Promise.all(files.map(filePath => (
+                    repo.createWriteStream(filePath, bin.id, true)
+                        .then(stream => cookClient.downloadFile(this.cookJobId, filePath, stream))
+                )));
             })
             .then(() => {
                 this.step = "";

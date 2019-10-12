@@ -26,10 +26,14 @@ import ItemBin from "./ItemBin";
 @Table
 export default class Item extends Model<Item>
 {
-    static async findBins(includeAssets: boolean)
+    static async findByNameAndSubjectOrCreate(values: any)
     {
-        //return Bin.findAll({ where: { }})
-        return Promise.reject(new Error("not implemented yet"));
+        if (values.name && values.subjectId) {
+            return this.findOne({ where: { name: values.name, subjectId: values.subjectId }})
+                .then(row => row ? row.update(values).then(() => row) : this.create(values));
+        }
+
+        return this.create(values);
     }
 
     @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, unique: true })

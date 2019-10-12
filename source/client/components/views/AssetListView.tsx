@@ -17,6 +17,8 @@
 
 import * as React from "react";
 
+import { useHistory } from "react-router-dom";
+
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
@@ -38,8 +40,8 @@ query AllAssets($binId: Int) {
 }`;
 
 const columns: ITableColumn[] = [
-    { id: "name", label: "Name" },
     { id: "path", label: "Path" },
+    { id: "name", label: "Name" },
     { id: "mimeType", label: "Type" },
     { id: "createdAt", label: "Created", format: formatDateTime },
 ];
@@ -55,6 +57,8 @@ export interface IAssetListViewProps
 function AssetListView(props: IAssetListViewProps)
 {
     const { classes } = props;
+    const history = useHistory();
+
     const { loading, error, data } = useQuery(ALL_ASSETS_QUERY);
 
     if (loading) {

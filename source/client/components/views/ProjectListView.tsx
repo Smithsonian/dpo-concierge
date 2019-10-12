@@ -17,7 +17,7 @@
 
 import * as React from "react";
 
-import { Link, Route, Switch, History } from "react-router-dom";
+import { Link, Route, Switch, useHistory } from "react-router-dom";
 
 import { useQuery, useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
@@ -92,7 +92,6 @@ const createActions: TableCellFormatter = (value, row, column) => (
 
 export interface IProjectListViewProps
 {
-    history?: History;
     match?: any;
 
     classes: {
@@ -104,7 +103,8 @@ export interface IProjectListViewProps
 
 function ProjectListView(props: IProjectListViewProps)
 {
-    const { classes, history, match } = props;
+    const { classes, match } = props;
+    const history = useHistory();
 
     const { data: userData } = useQuery(ACTIVE_USER_QUERY);
     const activeProject = userData && userData.me && userData.me.activeProject;

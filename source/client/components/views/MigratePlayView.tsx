@@ -17,6 +17,8 @@
 
 import * as React from "react";
 
+import { Redirect } from "react-router-dom";
+
 import * as queryString from "query-string";
 
 import { useQuery, useMutation } from "@apollo/react-hooks";
@@ -66,13 +68,11 @@ export interface IMigratePlayViewProps
 function MigratePlayView(props: IMigratePlayViewProps)
 {
     const { classes } = props;
+
     const params = queryString.parse(location.search);
     const sheetEntryId = params.id || "";
 
-    const [ createPlayMigrationJobMutation, { error } ] = useMutation(CREATE_PLAY_MIGRATION_JOB_MUTATION);
-    if (error) {
-        console.warn(error.graphQLErrors);
-    }
+    const [ createPlayMigrationJobMutation, { error, data } ] = useMutation(CREATE_PLAY_MIGRATION_JOB_MUTATION);
 
     let entry = null;
 
@@ -97,6 +97,13 @@ function MigratePlayView(props: IMigratePlayViewProps)
         if (data) {
             entry = data.migrationSheetEntry;
         }
+    }
+
+    if (error) {
+        console.warn(error.graphQLErrors);
+    }
+    if (data) {
+        return (<Redirect to="/workflow/jobs" />);
     }
 
     const formValues = {

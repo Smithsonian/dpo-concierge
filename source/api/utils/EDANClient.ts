@@ -44,16 +44,24 @@ export default class EDANClient
 
     constructor(appId: string, appKey: string)
     {
+        if (!appId || !appKey) {
+            throw new Error("EDANClient.constructor - missing appId and/or appKey");
+        }
+
         this.appId = appId;
         this.appKey = appKey;
     }
 
     async fetchMdmRecord(id: string)
     {
-        id.replace("edanmdm:", "edanmdm-");
+        id = id.replace("edanmdm:", "edanmdm-");
+
         if (!id.startsWith("edanmdm-")) {
-            throw new Error(`invalid EDAN MDM ID: ${id}`);
+            console.log(`[EDANClient] can't fetch, invalid record id: ${id}`);
+            throw new Error(`Can't fetch, invalid record id: ${id}`);
         }
+
+        console.log(`[EDANClient] fetching record for id: '${id}'`);
 
         return this.search({ fqs: "id:" + id, rows: 1, facet: true })
             .then(result => fs.promises.writeFile("edan-search-result.json", JSON.stringify(result, null, 2)));

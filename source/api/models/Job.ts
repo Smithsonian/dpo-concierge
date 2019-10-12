@@ -16,7 +16,7 @@
  */
 
 import { Model as BaseModel } from "sequelize";
-import { Table, Column, Model, ForeignKey, BelongsTo, BelongsToMany } from "sequelize-typescript";
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo, BelongsToMany } from "sequelize-typescript";
 
 import Project from "./Project";
 import Bin from "./Bin";
@@ -45,7 +45,7 @@ export default class Job extends Model<Job>
     @Column({ defaultValue: "created" })
     state: JobState;
 
-    @Column
+    @Column({ type: DataType.TEXT })
     error: string;
 
     @ForeignKey(() => Project)

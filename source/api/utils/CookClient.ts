@@ -16,6 +16,8 @@
  */
 
 import * as fs from "fs";
+import { WriteStream } from "fs";
+
 import * as fetch from "node-fetch";
 import * as mkdirp from "mkdirp";
 
@@ -56,14 +58,14 @@ export default class CookClient
     async uploadFile(jobId: string, filePath: string): Promise<void>
     {
         if (!fs.existsSync(filePath)) {
-            console.log(`CookClient.uploadFile - skipping upload, file not existing: ${filePath}`);
+            console.log(`[CookClient] skipping upload, file not existing: ${filePath}`);
             return Promise.resolve();
         }
 
         const stream = fs.createReadStream(filePath);
         const endpoint = this.machineAddress + "/" + jobId + "/" + filePath;
 
-        console.log(`CookClient.uploadFile - uploading: ${filePath}`);
+        console.log(`[CookClient] uploading: ${filePath}`);
 
         return fetch(endpoint, {
             method: "PUT",
@@ -76,11 +78,11 @@ export default class CookClient
         return Promise.all(filePaths.map(path => this.downloadFile(jobId, path)));
     }
 
-    async downloadFile(jobId: string, filePath: string)
+    async downloadFile(jobId: string, filePath: string, writeStream?: WriteStream)
     {
         const endpoint = this.machineAddress + "/" + jobId + "/" + filePath;
 
-        console.log(`CookClient.downloadFile - downloading: ${filePath}`);
+        console.log(`[CookClient] downloading: ${filePath}`);
 
         // ensure target folder exists
         const parts = filePath.split("/");
@@ -92,7 +94,7 @@ export default class CookClient
         }
 
         return fetch(endpoint).then(result => {
-            const stream = fs.createWriteStream(filePath);
+            const stream = writeStream || fs.createWriteStream(filePath);
             result.body.pipe(stream);
         });
     }

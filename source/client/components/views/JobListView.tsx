@@ -17,12 +17,10 @@
 
 import * as React from "react";
 
-import { History } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 
 import { useQuery, useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
-
-import moment from "moment";
 
 import { withStyles, styled, StyleRules } from "@material-ui/core/styles";
 import clsx from "clsx";
@@ -115,7 +113,6 @@ const createLabel: TableCellFormatter = (value, row, column) => (<StateBadge sta
 
 export interface IJobListViewProps
 {
-    history?: History;
     classes: {
         paper: string;
         progress: string;
@@ -125,8 +122,11 @@ export interface IJobListViewProps
 
 function JobListView(props: IJobListViewProps)
 {
-    const { classes, history } = props;
-    const { loading, error, data } = useQuery(ALL_JOBS_QUERY, { errorPolicy: "all" });
+    const { classes } = props;
+
+    const history = useHistory();
+
+    const { loading, error, data, refetch } = useQuery(ALL_JOBS_QUERY, { errorPolicy: "all" });
 
     const [ runJobMutation ] = useMutation(RUN_JOB_MUTATION);
     const [ cancelJobMutation ] = useMutation(CANCEL_JOB_MUTATION);
@@ -155,7 +155,7 @@ function JobListView(props: IJobListViewProps)
     return (
         <Paper className={classes.paper}>
             <Toolbar className={classes.toolbar}>
-                <Button color="primary" onClick={() => {}}>
+                <Button color="primary" onClick={() => refetch()}>
                     Refresh
                 </Button>
             </Toolbar>
