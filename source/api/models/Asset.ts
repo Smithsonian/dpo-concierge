@@ -26,20 +26,6 @@ import Bin from "./Bin";
 @Table({ indexes: [ { fields: [ "filePath", "binId" ] }] })
 export default class Asset extends Model<Asset>
 {
-    // TODO: For testing only
-    @AfterSync
-    static async populate()
-    {
-        return Asset.count().then(count => {
-            if (count === 0) {
-                return Asset.bulkCreate([
-                    { id: 1, binId: 1, filePath: "image.jpg" },
-                    { id: 2, binId: 1, filePath: "documents/document.pdf" },
-                ]);
-            }
-        });
-    }
-
     static async findByBinId(filePath: string, binId: number): Promise<Asset | undefined>
     {
         return Asset.findOne({

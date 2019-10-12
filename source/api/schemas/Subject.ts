@@ -34,5 +34,14 @@ export class SubjectSchema
 
     @Field()
     description: string;
+
+    @Field()
+    unitCode: string;
+
+    @Field()
+    unitRecordId: string;
+
+    @Field()
+    edanRecordId: string;
 }
 

@@ -13,3 +13,4 @@ services/db/bin/
 .env
 *.log
 .DS_Store
+edan-search-result.json

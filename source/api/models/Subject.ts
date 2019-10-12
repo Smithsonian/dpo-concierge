@@ -42,6 +42,9 @@ export default class Subject extends Model<Subject>
     description: string;
 
     @Column
+    unitCode: string;
+
+    @Column
     unitRecordId: string;
 
     @Column

@@ -214,13 +214,15 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
                     .catch(() => {});
             })
             .then(() => {
-                name = this.object;
+                const entry = record ? record.rows[0] : null;
+
+                name = entry ? entry.title : this.object;
                 description = `Play Scene Migration: Box ID #${this.playboxId}`;
 
                 const subject: any = {
                     name,
                     description,
-                    edanRecordId: this.edanRecordId,
+                    edanRecordId: entry ? entry.url : this.edanRecordId,
                     unitRecordId: this.unitRecordId,
                 };
                 if (record) {
@@ -238,14 +240,21 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
             .then(item =>
                 Promise.all([
                     Bin.create({
-                        name: this.job.name,
+                        name: `Play Migration #${this.playboxId} - Voyager Scene`,
                         typeId: BinType.presets.voyagerScene,
                     }).then(bin => ItemBin.create({
                         binId: bin.id,
                         itemId: item.id,
                     })),
                     Bin.create({
-                        name: this.job.name,
+                        name: `Play Migration #${this.playboxId} - Processing Files`,
+                        typeId: BinType.presets.processing,
+                    }).then(bin => ItemBin.create({
+                        binId: bin.id,
+                        itemId: item.id,
+                    })),
+                    Bin.create({
+                        name: `Play Migration #${this.playboxId} - Playbox Assets`,
                         typeId: BinType.presets.processing,
                     }).then(bin => ItemBin.create({
                         binId: bin.id,
@@ -253,7 +262,7 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
                     })),
                 ])
             )
-            .then(([sceneItemBin, tempItemBin]) => {
+            .then(([sceneItemBin, tempItemBin, boxItemBin]) => {
                 const deliveryStep = report.steps["delivery"];
                 if (!deliveryStep) {
                     throw new Error("job has no delivery step");
@@ -265,7 +274,10 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
                 }
 
                 return Promise.all(Object.keys(fileMap).map(fileKey => {
-                    const binId = sceneItemBin.binId;
+
+                    const binId = fileKey.startsWith("box:") ? boxItemBin.binId :
+                        (fileKey.startsWith("temp:") ? tempItemBin.binId : sceneItemBin.binId);
+
                     const filePath = fileMap[fileKey];
 
                     return repo.createWriteStream(filePath, binId, true)

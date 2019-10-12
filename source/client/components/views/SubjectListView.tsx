@@ -27,7 +27,7 @@ import { withStyles, StyleRules } from "@material-ui/core/styles";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Paper from "@material-ui/core/Paper";
 
-import DataTable, { ITableColumn, TableCellFormatter } from "../DataTable";
+import DataTable, { ITableColumn, formatText } from "../DataTable";
 import ErrorCard from "../ErrorCard";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -35,13 +35,15 @@ import ErrorCard from "../ErrorCard";
 export const ALL_SUBJECTS_QUERY = gql`
 query {
     subjects(offset: 0, limit: 0) {
-        name
+        id, name, unitCode, edanRecordId, description
     }
 }`;
 
 const columns: ITableColumn[] = [
     { id: "name", label: "Name" },
-    { id: "description", label: "Description" },
+    { id: "unitCode", label: "Unit", format: formatText },
+    { id: "edanRecordId", label: "EDAN Record ID", format: formatText },
+    { id: "description", label: "Description", format: formatText },
 ];
 
 export interface ISubjectListViewProps

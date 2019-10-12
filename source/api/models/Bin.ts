@@ -19,9 +19,7 @@ import { Table, Column, Model, DataType, ForeignKey, BelongsTo, HasMany, HasOne,
 
 import BinType from "./BinType";
 import Asset from "./Asset";
-import Item from "./Item";
 import ItemBin from "./ItemBin";
-import Job from "./Job";
 import JobBin from "./JobBin";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -29,18 +27,6 @@ import JobBin from "./JobBin";
 @Table({ indexes: [ { fields: ["uuid", "version"] } ] })
 export default class Bin extends Model<Bin>
 {
-    @AfterSync
-    static async populate()
-    {
-        return Bin.count().then(count => {
-            if (count === 0) {
-                return Bin.bulkCreate([
-                    { id: 1, version: 1, name: "My first bin", typeId: "processing" }
-                ]);
-            }
-        });
-    }
-
     static async getLatestVersion(binUuid: string)
     {
         return Bin.findOne({
