@@ -57,6 +57,19 @@ export default class JobResolver
             .then(rows => rows.map(row => row.toJSON() as JobSchema));
     }
 
+    @Query(returns => JobSchema, { nullable: true })
+    async job(
+        @Arg("id", type => Int) id: number,
+    ): Promise<JobSchema | null>
+    {
+        if (id) {
+            return Job.findByPk(id)
+                .then(row => row ? row.toJSON() as JobSchema : null);
+        }
+
+        return Promise.resolve(null);
+    }
+
     @Mutation(returns => StatusSchema)
     async runJob(
         @Arg("jobId", type => Int) jobId: number

@@ -33,6 +33,9 @@ export class AssetSchema
     binId: string;
 
     @Field()
+    binUuid: string;
+
+    @Field()
     filePath: string;
 
     @Field()

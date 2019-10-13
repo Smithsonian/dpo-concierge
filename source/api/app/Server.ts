@@ -193,14 +193,14 @@ export default class Server
 
         // repo file server
         app.get("/view/:bin/*", (req, res, next) => {
-            const bin = req.params.bin;
+            const binUuid = req.params.bin;
             const path = req.params[0];
 
-            if (!bin || !path) {
+            if (!binUuid || !path) {
                 return res.status(404).send();
             }
 
-            repository.createReadStream(path, bin)
+            repository.createReadStream(path, binUuid)
             .then(stream => {
                 if (!stream) {
                     return res.status(404).send();

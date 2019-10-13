@@ -37,7 +37,6 @@ import DeleteIcon from "@material-ui/icons/DeleteForever";
 
 import DataTable, { ITableColumn, TableCellFormatter, formatText, formatDateTime } from "../DataTable";
 import ErrorCard from "../ErrorCard";
-import { FilesIcon } from "client/components/icons";
 
 ////////////////////////////////////////////////////////////////////////////////
 

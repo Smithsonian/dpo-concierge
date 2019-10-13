@@ -25,6 +25,8 @@ import moment from "moment";
 import { withStyles, StyleRules } from "@material-ui/core/styles";
 
 import Tooltip from "@material-ui/core/Tooltip";
+import IconButton from "@material-ui/core/IconButton";
+
 import Table from "@material-ui/core/Table";
 import TableHead from "@material-ui/core/TableHead";
 import TableBody from "@material-ui/core/TableBody";
@@ -44,6 +46,23 @@ export const formatDateTime: TableCellFormatter = value => moment(value).format(
 export const  formatDate: TableCellFormatter = value => moment(value).format("YYYY-MM-DD");
 export const formatTime: TableCellFormatter = value => moment(value).format("HH:mm:ss");
 
+export interface ICellIconButtonProps
+{
+    title: string;
+    icon: React.ComponentType<{ fontSize: string }>;
+    onClick: (event: React.MouseEvent) => void;
+}
+
+export const CellIconButton = (props: ICellIconButtonProps) => {
+    const { title, onClick, icon: Icon } = props;
+    return (
+        <Tooltip title={title}>
+            <IconButton onClick={onClick} style={{ margin: "-16px 0" }}>
+                <Icon fontSize="small"/>
+            </IconButton>
+        </Tooltip>
+    );
+};
 
 export interface ITableColumn<T extends {} = {}>
 {

@@ -48,7 +48,6 @@ export default class ManagedRepository
     }
 
     get appsPath() {
-        console.log("***************", this.fileStore.getStoreFilePath("apps/"));
         return this.fileStore.getStoreFilePath("apps/");
     }
 
@@ -86,14 +85,14 @@ export default class ManagedRepository
     {
         return new Promise((resolve, reject) => {
             if (!this.activeBins[bin.uuid]) {
-                return reject(new Error(`unknown bin '${bin.uuid}'`));
+                return resolve();
             }
 
             delete this.activeBins[bin.uuid];
 
             this.webDAVServer.removeFileSystem("/" + bin.uuid, removeCount => {
                 if (!removeCount) {
-                    const message = `failed to unmount WebDAV file system`;
+                    const message = `failed to unmount WebDAV file system for bin: '${bin.uuid}'`;
                     console.log(`[Repository.WebDAV] ${message}`);
                     return reject(new Error(message));
                 }

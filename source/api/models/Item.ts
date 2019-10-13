@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, DataType, ForeignKey, BelongsTo, BelongsToMany } from "sequelize-typescript";
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo, HasMany, BelongsToMany } from "sequelize-typescript";
 
 import Subject from "./Subject";
 import Bin from "./Bin";
@@ -52,6 +52,6 @@ export default class Item extends Model<Item>
     @BelongsTo(() => Subject)
     subject: Subject;
 
-    @BelongsToMany(() => Bin, () => ItemBin, "itemId", "binId")
-    bins: Bin[];
+    @HasMany(() => ItemBin)
+    itemBins: Bin[];
 }

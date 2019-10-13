@@ -24,70 +24,76 @@ import * as queryString from "query-string";
 import { useQuery, useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
-import { withStyles, styled, StyleRules } from "@material-ui/core/styles";
+import { withStyles, StyleRules } from "@material-ui/core/styles";
 
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Paper from "@material-ui/core/Paper";
 import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
-import IconButton from "@material-ui/core/IconButton";
 
 import EditIcon from "@material-ui/icons/Edit";
 import DeleteIcon from "@material-ui/icons/DeleteForever";
 
-import { FilesIcon } from "../icons";
+import { FilesIcon, SceneIcon } from "../icons";
 
-import DataTable, { ITableColumn, TableCellFormatter } from "../DataTable";
+import DataTable, { ITableColumn, TableCellFormatter, CellIconButton } from "../DataTable";
 import ErrorCard from "../ErrorCard";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export const BINS_QUERY = gql`
-query Bins($itemId: Int, $jobId: Int) {
+export const FIND_BINS_QUERY = gql`
+query FindBins($itemId: Int!, $jobId: Int!) {
     bins(itemId: $itemId, jobId: $jobId, offset: 0, limit: 0) {
-        name, uuid, version
+        id, name, uuid, version
         type {
             name
         }
     }
+    item(id: $itemId) {
+        name
+    }
+    job(id: $jobId) {
+        name
+    }
 }`;
 
-export const EDIT_BIN_MUTATION = gql`
-mutation EditBin($binId: Int!) {
-    editBin(binId: $binId) {
-        id
+export const UPDATE_BIN_MUTATION = gql`
+mutation UpdateBin($bin: BinInputSchema) {
+    updateBin(bin: $bin) {
+        ok, message
     }
 }`;
 
 export const DELETE_BIN_MUTATION = gql`
 mutation DeleteBin($binId: Int!) {
     deleteBin(binId: $binId) {
-        id
+        ok, message
     }
 }`;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const CellIconButton = styled(IconButton)({
-    margin: "-16px 0",
-});
-
 const actionButtons: TableCellFormatter = (value, row, column) => (
     <div style={{ display: "flex", flexWrap: "nowrap" }}>
-        <CellIconButton onClick={() => {}} title="View Asset List">
-            <FilesIcon fontSize="small" />
-        </CellIconButton>
-        <CellIconButton onClick={() => {}} title="Edit Bin Details">
-            <EditIcon fontSize="small" />
-        </CellIconButton>
-        <CellIconButton onClick={() => {
+
+        <CellIconButton title="View Asset List" icon={FilesIcon} onClick={() => {
+            column.data.history.push(`assets?binId=${row["id"]}`);
+        }} />
+
+        <CellIconButton title="View Scene List" icon={SceneIcon} onClick={() => {
+            column.data.history.push(`scenes?binId=${row["id"]}`);
+        }}/>
+
+        <CellIconButton title="Edit Bin Details" icon={EditIcon} onClick={() => {
+
+        }} />
+
+        <CellIconButton title="Delete Bin and Assets" icon={DeleteIcon} onClick={() => {
             if (confirm("Delete bin and all assets. Are you sure?")) {
                 const variables = { binId: row["id"] };
                 column.data.deleteBinMutation({ variables });
             }
-        }} title="Delete Bin and Assets">
-            <DeleteIcon  fontSize="small" />
-        </CellIconButton>
+        }} />
     </div>
 );
 
@@ -111,7 +117,7 @@ function BinListView(props: IBinListViewProps)
     const history = useHistory();
 
     const [ deleteBinMutation ] = useMutation(DELETE_BIN_MUTATION);
-    const { loading, error, data } = useQuery(BINS_QUERY, { variables: { itemId, jobId }});
+    const { loading, error, data } = useQuery(FIND_BINS_QUERY, { variables: { itemId, jobId }});
 
     if (loading) {
         return (<CircularProgress className={classes.progress} />);
@@ -122,7 +128,7 @@ function BinListView(props: IBinListViewProps)
 
     const columns: ITableColumn[] = [
         { id: "actions", label: "Actions", format: actionButtons, width: 1, data: {
-                deleteBinMutation
+                history, deleteBinMutation,
             }},
         { id: "name", label: "Name" },
         { id: "type", label: "Type", format: value => value.name },
@@ -132,12 +138,13 @@ function BinListView(props: IBinListViewProps)
 
     const rows = data.bins;
     const item = data.item;
+    const job = data.job;
 
     return (
         <Paper className={classes.paper}>
             <Toolbar className={classes.toolbar}>
                 <Typography variant="subtitle2">
-                    { itemId ? `Bins in Item ${itemId}` : (jobId ? `Bins in Job ${jobId}` : "All Bins") }
+                    { item ? `Bins in Item: ${item.name}` : (job ? `Bins in Job: ${job.name}` : "All Bins") }
                 </Typography>
                 <div style={{ flex: 1 }}/>
             </Toolbar>
@@ -163,7 +170,7 @@ const styles = theme => ({
         justifyContent: "flex-end",
         paddingLeft: theme.spacing(2),
         backgroundColor: theme.palette.primary.light,
-    }
+    },
 } as StyleRules);
 
 export default withStyles(styles)(BinListView);

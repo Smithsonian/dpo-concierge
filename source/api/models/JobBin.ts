@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, ForeignKey } from "sequelize-typescript";
+import { Table, Column, Model, ForeignKey, BelongsTo } from "sequelize-typescript";
 
 import Job from "./Job";
 import Bin from "./Bin";
@@ -25,11 +25,17 @@ import Bin from "./Bin";
 @Table
 export default class JobBin extends Model<JobBin>
 {
+    @ForeignKey(() => Bin)
+    @Column({ unique: true })
+    binId: number;
+
+    @BelongsTo(() => Bin)
+    bin: Bin;
+
     @ForeignKey(() => Job)
     @Column
     jobId: number;
 
-    @ForeignKey(() => Bin)
-    @Column({ unique: true })
-    binId: number;
+    @BelongsTo(() => Job)
+    job: Job;
 }

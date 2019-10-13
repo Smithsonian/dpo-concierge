@@ -19,31 +19,30 @@ import * as React from "react";
 
 import { useHistory } from "react-router-dom";
 
+import * as queryString from "query-string";
+
 import { useQuery, useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
-import { withStyles, styled, StyleRules } from "@material-ui/core/styles";
+import { withStyles, StyleRules } from "@material-ui/core/styles";
 
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Paper from "@material-ui/core/Paper";
-import Tooltip from "@material-ui/core/Tooltip";
-import IconButton from "@material-ui/core/IconButton";
 import Toolbar from "@material-ui/core/Toolbar";
-import Button from "@material-ui/core/Button";
-import Link from "@material-ui/core/Link";
+import Typography from "@material-ui/core/Typography";
 
 import ViewIcon from "@material-ui/icons/Visibility";
 import EditIcon from "@material-ui/icons/Edit";
 import LaunchIcon from "@material-ui/icons/Launch";
 
-import DataTable, { ITableColumn, TableCellFormatter } from "../DataTable";
+import DataTable, { ITableColumn, TableCellFormatter, CellIconButton } from "../DataTable";
 import ErrorCard from "../ErrorCard";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export const ALL_SCENES_QUERY = gql`
-query AllScenes($itemId: Int) {
-    scenes(itemId: $itemId, offset: 0, limit: 0) {
+export const FETCH_SCENES_QUERY = gql`
+query Scenes($subjectId: Int!, $itemId: Int!, $binId: Int!) {
+    scenes(subjectId: $subjectId, itemId: $itemId, binId: $binId, offset: 0, limit: 0) {
         name
         published
         bin {
@@ -53,6 +52,15 @@ query AllScenes($itemId: Int) {
         voyagerDocument {
             filePath
         }
+    },
+    subject(id: $subjectId) {
+        name
+    }
+    item(id: $itemId) {
+        name
+    }
+    bin(id: $binId) {
+        name
     }
 }`;
 
@@ -72,40 +80,35 @@ mutation RevokeBinAccess($uuid: String!) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const CellIconButton = styled(IconButton)({
-    margin: "-16px 0",
-});
-
 const actionButtons: TableCellFormatter = (value, row, column) => (
     <div style={{ display: "flex", flexWrap: "nowrap" }}>
-        <Tooltip title="Open in Voyager Explorer">
-            <CellIconButton onClick={() => {
-                window.open(`/apps/voyager/voyager-explorer-dev.html?root=/view/${row["bin"].uuid}/&document=${row["voyagerDocument"].filePath}`, "_blank");
-            }}>
-                <ViewIcon fontSize="small" />
-            </CellIconButton>
-        </Tooltip>
-        <Tooltip title="Edit in Voyager Story">
-            <CellIconButton onClick={() => {
-                const variables = { uuid: row["bin"].uuid };
-                column.data.grantAccessMutation({ variables }).then(result => {
-                    const status = result.data.grantBinAccess;
-                    if (!status.ok) {
-                        return console.warn(status);
-                    }
-                    window.open(`/apps/voyager/voyager-story-dev.html?root=/edit/${row["bin"].uuid}/&document=${row["voyagerDocument"].filePath}`, "_blank")
-                });
-            }}>
-                <EditIcon fontSize="small" />
-            </CellIconButton>
-        </Tooltip>
-        <Tooltip title="Publish to API">
-            <CellIconButton onClick={() => {
-                // TODO
-            }}>
-                <LaunchIcon fontSize="small" />
-            </CellIconButton>
-        </Tooltip>
+
+        <CellIconButton title="Open in Voyager Explorer" icon={ViewIcon} onClick={() => {
+            const explorerUrl = "/apps/voyager/voyager-explorer-dev.html";
+            const query = `?root=/view/${row["bin"].uuid}/&document=${row["voyagerDocument"].filePath}`;
+            window.open(explorerUrl + query, "_blank");
+        }}/>
+
+        <CellIconButton title="Edit in Voyager Story" icon={EditIcon} onClick={() => {
+            const uuid = row["bin"].uuid;
+
+            column.data.grantAccessMutation({ variables: { uuid } }).then(result => {
+                const status = result.data.grantBinAccess;
+                if (!status.ok) {
+                    return console.warn(status.message);
+                }
+
+                const storyUrl = "/apps/voyager/voyager-story-dev.html";
+                const href = location.href;
+                const referrer = encodeURIComponent(href + (href.includes("?") ? "&" : "?") + `revokeId=${uuid}`);
+                const query = `?root=/edit/${uuid}/&document=${row["voyagerDocument"].filePath}&referrer=${referrer}`;
+                location.assign(storyUrl + query);
+            });
+        }}/>
+
+        <CellIconButton title="Publish to API" icon={LaunchIcon} onClick={() => {
+            // TODO            
+        }}/>
     </div>
 );
 
@@ -114,18 +117,39 @@ export interface ISceneListViewProps
     classes: {
         progress: string;
         paper: string;
+        toolbar: string;
     }
 }
 
 function SceneListView(props: ISceneListViewProps)
 {
     const { classes } = props;
+
+    const params = queryString.parse(location.search);
+    const subjectId = parseInt(params.subjectId as string) || 0;
+    const itemId = parseInt(params.itemId as string) || 0;
+    const binId = parseInt(params.binId as string) || 0;
+    const revokeId = params.revokeId as string;
+
     const history = useHistory();
 
-    const { loading, error, data } = useQuery(ALL_SCENES_QUERY);
+    const { loading, error, data } = useQuery(FETCH_SCENES_QUERY, { variables: { subjectId, itemId, binId } });
 
     const [ grantAccessMutation ] = useMutation(GRANT_ACCESS_MUTATION);
     const [ revokeAccessMutation ] = useMutation(REVOKE_ACCESS_MUTATION);
+
+    const [ revoked, setRevoked ] = React.useState(false);
+
+    if (!revoked && revokeId) {
+        revokeAccessMutation({ variables: { uuid: revokeId }}).then(result => {
+            const status = result.data.revokeBinAccess;
+            if (!status.ok) {
+                console.warn(status.message);
+            }
+        });
+
+        setRevoked(true);
+    }
 
     const columns: ITableColumn[] = [
         { id: "actions", label: "Actions", format: actionButtons, width: 1, data: {
@@ -145,9 +169,20 @@ function SceneListView(props: ISceneListViewProps)
     }
 
     const rows = data.scenes;
+    const subject = data.subject;
+    const item = data.item;
+    const bin = data.bin;
 
     return (
         <Paper className={classes.paper}>
+            <Toolbar className={classes.toolbar}>
+                <Typography variant="subtitle2">
+                    { item ? `Scenes in item: ${item.name}` :
+                        (subject ? `Scenes in subject: ${subject.name}` :
+                            (bin ? `Scenes in bin: ${bin.name}` : "All Scenes")) }
+                </Typography>
+                <div style={{ flex: 1 }}/>
+            </Toolbar>
             <DataTable
                 storageKey="repository/scenes"
                 rows={rows}

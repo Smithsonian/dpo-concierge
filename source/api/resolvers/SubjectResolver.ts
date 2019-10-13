@@ -23,10 +23,10 @@ import Subject from "../models/Subject";
 ////////////////////////////////////////////////////////////////////////////////
 
 @Resolver()
-export default class ItemResolver
+export default class SubjectResolver
 {
     @Query(returns => [ SubjectSchema ])
-    subjects(
+    async subjects(
         @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
         @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
     ): Promise<SubjectSchema[]>
@@ -38,12 +38,16 @@ export default class ItemResolver
     }
 
     @Query(returns => SubjectSchema, { nullable: true })
-    subject(
-        @Arg("id", type => Int) id: number,
-        @Arg("uuid") uuid: string,
+    async subject(
+        @Arg("id", type => Int, { nullable: true }) id: number,
+        @Arg("uuid", { nullable: true }) uuid: string,
     ): Promise<SubjectSchema | null>
     {
-        return (id ? Subject.findByPk(id) : Subject.findOne({ where: { uuid }}))
-        .then(row => row ? row.toJSON() as SubjectSchema : null);
+        if (id || uuid) {
+            return (id ? Subject.findByPk(id) : Subject.findOne({ where: { uuid }}))
+                .then(row => row ? row.toJSON() as SubjectSchema : null);
+        }
+
+        return Promise.resolve(null);
     }
 }

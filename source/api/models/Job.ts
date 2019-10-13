@@ -16,7 +16,7 @@
  */
 
 import { Model as BaseModel } from "sequelize";
-import { Table, Column, Model, DataType, ForeignKey, BelongsTo, BelongsToMany } from "sequelize-typescript";
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo, HasMany } from "sequelize-typescript";
 
 import Project from "./Project";
 import Bin from "./Bin";
@@ -55,8 +55,8 @@ export default class Job extends Model<Job>
     @BelongsTo(() => Project)
     project: Project;
 
-    @BelongsToMany(() => Bin, () => JobBin, "jobId", "binId")
-    bins: Bin[];
+    @HasMany(() => JobBin)
+    jobBins: JobBin[];
 
     async run()
     {

@@ -23,6 +23,7 @@ import { BinSchema } from "../schemas/Bin";
 import { StatusSchema } from "../schemas/Status";
 
 import ItemBin from "../models/ItemBin";
+import JobBin from "../models/JobBin";
 import BinType from "../models/BinType";
 import Asset from "../models/Asset";
 
@@ -34,7 +35,7 @@ import ManagedRepository from "../utils/ManagedRepository";
 export default class BinResolver
 {
     @Query(returns => [ BinSchema ])
-    bins(
+    async bins(
         @Arg("itemId", type => Int, { nullable: true }) itemId: number,
         @Arg("jobId", type => Int, { nullable: true }) jobId: number,
         @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
@@ -42,43 +43,56 @@ export default class BinResolver
     )
     {
         limit = limit ? limit : undefined;
+        let query;
 
         if (itemId) {
-            return Bin.findAll({
-                offset,
-                limit,
-                // where: {
-                //     include: [{ model: ItemBin, where: { itemId }}]
-                // },
-                include: [{
+            query = Bin.findAll({
+                include: [ BinType, {
                     model: ItemBin,
                     attributes: [],
                     where: { itemId },
                 }],
-            })
-            .then(rows =>
-                rows.map(row => row.toJSON() as BinSchema)
-            );
+                offset,
+                limit,
+            });
         }
         else if (jobId) {
-
+            query = Bin.findAll({
+                include: [ BinType, {
+                    model: JobBin,
+                    attributes: [],
+                    where: { jobId }
+                }],
+                offset,
+                limit,
+            });
+        }
+        else {
+            query = Bin.findAll({
+                include: [ BinType ],
+                offset,
+                limit,
+            });
         }
 
-        return Bin.findAll({ offset, limit, include: [BinType] })
-            .then(rows => rows.map(row => row.toJSON() as BinSchema));
+        return query.then(rows => rows.map(row => row.toJSON() as BinSchema));
     }
 
     @Query(returns => BinSchema, { nullable: true })
-    bin(
+    async bin(
         @Arg("id", type => Int) id: number,
     ): Promise<BinSchema | null>
     {
-        return Bin.findByPk(id, { include: [BinType, Asset] })
-            .then(row => row ? row.toJSON() as BinSchema : null);
+        if (id) {
+            return Bin.findByPk(id, { include: [BinType, Asset] })
+                .then(row => row ? row.toJSON() as BinSchema : null);
+        }
+
+        return Promise.resolve(null);
     }
 
     @Mutation(returns => StatusSchema)
-    grantBinAccess(
+    async grantBinAccess(
         @Arg("uuid", type => String) uuid: string,
     ): Promise<StatusSchema>
     {
@@ -95,7 +109,7 @@ export default class BinResolver
     }
 
     @Mutation(returns => StatusSchema)
-    revokeBinAccess(
+    async revokeBinAccess(
         @Arg("uuid", type => String) uuid: string,
     ): Promise<StatusSchema>
     {

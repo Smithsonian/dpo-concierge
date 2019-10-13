@@ -28,23 +28,44 @@ import Subject from "../models/Subject";
 export default class ItemResolver
 {
     @Query(returns => [ ItemSchema ])
-    items(
+    async items(
+        @Arg("subjectId", type => Int, { nullable: true }) subjectId: number,
         @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
         @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
     ): Promise<ItemSchema[]>
     {
         limit = limit ? limit : undefined;
+        let query;
 
-        return Item.findAll({ offset, limit, include: [ Subject ] })
-            .then(rows => rows.map(row => row.toJSON() as ItemSchema));
+        if (subjectId) {
+            query = Item.findAll({
+                include: [ Subject ],
+                where: { subjectId },
+                offset,
+                limit,
+            });
+        }
+        else {
+            query = Item.findAll({
+                include: [ Subject ],
+                offset,
+                limit,
+            });
+        }
+
+        return query.then(rows => rows.map(row => row.toJSON() as ItemSchema));
     }
 
     @Query(returns => ItemSchema, { nullable: true })
-    item(
+    async item(
         @Arg("id", type => Int) id: number,
     ): Promise<ItemSchema | null>
     {
-        return Item.findByPk(id)
-            .then(row => row ? row.toJSON() as ItemSchema : null);
+        if (id) {
+            return Item.findByPk(id)
+                .then(row => row ? row.toJSON() as ItemSchema : null);
+        }
+
+        return Promise.resolve(null);
     }
 }

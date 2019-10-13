@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, ForeignKey } from "sequelize-typescript";
+import { Table, Column, Model, ForeignKey, BelongsTo } from "sequelize-typescript";
 
 import Item from "./Item";
 import Bin from "./Bin";
@@ -29,7 +29,13 @@ export default class ItemBin extends Model<ItemBin>
     @Column({ unique: true })
     binId: number;
 
+    @BelongsTo(() => Bin)
+    bin: Bin;
+
     @ForeignKey(() => Item)
     @Column
     itemId: number;
+
+    @BelongsTo(() => Item)
+    item: Item;
 }

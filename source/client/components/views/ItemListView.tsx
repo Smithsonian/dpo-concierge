@@ -19,49 +19,101 @@ import * as React from "react";
 
 import { useHistory } from "react-router-dom";
 
-import { useQuery } from "@apollo/react-hooks";
+import * as queryString from "query-string";
+
+import { useQuery, useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
 import { withStyles, StyleRules } from "@material-ui/core/styles";
 
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Paper from "@material-ui/core/Paper";
+import Toolbar from "@material-ui/core/Toolbar";
+import Typography from "@material-ui/core/Typography";
 
-import DataTable, { ITableColumn, formatText } from "../DataTable";
+import EditIcon from "@material-ui/icons/Edit";
+import DeleteIcon from "@material-ui/icons/DeleteForever";
+
+import { FilesIcon, SceneIcon } from "../icons";
+
+import DataTable, { ITableColumn, TableCellFormatter, CellIconButton, formatText } from "../DataTable";
 import ErrorCard from "../ErrorCard";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export const ALL_ITEMS_QUERY = gql`
-query {
-    items(offset: 0, limit: 0) {
+export const FIND_ITEMS_QUERY = gql`
+query FindItems($subjectId: Int!) {
+    items(subjectId: $subjectId, offset: 0, limit: 0) {
         id, name, description
         subject {
             name
         }
     }
+    subject(id: $subjectId) {
+        name
+    }
 }`;
 
-const columns: ITableColumn[] = [
-    { id: "name", label: "Name" },
-    { id: "description", label: "Description", format: formatText },
-    { id: "subject", label: "Subject", format: subject => subject.name },
-];
+export const UPDATE_ITEM_MUTATION = gql`
+mutation UpdateItem($item: ItemInputSchema) {
+    updateBin(item: $item) {
+        ok, message
+    }
+}`;
+
+export const DELETE_ITEM_MUTATION = gql`
+mutation DeleteItem($itemId: Int!) {
+    deleteItem(id: $itemId) {
+        ok, message
+    }
+}`;
+
+////////////////////////////////////////////////////////////////////////////////
+
+const actionButtons: TableCellFormatter = (value, row, column) => (
+    <div style={{ display: "flex", flexWrap: "nowrap" }}>
+
+        <CellIconButton title="View Bin List" icon={FilesIcon} onClick={() => {
+            column.data.history.push(`bins?itemId=${row["id"]}`);
+        }} />
+
+        <CellIconButton title="View Scene List" icon={SceneIcon} onClick={() => {
+            column.data.history.push(`scenes?itemId=${row["id"]}`);
+        }}/>
+
+        <CellIconButton title="Edit Item Details" icon={EditIcon} onClick={() => {
+
+        }} />
+
+        <CellIconButton title="Delete Item, Bins, and Assets" icon={DeleteIcon} onClick={() => {
+            if (confirm("Delete item with all bins and assets. Are you sure?")) {
+                const variables = { itemId: row["id"] };
+                column.data.deleteItemMutation({ variables });
+            }
+        }} />
+    </div>
+);
 
 export interface IItemListViewProps
 {
     classes: {
         progress: string;
         paper: string;
+        toolbar: string;
     }
 }
 
 function ItemListView(props: IItemListViewProps)
 {
     const { classes } = props;
+
+    const params = queryString.parse(location.search);
+    const subjectId = parseInt(params.subjectId as string) || 0;
+
     const history = useHistory();
 
-    const { loading, error, data } = useQuery(ALL_ITEMS_QUERY);
+    const { loading, error, data } = useQuery(FIND_ITEMS_QUERY, { variables: { subjectId }});
+    const [ deleteItemMutation ] = useMutation(DELETE_ITEM_MUTATION);
 
     if (loading) {
         return (<CircularProgress className={classes.progress} />);
@@ -70,10 +122,26 @@ function ItemListView(props: IItemListViewProps)
         return (<ErrorCard title="Query Error" error={error}/>);
     }
 
+    const columns: ITableColumn[] = [
+        { id: "actions", label: "Actions", format: actionButtons, width: 1, data: {
+            history, deleteItemMutation,
+        }},
+        { id: "name", label: "Name" },
+        { id: "description", label: "Description", format: formatText },
+        { id: "subject", label: "Subject", format: subject => subject.name },
+    ];
+
     const rows = data.items;
+    const subject = data.subject;
 
     return (
         <Paper className={classes.paper}>
+            <Toolbar className={classes.toolbar}>
+                <Typography variant="subtitle2">
+                    { subject ? `Items in Subject: ${subject.name}` : "All Items" }
+                </Typography>
+                <div style={{ flex: 1 }}/>
+            </Toolbar>
             <DataTable
                 storageKey="repository/items"
                 rows={rows}
@@ -90,6 +158,12 @@ const styles = theme => ({
     },
     progress: {
         alignSelf: "center",
+    },
+    toolbar: {
+        display: "flex",
+        justifyContent: "flex-end",
+        paddingLeft: theme.spacing(2),
+        backgroundColor: theme.palette.primary.light,
     },
 } as StyleRules);
 

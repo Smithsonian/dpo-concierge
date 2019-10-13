@@ -19,6 +19,7 @@ import { Arg, Int, Query, Resolver } from "type-graphql";
 
 import { AssetSchema } from "../schemas/Asset";
 import Asset from "../models/Asset";
+import Bin from "../models/Bin";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -33,17 +34,33 @@ export default class AssetResolver
     ): Promise<AssetSchema[]>
     {
         limit = limit ? limit : undefined;
-        const where = binId !== undefined ? { binId } : undefined;
+        let query;
 
-        return Asset.findAll({ where, offset, limit })
-            .then(rows => rows.map(row => {
-                const asset = row.toJSON() as AssetSchema;
-                asset.path = row.path;
-                asset.name = row.name;
-                asset.extension = row.extension;
-                asset.mimeType = row.mimeType;
-                return asset;
-            }));
+        if (binId) {
+            query = Asset.findAll({
+                include: [ { model: Bin, attributes: [ "uuid", "version" ] }],
+                where: { binId },
+                offset,
+                limit,
+            });
+        }
+        else {
+            query = Asset.findAll({
+                include: [ { model: Bin, attributes: [ "uuid", "version" ] }],
+                offset,
+                limit,
+            });
+        }
+
+        return query.then(rows => rows.map(row => {
+            const asset = row.toJSON() as AssetSchema;
+            asset.path = row.path;
+            asset.name = row.name;
+            asset.extension = row.extension;
+            asset.mimeType = row.mimeType;
+            asset.binUuid = row.bin.uuid;
+            return asset;
+        }));
     }
 
     @Query(returns => AssetSchema, { nullable: true })

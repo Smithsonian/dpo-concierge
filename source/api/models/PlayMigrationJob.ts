@@ -150,16 +150,13 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
     {
         const cookClient = Container.get(CookClient);
 
-        if (this.step === "process") {
-            return cookClient.deleteJob(this.cookJobId)
-                .finally(() => this.destroy());
-        }
-        else if (this.step === "fetch") {
-            // can't delete during fetch
+        // can't delete during fetch
+        if (this.step === "fetch") {
             return Promise.reject(new Error("can't delete while fetching assets"));
         }
 
-        return this.destroy();
+        return cookClient.deleteJob(this.cookJobId).catch(() => {})
+            .finally(() => this.destroy());
     }
 
     protected async monitor(job: Job)
@@ -181,6 +178,7 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
                     .then(() => this.postProcessingStep(job));
             }
             if (!jobInfo || jobInfo.state !== "running") {
+                clearInterval(this.timerHandle);
                 const message = jobInfo ? jobInfo.error || "Cook job not running" : "Cook job not found";
                 throw new Error(message);
             }
@@ -303,7 +301,11 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
                         });
                 }));
             })
+            //.then(() =>
+            //    cookClient.deleteJob(this.cookJobId)
+            //)
             .then(() => {
+                //this.cookJobId = "";
                 this.step = "";
                 job.state = "done";
 
