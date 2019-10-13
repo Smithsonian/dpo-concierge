@@ -33,6 +33,7 @@ console.log(`
 
 Concierge Repository/Workflow Service
 Smithsonian 3D Foundation Project
+(c) 2019 Smithsonian Institution
 
 Github:
 https://github.com/Smithsonian/dpo-concierge

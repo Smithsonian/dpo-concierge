@@ -37,12 +37,19 @@ export default class ManagedRepository
 
         this.webDAVServer = new webdav.WebDAVServer(/* { port: webDAVPort } */);
 
-        this.webDAVServer.afterRequest((req, next) => {
-            // Display the method, the URI, the returned status code and the returned message
-            console.log(`[Repository.WebDAV] ${req.request.method} ${req.request.url} ` +
-                `${req.response.statusCode} ${req.response.statusMessage}`);
-            next();
-        });
+        // this.webDAVServer.afterRequest((req, next) => {
+        //     // Display the method, the URI, the returned status code and the returned message
+        //     console.log(`[Repository.WebDAV] ${req.request.method} ${req.request.url} ` +
+        //         `${req.response.statusCode} ${req.response.statusMessage}`);
+        //     next();
+        // });
+
+        this.activeBins = {};
+    }
+
+    get appsPath() {
+        console.log("***************", this.fileStore.getStoreFilePath("apps/"));
+        return this.fileStore.getStoreFilePath("apps/");
     }
 
     routeWebDAV()
@@ -64,10 +71,12 @@ export default class ManagedRepository
 
             this.webDAVServer.setFileSystem("/" + bin.uuid, new webdav.PhysicalFileSystem(physicalPath), success => {
                 if (!success) {
-                    return reject(new Error(`failed to mount WebDAV file system at '${physicalPath}'`));
+                    const message = `failed to mount WebDAV file system at '${physicalPath}'`;
+                    console.log(`[Repository.WebDAV] ${message}`);
+                    return reject(new Error(message));
                 }
 
-                console.log(`[Repository.WebDAV] file access granted for bin '${bin.uuid}'`);
+                console.log(`[Repository.WebDAV] file access granted for bin '${bin.uuid}', repo path: '${physicalPath}'`);
                 return resolve();
             });
         });
@@ -84,7 +93,9 @@ export default class ManagedRepository
 
             this.webDAVServer.removeFileSystem("/" + bin.uuid, removeCount => {
                 if (!removeCount) {
-                    return reject(new Error(`failed to unmount WebDAV file system`));
+                    const message = `failed to unmount WebDAV file system`;
+                    console.log(`[Repository.WebDAV] ${message}`);
+                    return reject(new Error(message));
                 }
 
                 return resolve();

@@ -186,11 +186,13 @@ export default class Server
         // static file server
         app.use("/static", express.static(this.config.staticDir));
 
+        app.use("/apps", express.static(repository.appsPath));
+
         // repo WebDAV server
-        app.use("/webdav", repository.routeWebDAV());
+        app.use("/edit", repository.routeWebDAV());
 
         // repo file server
-        app.get("/files/:bin/*", (req, res, next) => {
+        app.get("/view/:bin/*", (req, res, next) => {
             const bin = req.params.bin;
             const path = req.params[0];
 

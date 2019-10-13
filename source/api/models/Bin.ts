@@ -76,6 +76,6 @@ export default class Bin extends Model<Bin>
     jobBin: JobBin;
 
     getStoragePath() {
-        return `${this.uuid}/v${this.version}`;
+        return `bins/${this.uuid}/v${this.version}`;
     }
 }

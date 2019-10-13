@@ -80,7 +80,7 @@ const actionButtons: TableCellFormatter = (value, row, column) => (
     <div style={{ display: "flex", flexWrap: "nowrap" }}>
         <Tooltip title="Open in Voyager Explorer">
             <CellIconButton onClick={() => {
-                window.open(`/static/voyager/explorer.html?root=/files/${row["bin"].uuid}/${row["voyagerDocument"].filePath}`, "_blank");
+                window.open(`/apps/voyager/voyager-explorer-dev.html?root=/view/${row["bin"].uuid}/&document=${row["voyagerDocument"].filePath}`, "_blank");
             }}>
                 <ViewIcon fontSize="small" />
             </CellIconButton>
@@ -88,9 +88,13 @@ const actionButtons: TableCellFormatter = (value, row, column) => (
         <Tooltip title="Edit in Voyager Story">
             <CellIconButton onClick={() => {
                 const variables = { uuid: row["bin"].uuid };
-                column.data.grantAccessMutation({ variables }).then(() => (
-                    window.open(`/static/voyager/story.html?root=/webdav/${row["bin"].uuid}/${row["voyagerDocument"].filePath}`, "_blank")
-                ));
+                column.data.grantAccessMutation({ variables }).then(result => {
+                    const status = result.data.grantBinAccess;
+                    if (!status.ok) {
+                        return console.warn(status);
+                    }
+                    window.open(`/apps/voyager/voyager-story-dev.html?root=/edit/${row["bin"].uuid}/&document=${row["voyagerDocument"].filePath}`, "_blank")
+                });
             }}>
                 <EditIcon fontSize="small" />
             </CellIconButton>
