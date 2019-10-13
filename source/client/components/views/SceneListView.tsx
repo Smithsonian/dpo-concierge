@@ -17,13 +17,24 @@
 
 import * as React from "react";
 
-import { useQuery } from "@apollo/react-hooks";
+import { useHistory } from "react-router-dom";
+
+import { useQuery, useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
-import { withStyles, StyleRules } from "@material-ui/core/styles";
+import { withStyles, styled, StyleRules } from "@material-ui/core/styles";
 
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Paper from "@material-ui/core/Paper";
+import Tooltip from "@material-ui/core/Tooltip";
+import IconButton from "@material-ui/core/IconButton";
+import Toolbar from "@material-ui/core/Toolbar";
+import Button from "@material-ui/core/Button";
+import Link from "@material-ui/core/Link";
+
+import ViewIcon from "@material-ui/icons/Visibility";
+import EditIcon from "@material-ui/icons/Edit";
+import LaunchIcon from "@material-ui/icons/Launch";
 
 import DataTable, { ITableColumn, TableCellFormatter } from "../DataTable";
 import ErrorCard from "../ErrorCard";
@@ -34,12 +45,65 @@ export const ALL_SCENES_QUERY = gql`
 query AllScenes($itemId: Int) {
     scenes(itemId: $itemId, offset: 0, limit: 0) {
         name
+        published
+        bin {
+            uuid
+            name
+        }
+        voyagerDocument {
+            filePath
+        }
     }
 }`;
 
-const columns: ITableColumn[] = [
-    { id: "name", label: "Name" },
-];
+export const GRANT_ACCESS_MUTATION = gql`
+mutation GrantBinAccess($uuid: String!) {
+    grantBinAccess(uuid: $uuid) {
+        ok, message
+    }
+}`;
+
+export const REVOKE_ACCESS_MUTATION = gql`
+mutation RevokeBinAccess($uuid: String!) {
+    revokeBinAccess(uuid: $uuid) {
+        ok, message
+    }
+}`;
+
+////////////////////////////////////////////////////////////////////////////////
+
+const CellIconButton = styled(IconButton)({
+    margin: "-16px 0",
+});
+
+const actionButtons: TableCellFormatter = (value, row, column) => (
+    <div style={{ display: "flex", flexWrap: "nowrap" }}>
+        <Tooltip title="Open in Voyager Explorer">
+            <CellIconButton onClick={() => {
+                window.open(`/static/voyager/explorer.html?root=/files/${row["bin"].uuid}/${row["voyagerDocument"].filePath}`, "_blank");
+            }}>
+                <ViewIcon fontSize="small" />
+            </CellIconButton>
+        </Tooltip>
+        <Tooltip title="Edit in Voyager Story">
+            <CellIconButton onClick={() => {
+                const variables = { uuid: row["bin"].uuid };
+                column.data.grantAccessMutation({ variables }).then(() => (
+                    window.open(`/static/voyager/story.html?root=/webdav/${row["bin"].uuid}/${row["voyagerDocument"].filePath}`, "_blank")
+                ));
+            }}>
+                <EditIcon fontSize="small" />
+            </CellIconButton>
+        </Tooltip>
+        <Tooltip title="Publish to API">
+            <CellIconButton onClick={() => {
+                // TODO
+            }}>
+                <LaunchIcon fontSize="small" />
+            </CellIconButton>
+        </Tooltip>
+    </div>
+);
 
 export interface ISceneListViewProps
 {
@@ -52,7 +116,22 @@ export interface ISceneListViewProps
 function SceneListView(props: ISceneListViewProps)
 {
     const { classes } = props;
+    const history = useHistory();
+
     const { loading, error, data } = useQuery(ALL_SCENES_QUERY);
+
+    const [ grantAccessMutation ] = useMutation(GRANT_ACCESS_MUTATION);
+    const [ revokeAccessMutation ] = useMutation(REVOKE_ACCESS_MUTATION);
+
+    const columns: ITableColumn[] = [
+        { id: "actions", label: "Actions", format: actionButtons, width: 1, data: {
+            grantAccessMutation, revokeAccessMutation,
+        }},
+        { id: "name", label: "Name" },
+        //{ id: "bin", label: "Bin", format: bin => bin.name },
+        { id: "voyagerDocument", label: "Voyager Document", format: asset => asset.filePath },
+        { id: "published", label: "Published" },
+    ];
 
     if (loading) {
         return (<CircularProgress className={classes.progress} />);
@@ -82,6 +161,12 @@ const styles = theme => ({
     progress: {
         alignSelf: "center",
     },
+    toolbar: {
+        display: "flex",
+        justifyContent: "flex-end",
+        padding: theme.spacing(1),
+        backgroundColor: theme.palette.primary.light,
+    }
 } as StyleRules);
 
 export default withStyles(styles)(SceneListView);

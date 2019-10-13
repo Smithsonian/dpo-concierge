@@ -23,7 +23,7 @@ import uuid from "uuidv4";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export interface IEDANQuery
+export interface IEdanQuery
 {
     q?: string;
     fqs?: string | string[];
@@ -31,6 +31,26 @@ export interface IEDANQuery
     start?: number;
     sortDir?: "asc" | "desc";
     facet?: boolean;
+}
+
+export interface IEdanQueryResult
+{
+    rows?: IEdanEntry[];
+}
+
+export interface IEdanEntry
+{
+    id: string;
+    title: string;
+    unitCode: string;
+    type: string;
+    url: string;
+    content: any;
+    timestamp: number;
+    lastTimeUpdated: number;
+    status: number;
+    version: string;
+    publicSearch: boolean;
 }
 
 export default class EDANClient
@@ -52,7 +72,7 @@ export default class EDANClient
         this.appKey = appKey;
     }
 
-    async fetchMdmRecord(id: string)
+    async fetchMdmRecord(id: string): Promise<IEdanQueryResult>
     {
         id = id.replace("edanmdm:", "edanmdm-");
 
@@ -64,10 +84,13 @@ export default class EDANClient
         console.log(`[EDANClient] fetching record for id: '${id}'`);
 
         return this.search({ fqs: "id:" + id, rows: 1, facet: true })
-            .then(result => fs.promises.writeFile("edan-search-result.json", JSON.stringify(result, null, 2)));
+            .then(result =>
+                fs.promises.writeFile("edan-search-result.json", JSON.stringify(result, null, 2))
+                    .then(() => result)
+            );
     }
 
-    async search(query: IEDANQuery, metadataSearch: boolean = false): Promise<any>
+    async search(query: IEdanQuery, metadataSearch: boolean = false): Promise<IEdanQueryResult>
     {
         const q = Object.assign({}, query);
         delete q["fqs"];

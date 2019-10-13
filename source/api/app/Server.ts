@@ -36,6 +36,7 @@ import SubjectResolver from "../resolvers/SubjectResolver";
 import ItemResolver from "../resolvers/ItemResolver";
 import BinResolver from "../resolvers/BinResolver";
 import AssetResolver from "../resolvers/AssetResolver";
+import SceneResolver from "../resolvers/SceneResolver";
 
 import UserResolver from "../resolvers/UserResolver";
 import ProjectResolver from "../resolvers/ProjectResolver";
@@ -164,6 +165,7 @@ export default class Server
                 ItemResolver,
                 BinResolver,
                 AssetResolver,
+                SceneResolver,
                 UserResolver,
                 ProjectResolver,
                 JobResolver,
@@ -179,8 +181,13 @@ export default class Server
         ////////////////////////////////////////////////////////////////////////////////
         // ROUTES
 
+        const repository = Container.get(ManagedRepository);
+
         // static file server
         app.use("/static", express.static(this.config.staticDir));
+
+        // repo WebDAV server
+        app.use("/webdav", repository.routeWebDAV());
 
         // repo file server
         app.get("/files/:bin/*", (req, res, next) => {
@@ -191,7 +198,7 @@ export default class Server
                 return res.status(404).send();
             }
 
-            Container.get(ManagedRepository).createReadStream(path, bin)
+            repository.createReadStream(path, bin)
             .then(stream => {
                 if (!stream) {
                     return res.status(404).send();
@@ -278,22 +285,22 @@ export default class Server
         });
 
         // error handling
-        // app.use((error, req, res, next) => {
-        //     console.error(error);
-        //
-        //     if (res.headersSent) {
-        //         return next(error);
-        //     }
-        //
-        //     if (req.accepts("json")) {
-        //         // send JSON formatted error
-        //         res.status(500).send({ error: `${error.name}: ${error.message}` });
-        //     }
-        //     else {
-        //         // send generic error page
-        //         res.status(500).render("errors/500", { error });
-        //     }
-        // });
+        app.use((error, req, res, next) => {
+            console.error(error);
+
+            if (res.headersSent) {
+                return next(error);
+            }
+
+            if (req.accepts("json")) {
+                // send JSON formatted error
+                res.status(500).send({ error: `${error.name}: ${error.message}` });
+            }
+            else {
+                // send generic error page
+                res.status(500).render("errors/500", { error });
+            }
+        });
     }
 
     async start()

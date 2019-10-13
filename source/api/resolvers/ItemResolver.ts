@@ -18,7 +18,9 @@
 import { Arg, Int, Query, Resolver } from "type-graphql";
 
 import { ItemSchema } from "../schemas/Item";
+
 import Item from "../models/Item";
+import Subject from "../models/Subject";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -33,7 +35,7 @@ export default class ItemResolver
     {
         limit = limit ? limit : undefined;
 
-        return Item.findAll({ offset, limit })
+        return Item.findAll({ offset, limit, include: [ Subject ] })
             .then(rows => rows.map(row => row.toJSON() as ItemSchema));
     }
 

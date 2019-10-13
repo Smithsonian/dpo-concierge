@@ -97,7 +97,7 @@ Container.set(CookClient, new CookClient(cookMachineAddress, cookClientId));
 Container.set(EDANClient, new EDANClient(edanAppId, edanAppKey));
 
 database.setup()
-    .then(() => server.setup())
-    .then(() => server.start());
+.then(() => server.setup())
+.then(() => server.start());
 
 

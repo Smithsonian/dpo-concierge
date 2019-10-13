@@ -24,12 +24,13 @@ import Bin from "./Bin";
 import Item from "./Item";
 import ItemBin from "./ItemBin";
 import Subject from "./Subject";
+import Scene from "./Scene";
 
 import Job, { IJobImplementation } from "./Job";
 
 import CookClient, { IParameters } from "../utils/CookClient";
 import { IJobReport } from "../utils/cookTypes";
-import EDANClient from "../utils/EDANClient";
+import EDANClient, { IEdanEntry, IEdanQueryResult } from "../utils/EDANClient";
 import BinType from "./BinType";
 import ManagedRepository from "../utils/ManagedRepository";
 
@@ -203,7 +204,10 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
         const repo = Container.get(ManagedRepository);
 
         let report: IJobReport = undefined;
-        let record, name, description;
+        let record: IEdanQueryResult = undefined;
+        let entry: IEdanEntry = undefined;
+
+        let name, description;
 
         return cookClient.jobReport(this.cookJobId)
             .then(_report => {
@@ -214,7 +218,7 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
                     .catch(() => {});
             })
             .then(() => {
-                const entry = record ? record.rows[0] : null;
+                entry = record && record.rows ? record.rows[0] : null;
 
                 name = entry ? entry.title : this.object;
                 description = `Play Scene Migration: Box ID #${this.playboxId}`;
@@ -222,11 +226,12 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
                 const subject: any = {
                     name,
                     description,
-                    edanRecordId: entry ? entry.url : this.edanRecordId,
                     unitRecordId: this.unitRecordId,
                 };
                 if (record) {
-                    subject.edanRecordCache = record;
+                    subject.edanRecordId = entry.url;
+                    subject.edanRecordCache = entry;
+                    subject.unitCode = entry.unitCode;
                 }
 
                 return Subject.findByNameOrCreate(subject);
@@ -281,7 +286,21 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
                     const filePath = fileMap[fileKey];
 
                     return repo.createWriteStream(filePath, binId, true)
-                        .then(stream => cookClient.downloadFile(this.cookJobId, filePath, stream))
+                        .then(({ stream, asset }) => {
+                            const proms = [ cookClient.downloadFile(this.cookJobId, filePath, stream) ];
+
+                            if (fileKey === "scene:document") {
+                                proms.push(
+                                    Scene.create({
+                                        name,
+                                        binId: sceneItemBin.binId,
+                                        voyagerDocumentId: asset.id
+                                    })
+                                );
+                            }
+
+                            return Promise.all(proms);
+                        });
                 }));
             })
             .then(() => {

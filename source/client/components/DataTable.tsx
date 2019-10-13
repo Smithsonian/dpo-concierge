@@ -23,6 +23,8 @@ import { History } from "react-router-dom";
 import moment from "moment";
 
 import { withStyles, StyleRules } from "@material-ui/core/styles";
+
+import Tooltip from "@material-ui/core/Tooltip";
 import Table from "@material-ui/core/Table";
 import TableHead from "@material-ui/core/TableHead";
 import TableBody from "@material-ui/core/TableBody";
@@ -185,15 +187,16 @@ class DataTable<T extends {} = {}> extends React.Component<IDataTableProps<T>, I
                         <TableCell
                             key={column.id}
                             align={column.numeric ? "right" : "left"}
-                            title={isText ? content : null}
                         >
                             {isText ? (
-                                <div
-                                    className={classes.cell}
-                                    style={column.width ? { width: column.width } : null}
-                                >
-                                    {content}
-                                </div>
+                                <Tooltip title={content} enterDelay={500} placement="bottom-start">
+                                    <div
+                                        className={classes.cell}
+                                        style={column.width ? { width: column.width } : null}
+                                    >
+                                        {content}
+                                    </div>
+                                </Tooltip>
                             ) : content}
 
                         </TableCell>

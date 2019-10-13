@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { createMuiTheme, createStyles } from '@material-ui/core/styles';
+import { createMuiTheme, createStyles } from "@material-ui/core/styles";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -34,9 +34,9 @@ export let theme = createMuiTheme({
     // },
     palette: {
         primary: {
-            light: '#e8f7ff',
-            main: '#009be5',
-            dark: '#006db3',
+            light: "#e8f7ff",
+            main: "#1a83d9", //"#009be5",
+            dark: "#006db3",
         },
     },
     // shape: {
@@ -49,17 +49,17 @@ theme = {
     overrides: {
         MuiDrawer: {
             paper: {
-                backgroundColor: '#18202c',
+                backgroundColor: "#18202c",
             },
         },
         // MuiButton: {
         //     label: {
-        //         textTransform: 'none',
+        //         textTransform: "none",
         //     },
         //     contained: {
-        //         boxShadow: 'none',
-        //         '&:active': {
-        //             boxShadow: 'none',
+        //         boxShadow: "none",
+        //         "&:active": {
+        //             boxShadow: "none",
         //         },
         //     },
         // },
@@ -76,11 +76,11 @@ theme = {
         },
         MuiTab: {
             root: {
-                textTransform: 'none',
-                margin: '0 16px',
+                textTransform: "none",
+                margin: "0 16px",
                 minWidth: 0,
                 padding: 0,
-                [theme.breakpoints.up('md')]: {
+                [theme.breakpoints.up("md")]: {
                     padding: 0,
                     minWidth: 0,
                 },
@@ -98,7 +98,7 @@ theme = {
         },
         MuiDivider: {
             root: {
-                backgroundColor: '#404854',
+                backgroundColor: "#404854",
             },
         },
         MuiListItemText: {
@@ -108,9 +108,9 @@ theme = {
         },
         MuiListItemIcon: {
             root: {
-                color: 'inherit',
+                color: "inherit",
                 marginRight: 0,
-                '& svg': {
+                "& svg": {
                     fontSize: 20,
                 },
             },
@@ -139,23 +139,23 @@ theme = {
 //
 // export const styles = createStyles({
 //     root: {
-//         display: 'flex',
-//         minHeight: '100vh',
+//         display: "flex",
+//         minHeight: "100vh",
 //     },
 //     drawer: {
-//         [theme.breakpoints.up('sm')]: {
+//         [theme.breakpoints.up("sm")]: {
 //             width: drawerWidth,
 //             flexShrink: 0,
 //         },
 //     },
 //     appContent: {
 //         flex: 1,
-//         display: 'flex',
-//         flexDirection: 'column',
+//         display: "flex",
+//         flexDirection: "column",
 //     },
 //     mainContent: {
 //         flex: 1,
-//         padding: '48px 36px 0',
-//         background: '#eaeff1',
+//         padding: "48px 36px 0",
+//         background: "#eaeff1",
 //     },
 // });

@@ -23,8 +23,11 @@ import Bin from "./Bin";
 ////////////////////////////////////////////////////////////////////////////////
 
 @Table
-export default class SceneBin extends Model<SceneBin>
+export default class Scene extends Model<Scene>
 {
+    @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, unique: true })
+    uuid: string;
+
     @Column
     name: string;
 
@@ -44,4 +47,7 @@ export default class SceneBin extends Model<SceneBin>
 
     @Column
     voyagerVersion: string;
+
+    @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: false })
+    published: boolean;
 }

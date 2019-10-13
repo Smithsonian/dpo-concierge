@@ -39,14 +39,14 @@ export default class Item extends Model<Item>
     @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, unique: true })
     uuid: string;
 
-    @Column({ type: DataType.STRING })
+    @Column({ type: DataType.STRING, allowNull: false })
     name: string;
 
     @Column({ type: DataType.TEXT })
     description: string;
 
     @ForeignKey(() => Subject)
-    @Column
+    @Column({ allowNull: false })
     subjectId: number;
 
     @BelongsTo(() => Subject)

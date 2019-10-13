@@ -19,6 +19,7 @@ import "reflect-metadata";
 import { Field, Int, ObjectType } from "type-graphql";
 
 import { AssetSchema } from "./Asset";
+import { BinSchema } from "./Bin";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -29,12 +30,21 @@ export class SceneSchema
     id: number;
 
     @Field()
+    uuid: string;
+
+    @Field()
     name: string;
+
+    @Field()
+    bin: BinSchema;
 
     @Field()
     voyagerDocument: AssetSchema;
 
     @Field()
     voyagerVersion: string;
+
+    @Field()
+    published: boolean;
 }
 

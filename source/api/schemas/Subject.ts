@@ -32,16 +32,16 @@ export class SubjectSchema
     @Field()
     name: string;
 
-    @Field()
+    @Field({ nullable: true })
     description: string;
 
-    @Field()
+    @Field({ nullable: true })
     unitCode: string;
 
-    @Field()
+    @Field({ nullable: true })
     unitRecordId: string;
 
-    @Field()
+    @Field({ nullable: true })
     edanRecordId: string;
 }
 

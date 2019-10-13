@@ -33,6 +33,7 @@ export interface IFileInfo
 
 export interface IFileStore
 {
+    getStoreFilePath: (filePath: string) => string;
     readFile: (filePath: string, targetPath: string) => Promise<unknown>;
     writeFile: (sourcePath: string, filePath: string) => Promise<unknown>;
     moveFile: (sourcePath: string, destinationPath: string) => Promise<unknown>;

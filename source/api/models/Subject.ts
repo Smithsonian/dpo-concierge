@@ -35,7 +35,7 @@ export default class Subject extends Model<Subject>
     @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, unique: true })
     uuid: string;
 
-    @Column
+    @Column({ allowNull: false })
     name: string;
 
     @Column({ type: DataType.TEXT })

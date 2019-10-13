@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
+import { v2 as webdav } from "webdav-server";
+
 import Asset from "../models/Asset";
 import Bin from "../models/Bin";
 
-import { IFileStore, ReadStream } from "./FileStore";
+import { IFileStore, ReadStream, WriteStream } from "./FileStore";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -26,9 +28,68 @@ export default class ManagedRepository
 {
     protected readonly fileStore: IFileStore;
 
+    protected webDAVServer: webdav.WebDAVServer;
+    protected activeBins: { [id:string]: boolean };
+
     constructor(fileStore: IFileStore)
     {
         this.fileStore = fileStore;
+
+        this.webDAVServer = new webdav.WebDAVServer(/* { port: webDAVPort } */);
+
+        this.webDAVServer.afterRequest((req, next) => {
+            // Display the method, the URI, the returned status code and the returned message
+            console.log(`[Repository.WebDAV] ${req.request.method} ${req.request.url} ` +
+                `${req.response.statusCode} ${req.response.statusMessage}`);
+            next();
+        });
+    }
+
+    routeWebDAV()
+    {
+        return webdav.extensions.express("/", this.webDAVServer)
+    }
+
+    async grantWebDAVAccess(bin: Bin): Promise<void>
+    {
+        return new Promise((resolve, reject) => {
+            if (this.activeBins[bin.uuid]) {
+                console.log(`[Repository.WebDAV] file access already granted for bin '${bin.uuid}'`);
+                return resolve();
+            }
+
+            this.activeBins[bin.uuid] = true;
+
+            const physicalPath = this.fileStore.getStoreFilePath(bin.getStoragePath());
+
+            this.webDAVServer.setFileSystem("/" + bin.uuid, new webdav.PhysicalFileSystem(physicalPath), success => {
+                if (!success) {
+                    return reject(new Error(`failed to mount WebDAV file system at '${physicalPath}'`));
+                }
+
+                console.log(`[Repository.WebDAV] file access granted for bin '${bin.uuid}'`);
+                return resolve();
+            });
+        });
+    }
+
+    revokeWebDAVAccess(bin: Bin): Promise<void>
+    {
+        return new Promise((resolve, reject) => {
+            if (!this.activeBins[bin.uuid]) {
+                return reject(new Error(`unknown bin '${bin.uuid}'`));
+            }
+
+            delete this.activeBins[bin.uuid];
+
+            this.webDAVServer.removeFileSystem("/" + bin.uuid, removeCount => {
+                if (!removeCount) {
+                    return reject(new Error(`failed to unmount WebDAV file system`));
+                }
+
+                return resolve();
+            });
+        });
     }
 
     async readFile(targetFilePath: string, filePath: string, binUuid: string, binVersion?: number)
@@ -88,9 +149,10 @@ export default class ManagedRepository
         });
     }
 
-    async createWriteStream(filePath: string, binId: number, overwrite?: boolean)
+    async createWriteStream(filePath: string, binId: number, overwrite?: boolean): Promise<{ asset: Asset, stream: WriteStream }>
     {
         let bin: Bin = undefined;
+        let asset: Asset = undefined;
 
         return Bin.findByPk(binId)
         .then(_bin => {
@@ -100,9 +162,11 @@ export default class ManagedRepository
                 binId: bin.id
             });
         })
-        .then(asset => {
+        .then(_asset => {
+            asset = _asset;
             asset.bin = bin;
             return this.fileStore.createWriteStream(asset.getStoragePath());
-        });
+        })
+        .then(stream => ({ stream, asset }));
     }
 }

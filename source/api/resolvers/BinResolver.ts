@@ -15,15 +15,18 @@
  * limitations under the License.
  */
 
-import { Arg, Int, Query, Resolver } from "type-graphql";
+import { Arg, Int, Query, Mutation, Resolver } from "type-graphql";
+import { Container } from "typedi";
 
 import Bin from "../models/Bin";
 import { BinSchema } from "../schemas/Bin";
+import { StatusSchema } from "../schemas/Status";
 
 import ItemBin from "../models/ItemBin";
-import Item from "../models/Item";
 import BinType from "../models/BinType";
 import Asset from "../models/Asset";
+
+import ManagedRepository from "../utils/ManagedRepository";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -72,5 +75,39 @@ export default class BinResolver
     {
         return Bin.findByPk(id, { include: [BinType, Asset] })
             .then(row => row ? row.toJSON() as BinSchema : null);
+    }
+
+    @Mutation(returns => StatusSchema)
+    grantBinAccess(
+        @Arg("uuid", type => String) uuid: string,
+    ): Promise<StatusSchema>
+    {
+        return Bin.getLatestVersion(uuid)
+            .then(bin => {
+                if (!bin) {
+                    return { ok: false, message: `bin not found with uuid: ${uuid}` };
+                }
+
+                return Container.get(ManagedRepository).grantWebDAVAccess(bin)
+                    .then(() => ({ ok: true, message: "" }))
+                    .catch(err => ({ ok: false, message: err.message }));
+            });
+    }
+
+    @Mutation(returns => StatusSchema)
+    revokeBinAccess(
+        @Arg("uuid", type => String) uuid: string,
+    ): Promise<StatusSchema>
+    {
+        return Bin.getLatestVersion(uuid)
+        .then(bin => {
+            if (!bin) {
+                return { ok: false, message: `bin not found with uuid: ${uuid}` };
+            }
+
+            return Container.get(ManagedRepository).revokeWebDAVAccess(bin)
+            .then(() => ({ ok: true, message: "" }))
+            .catch(err => ({ ok: false, message: err.message }));
+        });
     }
 }

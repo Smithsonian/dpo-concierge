@@ -22,6 +22,26 @@ import Application from "./components/Application";
 
 ////////////////////////////////////////////////////////////////////////////////
 
+console.log(`
+  _________       .__  __  .__                        .__                ________ ________   
+ /   _____/ _____ |__|/  |_|  |__   __________   ____ |__|____    ____   \\_____  \\\\______ \\  
+ \\_____  \\ /     \\|  \\   __\\  |  \\ /  ___/  _ \\ /    \\|  \\__  \\  /    \\    _(__  < |    |  \\ 
+ /        \\  Y Y  \\  ||  | |   Y  \\\\___ (  <_> )   |  \\  |/ __ \\|   |  \\  /       \\|    \`   \\
+/_______  /__|_|  /__||__| |___|  /____  >____/|___|  /__(____  /___|  / /______  /_______  /
+        \\/      \\/              \\/     \\/           \\/        \\/     \\/         \\/        \\/ 
+
+
+Concierge Repository/Workflow Service
+Smithsonian 3D Foundation Project
+
+Github:
+https://github.com/Smithsonian/dpo-concierge
+
+Design and development:
+Ralph Wiedemeier, Frame Factory GmbH
+https://www.framefactory.ch
+`);
+
 ReactDOM.render(
     <Application/>,
     document.getElementById("main")

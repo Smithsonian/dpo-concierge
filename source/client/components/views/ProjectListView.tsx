@@ -115,7 +115,9 @@ function ProjectListView(props: IProjectListViewProps)
     const [setActiveProject, { error: error1, data: data1 }] = useMutation(ACTIVATE_PROJECT_MUTATION);
 
     const columns: ITableColumn[] = [
-        { id: "active", label: "Actions", format: actionButtons, width: 1, data: { setActiveProject, activeProjectId } },
+        { id: "active", label: "Actions", format: actionButtons, width: 1, data: {
+            setActiveProject, activeProjectId
+        }},
         { id: "name", label: "Name" },
         { id: "description", label: "Description" },
         { id: "createdAt", label: "Created", format: formatDateTime },

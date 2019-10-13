@@ -36,7 +36,7 @@ import WorkIcon from "@material-ui/icons/Work";
 import AirportShuttleIcon from "@material-ui/icons/AirportShuttle";
 import ImportIcon from "@material-ui/icons/Input";
 
-import { ConciergeIcon, BookIcon, CabinetIcon, BoneIcon, FilesIcon } from "./icons";
+import { ConciergeIcon, BookIcon, CabinetIcon, BoneIcon, FilesIcon, SceneIcon } from "./icons";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -58,6 +58,7 @@ const categories = [{
         { name: "Items", icon: <BoneIcon />, link: "/repository/items" },
         { name: "Bins", icon: <CabinetIcon />, link: "/repository/bins" },
         { name: "Assets", icon: <FilesIcon />, link: "/repository/assets" },
+        { name: "Scenes", icon: <SceneIcon />, link: "/repository/scenes" },
     ],
 }, {
     name: "Workflow",

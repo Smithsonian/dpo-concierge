@@ -31,7 +31,7 @@ export default class Bin extends Model<Bin>
     {
         return Bin.findOne({
             where: { uuid: binUuid },
-            order: [ "version", "DESC" ],
+            order: [ [ "version", "DESC" ] ],
         });
     }
 
@@ -39,7 +39,7 @@ export default class Bin extends Model<Bin>
     {
         return Bin.findOne({
             where: { uuid: binUuid },
-            order: [ "version", "DESC" ],
+            order: [ [ "version", "DESC" ] ],
             attributes: [ "version" ]
         })
         .then(bin => bin ? bin.version : 0);

@@ -36,6 +36,11 @@ export default class LocalFileStore implements IFileStore
         this.storePath = storePath;
     }
 
+    getStoreFilePath(filePath: string)
+    {
+        return path.resolve(this.storePath, filePath);
+    }
+
     async readFile(filePath: string, targetPath: string): Promise<unknown>
     {
         const storageFilePath = this.getStoreFilePath(filePath);
@@ -118,10 +123,5 @@ export default class LocalFileStore implements IFileStore
                 resolve(made);
             });
         });
-    }
-
-    protected getStoreFilePath(filePath: string)
-    {
-        return path.resolve(this.storePath, filePath);
     }
 }

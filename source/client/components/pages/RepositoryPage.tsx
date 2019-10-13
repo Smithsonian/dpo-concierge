@@ -21,6 +21,7 @@ import SubjectListView from "../views/SubjectListView";
 import ItemListView from "../views/ItemListView";
 import BinListView from "../views/BinListView";
 import AssetListView from "../views/AssetListView";
+import SceneListView from "../views/SceneListView";
 
 import Page, { IPageView } from "../Page";
 
@@ -31,6 +32,7 @@ const views: IPageView[] = [
     { title: "Items", component: ItemListView, route: "/items" },
     { title: "Bins", component: BinListView, route: "/bins" },
     { title: "Assets", component: AssetListView, route: "/assets" },
+    { title: "Scenes", component: SceneListView, route: "/scenes" },
 //    { title: "Units", component: NotYetImplementedView, route: "/units" },
 //    { title: "Stakeholders", component: NotYetImplementedView, route: "/stakeholders" },
 ];

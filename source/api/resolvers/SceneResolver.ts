@@ -18,7 +18,8 @@
 import { Arg, Int, Query, Resolver } from "type-graphql";
 
 import { SceneSchema } from "../schemas/Scene";
-import SceneBin from "../models/SceneBin";
+import Scene from "../models/Scene";
+import Bin from "../models/Bin";
 import Asset from "../models/Asset";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -35,7 +36,7 @@ export default class SceneResolver
     {
         limit = limit ? limit : undefined;
 
-        return SceneBin.findAll({ include: [ Asset ], offset, limit })
+        return Scene.findAll({ include: [ Bin, Asset ], offset, limit })
             .then(rows => rows.map(row => row.toJSON() as SceneSchema));
     }
 
@@ -44,7 +45,7 @@ export default class SceneResolver
         @Arg("id", type => Int) id: number,
     ): Promise<SceneSchema | null>
     {
-        return SceneBin.findByPk(id, { include: [ Asset ]})
+        return Scene.findByPk(id, { include: [ Asset ]})
             .then(row => row ? row.toJSON() as SceneSchema : null);
     }
 }
