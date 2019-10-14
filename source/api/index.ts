@@ -20,6 +20,7 @@ sourceMapSupport.install();
 
 import * as path from "path";
 import { Container } from "typedi";
+import { PubSub } from "graphql-subscriptions";
 
 import Server, { IServerConfiguration } from "./app/Server";
 import Database, { IDatabaseConfiguration } from "./app/Database";
@@ -89,12 +90,21 @@ Cook Server:             ${process.env["COOK_MACHINE_ADDRESS"]}
 
 const server = new Server(serverConfig);
 const database = new Database(databaseConfig);
+const pubSub = new PubSub();
+
+// setInterval(() => {
+//     console.log("[index] interval publish");
+//     pubSub.publish("JOB_STATE", { ok: true, message: "interval!" });
+// }, 5000);
+//
+// pubSub.subscribe("JOB_STATE", m => { console.log("[index] message received: ", m)})
 
 Container.set(Server, server);
 Container.set(Database, database);
 Container.set(ManagedRepository, new ManagedRepository(new LocalFileStore(fileStorePath)));
 Container.set(CookClient, new CookClient(cookMachineAddress, cookClientId));
 Container.set(EDANClient, new EDANClient(edanAppId, edanAppKey));
+Container.set(PubSub, pubSub);
 
 database.setup()
 .then(() => server.setup())

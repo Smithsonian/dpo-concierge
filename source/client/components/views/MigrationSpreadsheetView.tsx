@@ -188,8 +188,8 @@ function MigrationSpreadsheetView(props: IMigrationSpreadsheetViewProps)
 
 const styles = theme => ({
     paper: {
+        overflow: "auto",
         alignSelf: "stretch",
-        overflow: "hidden",
     },
     progress: {
         alignSelf: "center"

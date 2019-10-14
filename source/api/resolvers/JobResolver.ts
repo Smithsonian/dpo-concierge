@@ -15,7 +15,10 @@
  * limitations under the License.
  */
 
-import { Arg, Query, Mutation, Int, Resolver, Ctx } from "type-graphql";
+import { Arg, Query, Mutation, Int, Resolver, Ctx, Subscription, Root } from "type-graphql";
+
+import { Container } from "typedi";
+import { PubSub } from "graphql-subscriptions";
 
 import { JobSchema } from "../schemas/Job";
 import { StatusSchema } from "../schemas/Status";
@@ -103,11 +106,14 @@ export default class JobResolver
         .catch(err => ({ ok: false, message: err.message }));
     }
 
-    // @Subscription({
-    //     topics: "JOB_STATE"
-    // })
-    // jobStateChange(): Promise<JobType[]>
-    // {
-    //     return Promise.resolve([]);
-    // }
+    @Subscription({
+        subscribe: () => Container.get(PubSub).asyncIterator("JOB_STATE"),
+    })
+    jobStateChange(
+        @Root() payload: { ok: boolean, message: string },
+    ): StatusSchema
+    {
+        console.log("[JobResolver] publish change - ", payload.message);
+        return payload;
+    }
 }

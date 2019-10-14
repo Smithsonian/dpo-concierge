@@ -22,8 +22,11 @@ import { BrowserRouter, Route, Switch } from "react-router-dom";
 import ApolloClient from "apollo-client";
 import { ApolloLink } from "apollo-link";
 import { HttpLink } from "apollo-link-http";
+import { WebSocketLink } from "apollo-link-ws";
+import { SubscriptionClient } from "subscriptions-transport-ws";
 import { onError } from "apollo-link-error";
 import { InMemoryCache } from "apollo-cache-inmemory";
+import { getMainDefinition } from "apollo-utilities";
 import { ApolloProvider } from "@apollo/react-hooks";
 
 import { ThemeProvider } from '@material-ui/styles';
@@ -79,6 +82,9 @@ class Application extends React.Component<IApplicationProps, IApplicationState>
             isNavigatorOpen: false,
         };
 
+        const subscriptionsEndpoint = `ws://${location.hostname}/subscriptions`;
+        const client = new SubscriptionClient(subscriptionsEndpoint, { reconnect: true });
+
         const link = ApolloLink.from([
             onError(({ graphQLErrors, networkError }) => {
                 if (graphQLErrors)
@@ -92,7 +98,13 @@ class Application extends React.Component<IApplicationProps, IApplicationState>
                     console.log(`[Network error]: ${networkError}`);
                 }
             }),
-            new HttpLink({ uri: "/graphql" }),
+            ApolloLink.split(({ query }) => {
+                    const def = getMainDefinition(query);
+                    return def.kind === "OperationDefinition" && def.operation === "subscription";
+                },
+                new WebSocketLink(client),
+                new HttpLink({ uri: "/graphql" }),
+            ),
         ]);
 
         this.client = new ApolloClient({

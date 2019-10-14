@@ -16,10 +16,22 @@
  */
 
 import { Model as BaseModel } from "sequelize";
-import { Table, Column, Model, DataType, ForeignKey, BelongsTo, HasMany } from "sequelize-typescript";
+import {
+    Table,
+    Column,
+    Model,
+    DataType,
+    ForeignKey,
+    BelongsTo,
+    HasMany,
+    AfterUpdate,
+    AfterUpsert, AfterCreate, AfterDestroy
+} from "sequelize-typescript";
+
+import { Container } from "typedi";
+import { PubSub } from "graphql-subscriptions";
 
 import Project from "./Project";
-import Bin from "./Bin";
 import JobBin from "./JobBin";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -36,6 +48,16 @@ export type JobState = "created" | "running" | "done" | "error" | "cancelled";
 @Table
 export default class Job extends Model<Job>
 {
+    @AfterCreate
+    @AfterUpsert
+    @AfterUpdate
+    @AfterDestroy
+    static async publish()
+    {
+        console.log("[Job] publish change");
+        return Container.get(PubSub).publish("JOB_STATE", { ok: true, message: "update!" });
+    }
+
     @Column
     name: string;
 

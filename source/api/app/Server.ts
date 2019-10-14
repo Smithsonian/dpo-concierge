@@ -28,8 +28,11 @@ import * as passport from "passport";
 import * as LocalStrategy from "passport-local";
 import * as LdapStrategy from "passport-ldapauth";
 
+import { SubscriptionServer } from "subscriptions-transport-ws";
+import { GraphQLSchema, execute, subscribe } from "graphql";
 import * as graphqlHttp from "express-graphql";
 import { buildSchema } from "type-graphql";
+import { PubSub } from "graphql-subscriptions";
 import { Container } from "typedi";
 
 import SubjectResolver from "../resolvers/SubjectResolver";
@@ -61,6 +64,8 @@ export default class Server
     private _config: IServerConfiguration;
     private _app: express.Express;
     private _server: http.Server;
+    private _subsServer: SubscriptionServer;
+    private _graphQLSchema: GraphQLSchema;
 
     get app() {
         return this._app;
@@ -159,7 +164,7 @@ export default class Server
         // passport.use(ldapStrategy);
 
         // GraphQL endpoint
-        const schema = await buildSchema({
+        this._graphQLSchema = await buildSchema({
             resolvers: [
                 SubjectResolver,
                 ItemResolver,
@@ -172,6 +177,7 @@ export default class Server
                 PlayMigrationJobResolver,
                 MigrationSheetEntryResolver,
             ],
+            pubSub: Container.get(PubSub),
             authChecker: ({ root, args, context, info }, roles) => {
                 return true;
             },
@@ -231,13 +237,16 @@ export default class Server
             res.json({ status: "ok" });
         });
 
+        const subscriptionsEndpoint = `ws://localhost:${this.config.port}/subscriptions`;
+        console.log(`[Server] subscriptions endpoint: ${subscriptionsEndpoint}`);
 
         // TODO: Must be authorized
         app.use("/graphql", graphqlHttp(async (req, res, graphQLParams) => {
 
             return {
-                schema: schema,
+                schema: this._graphQLSchema,
                 graphiql: this.isDevMode,
+                subscriptionsEndpoint,
                 customFormatErrorFn: this.isDevMode ? error => {
                     console.log(colors.red("GRAPHQL ERROR"));
                     console.log(error.message);
@@ -307,8 +316,18 @@ export default class Server
 
     async start()
     {
-        this._server = new http.Server(this.app);
+        this._server = http.createServer(this.app);
         await this._server.listen(this.config.port);
-        console.info(`\n\nServer ready and listening on port ${this.config.port}\n`);
+
+        this._subsServer = new SubscriptionServer({
+            execute,
+            subscribe,
+            schema: this._graphQLSchema
+        }, {
+            server: this._server,
+            path: "/subscriptions",
+        });
+
+        console.info(`[Server] ready and listening on port ${this.config.port}\n`);
     }
 }

@@ -11,6 +11,8 @@
     "apollo-link": "^1.2.13",
     "apollo-link-error": "^1.1.12",
     "apollo-link-http": "^1.5.16",
+    "apollo-link-ws": "^1.0.19",
+    "apollo-utilities": "^1.3.2",
     "formik": "^1.5.8",
     "formik-material-ui": "0.0.22",
     "graphql": "^14.5.8",
@@ -19,7 +21,8 @@
     "query-string": "^6.8.3",
     "react": "^16.10.1",
     "react-dom": "^16.10.1",
-    "react-router-dom": "^5.1.2"
+    "react-router-dom": "^5.1.2",
+    "subscriptions-transport-ws": "^0.9.16"
   },
   "devDependencies": {
     "@types/react": "^16.9.4"

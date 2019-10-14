@@ -85,7 +85,9 @@ export interface IDataTableProps<T extends {} = {}>
         root: string;
         wrapper: string;
         table: string;
-        cell: string;
+        tableBody: string;
+        tableCell: string;
+        innerCell: string;
     }
 }
 
@@ -139,18 +141,18 @@ class DataTable<T extends {} = {}> extends React.Component<IDataTableProps<T>, I
         return (
             <div className={classes.root}>
                 <div className={classes.wrapper}>
-                    <Table className={classes.table}>
+                    <Table className={classes.table} stickyHeader={true}>
                         <TableHead>
                             {this.renderHeadRow(order, orderBy)}
                         </TableHead>
-                        <TableBody>
+                        <TableBody className={classes.tableBody}>
                             {this.getDisplayRows(state).map((row, index) => this.renderRow(row))}
                         </TableBody>
                     </Table>
                 </div>
                 <TablePagination
                     component="div"
-                    rowsPerPageOptions={[ 5, 10, 20, 50, 100 ]}
+                    rowsPerPageOptions={[ 10, 15, 20, 50, 100 ]}
                     count={rows.length}
                     rowsPerPage={rowsPerPage}
                     page={page}
@@ -169,13 +171,14 @@ class DataTable<T extends {} = {}> extends React.Component<IDataTableProps<T>, I
             <TableRow>
                 {columns.map(column => (
                     <TableCell
+                        className={classes.tableCell}
                         style={{ width: column.width }}
                         key={column.id}
                         align={column.numeric ? "right" : "left"}
                         sortDirection={orderBy === column.id ? order : false}
                     >
                         <TableSortLabel
-                            className={classes.cell}
+                            className={classes.innerCell}
                             active={orderBy === column.id}
                             direction={order}
                             onClick={() => this.onClickColumnSort(column.id)}
@@ -204,13 +207,14 @@ class DataTable<T extends {} = {}> extends React.Component<IDataTableProps<T>, I
 
                     return(
                         <TableCell
+                            className={classes.tableCell}
                             key={column.id}
                             align={column.numeric ? "right" : "left"}
                         >
                             {isText ? (
                                 <Tooltip title={content} enterDelay={500} placement="bottom-start">
                                     <div
-                                        className={classes.cell}
+                                        className={classes.innerCell}
                                         style={column.width ? { width: column.width } : null}
                                     >
                                         {content}
@@ -296,8 +300,16 @@ const styles = theme => ({
         overflow: "auto",
     },
     table: {
+        overflow: "auto",
     },
-    cell: {
+    tableBody: {
+        //overflow: "auto",
+        //background: "red",
+    },
+    tableCell: {
+        padding: theme.spacing(1.5),
+    },
+    innerCell: {
         whiteSpace: "nowrap",
         overflow: "hidden",
         textOverflow: "ellipsis",

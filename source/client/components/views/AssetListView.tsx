@@ -137,6 +137,7 @@ function AssetListView(props: IAssetListViewProps)
 const styles = theme => ({
     paper: {
         alignSelf: "stretch",
+        overflow: "auto",
     },
     progress: {
         alignSelf: "center",

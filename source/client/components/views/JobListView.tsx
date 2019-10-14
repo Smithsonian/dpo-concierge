@@ -19,7 +19,7 @@ import * as React from "react";
 
 import { useHistory } from "react-router-dom";
 
-import { useQuery, useMutation } from "@apollo/react-hooks";
+import { useQuery, useMutation, useSubscription } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
 import { withStyles, styled, StyleRules } from "@material-ui/core/styles";
@@ -44,6 +44,13 @@ export const ALL_JOBS_QUERY = gql`
 query {
     jobs(offset: 0, limit: 0) {
         id, name, type, state, createdAt, error
+    }
+}`;
+
+export const JOB_STATE_SUBSCRIPTION = gql`
+subscription JobStateChange {
+    jobStateChange {
+        ok, message
     }
 }`;
 
@@ -78,20 +85,20 @@ const actionButtons: TableCellFormatter = (value, row, column) => (
     <div style={{ display: "flex", flexWrap: "nowrap" }}>
         <CellIconButton onClick={() => {
             const variables = { jobId: row["id"] };
-            column.data.runJobMutation({ variables, refetchQueries: [{ query: ALL_JOBS_QUERY }] });
+            column.data.runJobMutation({ variables });
         }} title="Run Job">
             <PlayIcon  fontSize="small" />
         </CellIconButton>
         <CellIconButton onClick={() => {
             const variables = { jobId: row["id"] };
-            column.data.cancelJobMutation({ variables, refetchQueries: [{ query: ALL_JOBS_QUERY }] });
+            column.data.cancelJobMutation({ variables });
         }} title="Cancel Job">
             <StopIcon  fontSize="small" />
         </CellIconButton>
         <CellIconButton onClick={() => {
             if (confirm("Delete job. Are you sure?")) {
                 const variables = { jobId: row["id"] };
-                column.data.deleteJobMutation({ variables, refetchQueries: [{ query: ALL_JOBS_QUERY }] });
+                column.data.deleteJobMutation({ variables });
             }
         }} title="Delete Job">
             <DeleteIcon fontSize="small" />
@@ -100,7 +107,15 @@ const actionButtons: TableCellFormatter = (value, row, column) => (
 );
 
 const StateBadge = withStyles(theme => ({
-    root: { borderRadius: 3, color: "white", fontWeight: "bold", textAlign: "center", padding: 1 },
+    root: {
+        borderRadius: 3,
+        color: "white",
+        fontWeight: "bold",
+        textAlign: "center",
+        padding: 1,
+        marginRight: 4,
+        flex: 1,
+    },
     created: { background: "#b3b337" },
     waiting: { background: "#b38937" },
     running: { background: "#37b34c" },
@@ -111,7 +126,12 @@ const StateBadge = withStyles(theme => ({
     <div className={clsx(props.classes.root, props.classes[props.state])}>{props.state}</div>)
 );
 
-const createLabel: TableCellFormatter = (value, row, column) => (<StateBadge state={value} />);
+const createLabel: TableCellFormatter = (value, row, column) => (
+    <div style={{ display: "flex", flexWrap: "nowrap", alignItems: "center" }}>
+        <StateBadge state={value} />
+        {value === "running" ? <CircularProgress size={16}/> : null}
+    </div>
+);
 
 export interface IJobListViewProps
 {
@@ -129,6 +149,11 @@ function JobListView(props: IJobListViewProps)
     const history = useHistory();
 
     const { loading, error, data, refetch } = useQuery(ALL_JOBS_QUERY, { errorPolicy: "all" });
+
+    useSubscription(JOB_STATE_SUBSCRIPTION, { fetchPolicy: "no-cache", shouldResubscribe: true, onSubscriptionData: data => {
+        console.log("[Job] state subscription - refetch");
+        refetch();
+    }});
 
     const [ runJobMutation ] = useMutation(RUN_JOB_MUTATION);
     const [ cancelJobMutation ] = useMutation(CANCEL_JOB_MUTATION);
@@ -174,6 +199,7 @@ function JobListView(props: IJobListViewProps)
 const styles = theme => ({
     paper: {
         alignSelf: "stretch",
+        overflow: "auto",
     },
     progress: {
         alignSelf: "center",
