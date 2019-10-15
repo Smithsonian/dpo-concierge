@@ -36,7 +36,7 @@ import DeleteIcon from "@material-ui/icons/DeleteForever";
 
 import { FilesIcon, SceneIcon } from "../icons";
 
-import DataTable, { ITableColumn, TableCellFormatter, CellIconButton } from "../DataTable";
+import DataTable, { ITableColumn, TableCellFormatter, CellIconButton, formatDateTime } from "../DataTable";
 import ErrorCard from "../ErrorCard";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -44,7 +44,7 @@ import ErrorCard from "../ErrorCard";
 export const FIND_BINS_QUERY = gql`
 query FindBins($itemId: Int!, $jobId: Int!) {
     bins(itemId: $itemId, jobId: $jobId, offset: 0, limit: 0) {
-        id, name, uuid, version
+        id, name, uuid, version, createdAt
         type {
             name
         }
@@ -134,6 +134,7 @@ function BinListView(props: IBinListViewProps)
         { id: "type", label: "Type", format: value => value.name },
         { id: "uuid", label: "UUID" },
         { id: "version", label: "version" },
+        { id: "createdAt", label: "Created", format: formatDateTime },
     ];
 
     const rows = data.bins;

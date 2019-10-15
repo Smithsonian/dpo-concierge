@@ -43,5 +43,11 @@ export class SubjectSchema
 
     @Field({ nullable: true })
     edanRecordId: string;
+
+    @Field()
+    createdAt: Date;
+
+    @Field()
+    updatedAt: Date;
 }
 

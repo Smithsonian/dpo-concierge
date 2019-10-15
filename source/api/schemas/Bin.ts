@@ -50,5 +50,11 @@ export class BinSchema
 
     @Field(type => [AssetSchema])
     assets: AssetSchema[];
+
+    @Field()
+    createdAt: Date;
+
+    @Field()
+    updatedAt: Date;
 }
 

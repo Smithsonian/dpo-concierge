@@ -110,11 +110,48 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
         }
 
         const cookClient = Container.get(CookClient);
+        const edanClient = Container.get(EDANClient);
 
         this.job = job;
         this.step = "process";
 
+        let edanRecord: IEdanQueryResult;
+        let edanEntry: IEdanEntry;
+        let name, description;
+
         return this.save()
+        .then(() => edanClient.fetchMdmRecord(this.edanRecordId)
+            .then(_record => edanRecord = _record).catch(() => {})
+        )
+        .then(() => {
+            edanEntry = edanRecord && edanRecord.rows ? edanRecord.rows[0] : null;
+            name = edanEntry ? edanEntry.title : this.object;
+            description = `Play Scene Migration: Box ID #${this.playboxId}`;
+
+            const subject: any = {
+                name,
+                description,
+                unitRecordId: this.unitRecordId,
+            };
+            if (edanEntry) {
+                subject.edanRecordId = edanEntry.url;
+                subject.edanRecordCache = edanEntry;
+                subject.unitCode = edanEntry.unitCode;
+            }
+
+            return Subject.findByNameOrCreate(subject);
+        })
+        .then(subject =>
+            Item.findByNameAndSubjectOrCreate({
+                name: this.object,
+                subjectId: subject.id,
+            })
+        )
+        .then(item => {
+            this.item = item;
+            this.itemId = item.id;
+            return this.save();
+        })
         .then(() => {
             const params: IParameters = {
                 boxId: parseInt(this.playboxId),
@@ -122,6 +159,10 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
                 migrateAnnotationColor: !!this.migrateAnnotationColor,
                 createReadingSteps: !!this.createReadingSteps,
             };
+
+            if (edanEntry) {
+                params.edanEntry = JSON.stringify(edanEntry);
+            }
 
             return cookClient.createJob(this.cookJobId, "migrate-play", params);
         })
@@ -202,50 +243,21 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
     protected async postProcessingStep(job: Job)
     {
         const cookClient = Container.get(CookClient);
-        const edanClient = Container.get(EDANClient);
         const repo = Container.get(ManagedRepository);
 
         let report: IJobReport = undefined;
-        let record: IEdanQueryResult = undefined;
-        let entry: IEdanEntry = undefined;
-
-        let name, description;
+        let name;
 
         return cookClient.jobReport(this.cookJobId)
             .then(_report => {
                 report = _report;
-
-                return edanClient.fetchMdmRecord(this.edanRecordId)
-                    .then(_record => record = _record)
-                    .catch(() => {});
+                const edanJson = report.parameters.edanEntry as string;
+                const edanEntry = edanJson ? JSON.parse(edanJson) : null;
+                name = this.object || edanEntry.title;
             })
             .then(() => {
-                entry = record && record.rows ? record.rows[0] : null;
-
-                name = entry ? entry.title : this.object;
-                description = `Play Scene Migration: Box ID #${this.playboxId}`;
-
-                const subject: any = {
-                    name,
-                    description,
-                    unitRecordId: this.unitRecordId,
-                };
-                if (record) {
-                    subject.edanRecordId = entry.url;
-                    subject.edanRecordCache = entry;
-                    subject.unitCode = entry.unitCode;
-                }
-
-                return Subject.findByNameOrCreate(subject);
-            })
-            .then(subject =>
-                Item.findByNameAndSubjectOrCreate({
-                    name: this.object,
-                    subjectId: subject.id,
-                })
-            )
-            .then(item =>
-                Promise.all([
+                const item = this.item;
+                return Promise.all([
                     Bin.create({
                         name: `Play Migration #${this.playboxId} - Voyager Scene`,
                         typeId: BinType.presets.voyagerScene,
@@ -267,8 +279,8 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
                         binId: bin.id,
                         itemId: item.id,
                     })),
-                ])
-            )
+                ]);
+            })
             .then(([sceneItemBin, tempItemBin, boxItemBin]) => {
                 const deliveryStep = report.steps["delivery"];
                 if (!deliveryStep) {

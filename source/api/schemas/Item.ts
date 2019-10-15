@@ -40,5 +40,10 @@ export class ItemSchema
     @Field()
     subject: SubjectSchema;
 
+    @Field()
+    createdAt: Date;
+
+    @Field()
+    updatedAt: Date;
 }
 
