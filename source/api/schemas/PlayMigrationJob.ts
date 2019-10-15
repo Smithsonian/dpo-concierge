@@ -50,6 +50,9 @@ export class PlayMigrationJobSchema
     @Field()
     migrateAnnotationColor: boolean;
 
+    @Field()
+    createReadingSteps: boolean;
+
 }
 
 @InputType()
@@ -87,6 +90,9 @@ export class PlayMigrationJobInput
 
     @Field()
     migrateAnnotationColor: boolean;
+
+    @Field()
+    createReadingSteps: boolean;
 
     @Field(type => ID, { nullable: true })
     sheetEntryId: string;

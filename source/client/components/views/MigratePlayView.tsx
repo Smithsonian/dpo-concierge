@@ -117,6 +117,7 @@ function MigratePlayView(props: IMigratePlayViewProps)
         masterModelTexture: "",
         annotationStyle: "Circle",
         migrateAnnotationColor: false,
+        createReadingSteps: false,
     };
 
     return (
@@ -222,7 +223,7 @@ function MigratePlayView(props: IMigratePlayViewProps)
                                     Migration Settings
                                 </Typography>
                             </Grid>
-                            <Grid item xs={6}>
+                            <Grid item xs={12}>
                                 <InputLabel htmlFor="annotationStyle">Annotation Style</InputLabel>
                                 <Field
                                     name="annotationStyle"
@@ -236,12 +237,21 @@ function MigratePlayView(props: IMigratePlayViewProps)
                                     <MenuItem value="Extended">Extended</MenuItem>
                                 </Field>
                             </Grid>
-                            <Grid item xs={6}>
+                            <Grid item md={6}>
                                 <InputLabel htmlFor="migrateAnnotationColor">Migrate Annotation Color</InputLabel>
                                 <Field
                                     name="migrateAnnotationColor"
                                     label="Migrate Annotation Color"
                                     id="migrateAnnotationColor"
+                                    component={Switch}
+                                />
+                            </Grid>
+                            <Grid item md={6}>
+                                <InputLabel htmlFor="createReadingSteps">Create Reading Tour Steps</InputLabel>
+                                <Field
+                                    name="createReadingSteps"
+                                    label="Create Reading Tour Steps"
+                                    id="createReadingSteps"
                                     component={Switch}
                                 />
                             </Grid>

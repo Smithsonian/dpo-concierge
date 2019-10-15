@@ -20,6 +20,7 @@ import * as crypto from "crypto";
 import * as fetch from "node-fetch";
 
 import uuid from "uuidv4";
+import { Dictionary } from "./types";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -45,12 +46,25 @@ export interface IEdanEntry
     unitCode: string;
     type: string;
     url: string;
-    content: any;
+    content: IEdanContent;
     timestamp: number;
     lastTimeUpdated: number;
     status: number;
     version: string;
     publicSearch: boolean;
+}
+
+export interface IEdanContent
+{
+    descriptiveNonRepeating: Dictionary<any>;
+    indexedStructured: Dictionary<string[]>;
+    freeText: Dictionary<IEdanFreeTextEntry[]>;
+}
+
+export interface IEdanFreeTextEntry
+{
+    label: string;
+    content: string;
 }
 
 export default class EDANClient
@@ -114,6 +128,26 @@ export default class EDANClient
             headers
         })
         .then(result => result.json())
+    }
+
+    protected transformToVoyagerMeta(entry: IEdanEntry): Dictionary<string>
+    {
+        const meta: Dictionary<string> = {};
+
+        meta.title = entry.title;
+        meta.id = entry.id;
+        meta.unitCode = entry.unitCode;
+
+        const freeText = entry.content.freeText;
+
+        Object.keys(freeText).forEach(key => {
+            freeText[key].forEach(entry => {
+                let text = meta[entry.label];
+                meta[entry.label] = text ? `${text}, ${entry.content}` : entry.content;
+            });
+        });
+
+        return meta;
     }
 
     protected serializeQuery(query: object): string

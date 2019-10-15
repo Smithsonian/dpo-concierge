@@ -96,6 +96,9 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
     @Column({ defaultValue: false })
     migrateAnnotationColor: boolean;
 
+    @Column({ defaultValue: false })
+    createReadingSteps: boolean;
+
     ////////////////////////////////////////////////////////////////////////////////
 
     protected timerHandle = null;
@@ -117,6 +120,7 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
                 boxId: parseInt(this.playboxId),
                 annotationStyle: this.annotationStyle,
                 migrateAnnotationColor: !!this.migrateAnnotationColor,
+                createReadingSteps: !!this.createReadingSteps,
             };
 
             return cookClient.createJob(this.cookJobId, "migrate-play", params);
