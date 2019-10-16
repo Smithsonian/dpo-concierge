@@ -67,6 +67,9 @@ export default class Job extends Model<Job>
     @Column({ defaultValue: "created" })
     state: JobState;
 
+    @Column
+    step: string;
+
     @Column({ type: DataType.TEXT })
     error: string;
 

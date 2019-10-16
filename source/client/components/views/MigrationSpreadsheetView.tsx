@@ -17,9 +17,9 @@
 
 import * as React from "react";
 
-import { Link, History } from "react-router-dom";
+import { Link } from "react-router-dom";
 
-import { useQuery, useMutation, useApolloClient } from "@apollo/react-hooks";
+import { useQuery, useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
 import { withStyles, styled, StyleRules } from "@material-ui/core/styles";
@@ -34,58 +34,86 @@ import Typography from "@material-ui/core/Typography";
 import SearchIcon from "@material-ui/icons/Search";
 import InputIcon from "@material-ui/icons/Input";
 
+import { getStorageObject, setStorageObject } from "../../utils/LocalStorage";
+
 import ErrorCard from "../ErrorCard";
-import DataTable, { ITableColumn, TableCellFormatter } from "../DataTable";
+import DataTable, { IDataTableView, ITableColumn, TableCellFormatter, defaultView, formatText } from "../data/DataTable";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const format = value => value === undefined || value === null ? "" : String(value);
-
 const columns: ITableColumn[] = [
-    { id: "object", label: "Object Name", format, width: 150 },
-    { id: "unitrecordid", label: "Unit Record ID", format, width: 150 },
-    { id: "edanrecordid", label: "EDAN Record ID", format, width: 270 },
-    { id: "collectingbody", label: "Collecting Body", format },
-    { id: "collection", label: "Collection", format, width: 200 },
-    { id: "scantype", label: "Scan Type", format },
-    { id: "levelofcompletion", label: "Level Of Completion", format },
-    { id: "rawdatastatus", label: "Raw Data Status", format },
-    { id: "source", label: "Source", format },
-    { id: "publiclylisted", label: "Publicly Listed", format },
-    { id: "publishstatus", label: "Publish Status", format },
-    { id: "rights", label: "Rights", format },
-    { id: "partscount", label: "Parts Count", numeric: true, format },
-    { id: "articles", label: "Articles", numeric: true, format },
-    { id: "annotations", label: "Annotations", numeric: true, format },
-    { id: "tours", label: "Tours", numeric: true, format },
-    { id: "tourstops", label: "Tour Stops", numeric: true, format },
-    { id: "downloads", label: "Downloads", numeric: true, format },
-    { id: "playboxid", label: "Playbox ID", numeric: true, format },
-    { id: "previewlink", label: "Preview Link", format, width: 200 },
-    { id: "legacyplayboxid", label: "Legacy Playbox ID", format },
-    { id: "legacypreviewlink", label: "Legacy Preview Link", format, width: 200 },
-    { id: "shareddrivefolder", label: "Shared Drive Folder", format, width: 200 },
-    { id: "mastermodellocation", label: "Master Model Location", format, width: 200 },
-    { id: "rawdatasizegb", label: "Raw Data Size (GB)", numeric: true, format },
-    { id: "mastermodelsizegb", label: "Master Model Size (GB)", numeric: true, format },
-    { id: "notes", label: "Notes", format, width: 300 },
+    { id: "object", label: "Object Name", format: formatText, width: 150 },
+    { id: "unitrecordid", label: "Unit Record ID", format: formatText, width: 150 },
+    { id: "edanrecordid", label: "EDAN Record ID", format: formatText, width: 270 },
+    { id: "collectingbody", label: "Collecting Body", format: formatText },
+    { id: "collection", label: "Collection", format: formatText, width: 200 },
+    { id: "scantype", label: "Scan Type", format: formatText },
+    { id: "levelofcompletion", label: "Level Of Completion", format: formatText },
+    { id: "rawdatastatus", label: "Raw Data Status", format: formatText },
+    { id: "source", label: "Source", format: formatText },
+    { id: "publiclylisted", label: "Publicly Listed", format: formatText },
+    { id: "publishstatus", label: "Publish Status", format: formatText },
+    { id: "rights", label: "Rights", format: formatText },
+    { id: "partscount", label: "Parts Count", numeric: true, format: formatText },
+    { id: "articles", label: "Articles", numeric: true, format: formatText },
+    { id: "annotations", label: "Annotations", numeric: true, format: formatText },
+    { id: "tours", label: "Tours", numeric: true, format: formatText },
+    { id: "tourstops", label: "Tour Stops", numeric: true, format: formatText },
+    { id: "downloads", label: "Downloads", numeric: true, format: formatText },
+    { id: "playboxid", label: "Playbox ID", numeric: true, format: formatText },
+    { id: "previewlink", label: "Preview Link", format: formatText, width: 200 },
+    { id: "legacyplayboxid", label: "Legacy Playbox ID", format: formatText },
+    { id: "legacypreviewlink", label: "Legacy Preview Link", format: formatText, width: 200 },
+    { id: "shareddrivefolder", label: "Shared Drive Folder", format: formatText, width: 200 },
+    { id: "mastermodellocation", label: "Master Model Location", format: formatText, width: 200 },
+    { id: "rawdatasizegb", label: "Raw Data Size (GB)", numeric: true, format: formatText },
+    { id: "mastermodelsizegb", label: "Master Model Size (GB)", numeric: true, format: formatText },
+    { id: "notes", label: "Notes", format: formatText, width: 300 },
 ];
 
 const queryColumns = columns.map(column => column.id).join(", ");
 
-const ALL_SHEET_ENTRIES_QUERY = gql`
-query MigrationSheetEntries($search: String) {
-    migrationSheetEntries(search: $search, offset: 0, limit: 0) {
-        id, ${queryColumns}
+////////////////////////////////////////////////////////////////////////////////
+
+const SHEET_ENTRIES_QUERY = gql`
+query MigrationSheetEntries($view: ViewInputType!) {
+    migrationSheetEntries(view: $view) {
+        rows {
+            id, ${queryColumns}
+        }
+        count
     }
 }`;
 
-const FETCH_SPREADSHEET_MUTATION = gql`
-mutation FetchSpreadsheetMutation {
-    updateMigrationSheetEntries(offset: 0, limit: 0) {
-        id, ${queryColumns}
+const FETCH_SHEET_MUTATION = gql`
+mutation FetchMigrationSheet {
+    fetchMigrationSheet {
+        ok, message
     }    
 }`;
+
+const VIEW_STORAGE_KEY = "migration/sheet/view";
+
+////////////////////////////////////////////////////////////////////////////////
+
+const styles = theme => ({
+    paper: {
+        overflow: "auto",
+        alignSelf: "stretch",
+    },
+    toolbar: {
+        display: "flex",
+        justifyContent: "flex-end",
+        padding: theme.spacing(1),
+        backgroundColor: theme.palette.primary.light,
+    },
+    progress: {
+        alignSelf: "center",
+    },
+    grow: {
+        flexGrow: 1,
+    },
+} as StyleRules);
 
 const FlatButton = styled(Button)({
     margin: "-16px 0",
@@ -112,12 +140,10 @@ const formatStatus: TableCellFormatter = (value, row, column) => {
     return value === undefined || value === null ? "\u2014" : String(value);
 };
 
-columns.unshift({ id: "status", label: "Migration", format: formatStatus });
+columns.unshift({ id: "_actions", label: "Actions", format: formatStatus });
 
 export interface IMigrationSpreadsheetViewProps
 {
-    history?: History;
-
     classes: {
         paper: string;
         card: string;
@@ -129,35 +155,32 @@ export interface IMigrationSpreadsheetViewProps
 
 function MigrationSpreadsheetView(props: IMigrationSpreadsheetViewProps)
 {
-    const { classes, history } = props;
+    const { classes } = props;
 
-    const [ search, setSearch ] = React.useState("");
+    const initialView: IDataTableView = getStorageObject(VIEW_STORAGE_KEY, defaultView);
+    const [ view, setView ] = React.useState(initialView);
 
-    const { loading: loading0, error: error0, data: data0, client } = useQuery(ALL_SHEET_ENTRIES_QUERY, { variables: { search }});
-    const [ updateData, { loading: loading1, error: error1, data: data1 }] = useMutation(FETCH_SPREADSHEET_MUTATION);
+    const variables = { view };
+    const queryResult = useQuery(SHEET_ENTRIES_QUERY, { variables });
+    const [ updateData, updateResult ] = useMutation(FETCH_SHEET_MUTATION);
 
-
-    if (loading0 || loading1) {
-        return (<CircularProgress className={classes.progress} />)
+    const error = queryResult.error || updateResult.error;
+    if (error) {
+        return (<ErrorCard title="Query Error" error={error} />);
     }
-    if (error0 || error1) {
-        return (<ErrorCard title="Query Error" error={error0 || error1} />);
+
+    const status = updateResult.data && updateResult.data.fetchMigrationSheet;
+    if (status && !status.ok) {
+        return (<ErrorCard title="Failed to fetch spreadsheet" error={status} />);
     }
 
-    let rows;
-
-    if (data1) {
-        rows = data1.updateMigrationSheetEntries;
-
-        // update GraphQL cache
-        client.writeQuery({
-            query: ALL_SHEET_ENTRIES_QUERY,
-            data: { migrationSheetEntries: rows },
-        });
+    if (updateResult.loading) {
+        return (<CircularProgress className={classes.progress} />);
     }
-    else if (data0) {
-        rows = data0.migrationSheetEntries;
-    }
+
+    const entries = queryResult.data && queryResult.data.migrationSheetEntries;
+    const rows = entries ? entries.rows : [];
+    const count = entries ? entries.count : 0;
 
     return (
         <Paper className={classes.paper}>
@@ -165,44 +188,40 @@ function MigrationSpreadsheetView(props: IMigrationSpreadsheetViewProps)
                 <SearchIcon />
                 <Input
                     type="search"
-                    defaultValue={search}
-                    onBlur={e => setSearch(e.target.value)}
-                    onKeyDown={(e: any) => e.key === "Enter" && setSearch(e.target.value)}
+                    defaultValue={view.search}
+                    onBlur={e => {
+                        const nextView = { ...view, search: e.target.value };
+                        setStorageObject(VIEW_STORAGE_KEY, nextView);
+                        setView(nextView);
+                    }}
+                    onKeyDown={(e: any) => {
+                        if (e.key === "Enter") {
+                            const nextView = { ...view, search: e.target.value };
+                            setStorageObject(VIEW_STORAGE_KEY, nextView);
+                            setView(nextView);
+                        }
+                    }}
                 />
                 <Typography className={classes.grow}/>
-                <Button color="primary" onClick={() => updateData()}>
+                <Button color="primary" onClick={() => updateData({ variables })}>
                     <InputIcon style={{ marginRight: 8 }} />
                     <span>Fetch Spreadsheet Data</span>
                 </Button>
             </Toolbar>
 
             <DataTable
-                storageKey="migration/spreadsheet"
+                loading={queryResult.loading}
                 rows={rows}
                 columns={columns}
-                history={history}
+                count={count}
+                view={view}
+                onViewChange={view => {
+                    setStorageObject(VIEW_STORAGE_KEY, view);
+                    setView(view);
+                }}
             />
         </Paper>
     );
 }
-
-const styles = theme => ({
-    paper: {
-        overflow: "auto",
-        alignSelf: "stretch",
-    },
-    progress: {
-        alignSelf: "center"
-    },
-    toolbar: {
-        display: "flex",
-        justifyContent: "flex-end",
-        padding: theme.spacing(1),
-        backgroundColor: theme.palette.primary.light,
-    },
-    grow: {
-        flexGrow: 1,
-    },
-} as StyleRules);
 
 export default withStyles(styles)(MigrationSpreadsheetView);

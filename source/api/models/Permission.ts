@@ -47,6 +47,9 @@ export default class Permission extends Model<Permission>
     @Column({ primaryKey: true })
     id: string;
 
-    @Column
+    @Column({ allowNull: false })
     name: string;
+
+    @Column
+    description: string;
 }

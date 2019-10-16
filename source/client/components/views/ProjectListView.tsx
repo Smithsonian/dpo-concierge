@@ -17,14 +17,13 @@
 
 import * as React from "react";
 
-import { Link, Route, Switch, useHistory } from "react-router-dom";
+import { Link, Route, Switch } from "react-router-dom";
 
 import { useQuery, useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
 import { withStyles, styled, StyleRules } from "@material-ui/core/styles";
 
-import CircularProgress from "@material-ui/core/CircularProgress";
 import Paper from "@material-ui/core/Paper";
 import Toolbar from "@material-ui/core/Toolbar";
 import Button from "@material-ui/core/Button";
@@ -35,8 +34,10 @@ import UncheckedIcon from "@material-ui/icons/RadioButtonUnchecked";
 import CheckedIcon from "@material-ui/icons/RadioButtonChecked";
 import DeleteIcon from "@material-ui/icons/DeleteForever";
 
-import DataTable, { formatDateTime, ITableColumn, TableCellFormatter } from "../DataTable";
+import { getStorageObject, setStorageObject } from "../../utils/LocalStorage";
+
 import ErrorCard from "../ErrorCard";
+import DataTable, { IDataTableView, ITableColumn, TableCellFormatter, defaultView, formatDateTime } from "../data/DataTable";
 
 import ProjectEditView from "./ProjectEditView";
 
@@ -45,10 +46,13 @@ import { ALL_JOBS_QUERY } from "./JobListView";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export const ALL_PROJECTS_QUERY = gql`
-query {
-    projects(offset: 0, limit: 0) {
-        id, name, description, createdAt
+export const PROJECT_VIEW_QUERY = gql`
+query ProjectView($view: ViewInputType!) {
+    projectView(view: $view) {
+        rows {
+            id, name, description, createdAt
+        }
+        count
     }
 }`;
 
@@ -58,6 +62,25 @@ mutation SetActiveProject($id: Int!) {
         id, name, description
     }
 }`;
+
+const VIEW_STORAGE_KEY = "workflow/projects/view";
+
+////////////////////////////////////////////////////////////////////////////////
+
+const styles = theme => ({
+    paper: {
+        alignSelf: "stretch",
+    },
+    progress: {
+        alignSelf: "center"
+    },
+    toolbar: {
+        display: "flex",
+        justifyContent: "flex-end",
+        padding: theme.spacing(1),
+        backgroundColor: theme.palette.primary.light,
+    }
+} as StyleRules);
 
 const CellIconButton = styled(IconButton)({
     margin: "-16px 0",
@@ -104,18 +127,21 @@ export interface IProjectListViewProps
 function ProjectListView(props: IProjectListViewProps)
 {
     const { classes, match } = props;
-    const history = useHistory();
+
+    const initialView: IDataTableView = getStorageObject(VIEW_STORAGE_KEY, defaultView);
+    const [ view, setView ] = React.useState(initialView);
 
     const { data: userData } = useQuery(ACTIVE_USER_QUERY);
     const activeProject = userData && userData.me && userData.me.activeProject;
     const activeProjectId = activeProject && activeProject.id;
 
-    const { loading: loading0, error: error0, data: data0 } = useQuery(ALL_PROJECTS_QUERY);
+    const variables = { view };
+    const queryResult = useQuery(PROJECT_VIEW_QUERY, { variables });
 
-    const [setActiveProject, { error: error1, data: data1 }] = useMutation(ACTIVATE_PROJECT_MUTATION);
+    const [setActiveProject, mutationResult] = useMutation(ACTIVATE_PROJECT_MUTATION);
 
     const columns: ITableColumn[] = [
-        { id: "active", label: "Actions", format: actionButtons, width: 1, data: {
+        { id: "_actions", label: "Actions", format: actionButtons, width: 1, data: {
             setActiveProject, activeProjectId
         }},
         { id: "name", label: "Name" },
@@ -123,14 +149,14 @@ function ProjectListView(props: IProjectListViewProps)
         { id: "createdAt", label: "Created", format: formatDateTime },
     ];
 
-    if (loading0) {
-        return (<CircularProgress className={classes.progress} />)
-    }
-    if (error0 || error1) {
-        return (<ErrorCard title="Query Error" error={error0 || error1}/>);
+    const error = queryResult.error || mutationResult.error;
+    if (error) {
+        return (<ErrorCard title="Query Error" error={error}/>);
     }
 
-    const rows = data0.projects;
+    const entries = queryResult.data && queryResult.data.projectView;
+    const rows = entries ? entries.rows : [];
+    const count = entries ? entries.count : 0;
 
     return (
         <Switch>
@@ -148,30 +174,20 @@ function ProjectListView(props: IProjectListViewProps)
                         </Link>
                     </Toolbar>
                     <DataTable
-                        storageKey="workflow/projects"
+                        loading={queryResult.loading}
                         rows={rows}
                         columns={columns}
-                        history={history}
+                        count={count}
+                        view={view}
+                        onViewChange={view => {
+                            setStorageObject(VIEW_STORAGE_KEY, view);
+                            setView(view);
+                        }}
                     />
                 </Paper>
             </Route>
         </Switch>
     );
 }
-
-const styles = theme => ({
-    paper: {
-        alignSelf: "stretch",
-    },
-    progress: {
-        alignSelf: "center"
-    },
-    toolbar: {
-        display: "flex",
-        justifyContent: "flex-end",
-        padding: theme.spacing(1),
-        backgroundColor: theme.palette.primary.light,
-    }
-} as StyleRules);
 
 export default withStyles(styles)(ProjectListView);

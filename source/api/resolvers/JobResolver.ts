@@ -21,7 +21,7 @@ import { Container } from "typedi";
 import { PubSub } from "graphql-subscriptions";
 
 import { JobSchema } from "../schemas/Job";
-import { StatusSchema } from "../schemas/Status";
+import { StatusType } from "../schemas/Status";
 
 import Job from "../models/Job";
 import User from "../models/User";
@@ -73,10 +73,10 @@ export default class JobResolver
         return Promise.resolve(null);
     }
 
-    @Mutation(returns => StatusSchema)
+    @Mutation(returns => StatusType)
     async runJob(
         @Arg("jobId", type => Int) jobId: number
-    ): Promise<StatusSchema>
+    ): Promise<StatusType>
     {
         return Job.findByPk(jobId)
             .then(job => job.run())
@@ -84,10 +84,10 @@ export default class JobResolver
             .catch(err => ({ ok: false, message: err.message }));
     }
 
-    @Mutation(returns => StatusSchema)
+    @Mutation(returns => StatusType)
     async cancelJob(
         @Arg("jobId", type => Int) jobId: number
-    ): Promise<StatusSchema>
+    ): Promise<StatusType>
     {
         return Job.findByPk(jobId)
         .then(job => job.cancel())
@@ -95,10 +95,10 @@ export default class JobResolver
         .catch(err => ({ ok: false, message: err.message }));
     }
 
-    @Mutation(returns => StatusSchema)
+    @Mutation(returns => StatusType)
     async deleteJob(
         @Arg("jobId", type => Int) jobId: number
-    ): Promise<StatusSchema>
+    ): Promise<StatusType>
     {
         return Job.findByPk(jobId)
         .then(job => job.delete())
@@ -111,7 +111,7 @@ export default class JobResolver
     })
     jobStateChange(
         @Root() payload: { ok: boolean, message: string },
-    ): StatusSchema
+    ): StatusType
     {
         console.log("[JobResolver] publish change - ", payload.message);
         return payload;

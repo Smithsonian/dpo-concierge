@@ -17,10 +17,16 @@
 
 const storage = window.localStorage;
 
-export function getStorageObject(key: string, defaultObject?: any)
+export function getStorageObject<T = any>(key: string, defaultObject?: T): T
 {
     const json = storage ? storage.getItem(key) : undefined;
-    return Object.assign({}, defaultObject, json && JSON.parse(json));
+    const data = json && JSON.parse(json);
+
+    if (defaultObject !== undefined && typeof defaultObject !== "object") {
+        return data !== undefined ? data : defaultObject;
+    }
+
+    return Object.assign({}, defaultObject, data);
 }
 
 export function setStorageObject(key: string, object: any)

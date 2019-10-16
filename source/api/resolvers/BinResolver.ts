@@ -20,7 +20,7 @@ import { Container } from "typedi";
 
 import Bin from "../models/Bin";
 import { BinSchema } from "../schemas/Bin";
-import { StatusSchema } from "../schemas/Status";
+import { StatusType } from "../schemas/Status";
 
 import ItemBin from "../models/ItemBin";
 import JobBin from "../models/JobBin";
@@ -91,10 +91,10 @@ export default class BinResolver
         return Promise.resolve(null);
     }
 
-    @Mutation(returns => StatusSchema)
+    @Mutation(returns => StatusType)
     async grantBinAccess(
         @Arg("uuid", type => String) uuid: string,
-    ): Promise<StatusSchema>
+    ): Promise<StatusType>
     {
         return Bin.getLatestVersion(uuid)
             .then(bin => {
@@ -108,10 +108,10 @@ export default class BinResolver
             });
     }
 
-    @Mutation(returns => StatusSchema)
+    @Mutation(returns => StatusType)
     async revokeBinAccess(
         @Arg("uuid", type => String) uuid: string,
-    ): Promise<StatusSchema>
+    ): Promise<StatusType>
     {
         return Bin.getLatestVersion(uuid)
         .then(bin => {

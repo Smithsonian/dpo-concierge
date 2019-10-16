@@ -18,7 +18,7 @@
 import { Arg, Int, Query, Mutation, Resolver, Ctx } from "type-graphql";
 
 import { UserSchema, UserInputSchema } from "../schemas/User";
-import { StatusSchema } from "../schemas/Status";
+import { StatusType } from "../schemas/Status";
 
 import User from "../models/User";
 import Role from "../models/Role";
@@ -65,10 +65,10 @@ export default class UserResolver
         return Promise.resolve(user ? user.toJSON() as UserSchema : null);
     }
 
-    @Mutation(returns => StatusSchema)
+    @Mutation(returns => StatusType)
     async createUser(
         @Arg("user", { nullable: false }) user: UserInputSchema
-    ): Promise<StatusSchema>
+    ): Promise<StatusType>
     {
         return User.createWithProject(user.name, user.email, user.password)
             .then(user => ({ ok: true, message: null }))

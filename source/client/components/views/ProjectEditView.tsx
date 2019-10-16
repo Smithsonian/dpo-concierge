@@ -35,7 +35,7 @@ import Button from "@material-ui/core/Button";
 import { Formik, Field } from "formik";
 import { TextField } from 'formik-material-ui';
 
-import { ALL_PROJECTS_QUERY } from "./ProjectListView";
+import { PROJECT_VIEW_QUERY } from "./ProjectListView";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -47,7 +47,7 @@ query Project($id: Int!) {
 }`;
 
 const UPSERT_PROJECT_MUTATION = gql`
-mutation UpdateProject($project: ProjectInputSchema!) {
+mutation UpdateProject($project: ProjectInput!) {
     upsertProject(project: $project) {
         id, name, description
     }
@@ -116,7 +116,7 @@ function ProjectEditView(props: IProjectEditViewProps)
                     Object.assign(project, values);
                     upsertProjectMutation({
                         variables: { project },
-                        refetchQueries: [{ query: ALL_PROJECTS_QUERY }],
+                        refetchQueries: [{ query: PROJECT_VIEW_QUERY }],
                     });
                 }}
             >

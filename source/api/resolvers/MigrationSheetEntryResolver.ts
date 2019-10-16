@@ -15,69 +15,66 @@
  * limitations under the License.
  */
 
-import { Arg, Int, Query, Resolver, Mutation } from "type-graphql";
-import { Op } from "sequelize";
+import { Arg, Query, Resolver, Mutation } from "type-graphql";
 
-import { MigrationSheetEntrySchema } from "../schemas/MigrationSheetEntry";
+import { MigrationSheetEntryType, MigrationSheetResultType } from "../schemas/MigrationSheetEntry";
+
+import { StatusType } from "../schemas/Status";
+import { ViewInputType, getFindOptions } from "../schemas/View";
+
 import MigrationSheetEntry from "../models/MigrationSheetEntry";
-
 import MigrationSheet from "../utils/MigrationSheet";
 
 ////////////////////////////////////////////////////////////////////////////////
 
+const searchFields = [
+    "object",
+    "unitrecordid",
+    "edanrecordid",
+    "collectingbody",
+    "collection",
+    "source",
+    "playboxid",
+    "legacyplayboxid",
+    "notes",
+];
+
 @Resolver()
 export default class MigrationSheetEntryResolver
 {
-    @Query(returns => [ MigrationSheetEntrySchema ])
+    @Query(returns => MigrationSheetResultType)
     async migrationSheetEntries(
-        @Arg("search", { nullable: true }) search: string,
-        @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
-        @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
-    ): Promise<MigrationSheetEntrySchema[]>
+        @Arg("view", type => ViewInputType) view: ViewInputType,
+    ): Promise<MigrationSheetResultType>
     {
-        limit = limit ? limit : undefined;
-        let where = undefined;
+        const findOptions = getFindOptions(view, searchFields);
 
-        if (search) {
-            where = {
-                [Op.or]: [
-                    { "object": { [Op.substring]: search } },
-                    { "unitrecordid": { [Op.substring]: search } },
-                    { "edanrecordid": { [Op.substring]: search } },
-                    { "collectingbody": { [Op.substring]: search } },
-                    { "collection": { [Op.substring]: search } },
-                    { "source": { [Op.substring]: search } },
-                    { "playboxid": { [Op.substring]: search } },
-                    { "legacyplayboxid": { [Op.substring]: search } },
-                    { "notes": { [Op.substring]: search } },
-                ]
-            };
-        }
-
-        return MigrationSheetEntry.findAll({ where, offset, limit })
-            .then(rows => rows.map(row => row.toJSON() as MigrationSheetEntrySchema));
+        return MigrationSheetEntry.findAndCountAll(findOptions)
+            .then(result => ({
+                rows: result.rows.map(row => row.toJSON() as MigrationSheetEntryType),
+                count: result.count,
+            }));
     }
 
-    @Query(returns => MigrationSheetEntrySchema)
+    @Query(returns => MigrationSheetEntryType)
     async migrationSheetEntry(
         @Arg("id") id: string
-    ): Promise<MigrationSheetEntrySchema>
+    ): Promise<MigrationSheetEntryType>
     {
         return MigrationSheetEntry.findOne({ where: { id } })
-            .then(row => row.toJSON() as MigrationSheetEntrySchema);
+            .then(row => row.toJSON() as MigrationSheetEntryType);
     }
 
-    @Mutation(returns => [ MigrationSheetEntrySchema ])
-    async updateMigrationSheetEntries(
-        @Arg("offset", { defaultValue: 0 }) offset: number,
-        @Arg("limit", { defaultValue: 50 }) limit: number,
-    ): Promise<MigrationSheetEntrySchema[]>
+    @Mutation(returns => StatusType)
+    async fetchMigrationSheet(
+    ): Promise<StatusType>
     {
         const migration = new MigrationSheet();
+
         return migration.update()
             .then(() => MigrationSheetEntry.importSheet(migration))
-            .then(() => MigrationSheetEntry.findAll({ offset, limit: limit ? limit : undefined }))
-            .then(rows => rows.map(row => row.toJSON() as MigrationSheetEntrySchema));
+            .then(() => ({ ok: true, message: "" }))
+            .catch(err => ({ ok: false, message: err.message }));
     }
 }
 

@@ -21,7 +21,17 @@ import { Field, Int, ObjectType, InputType } from "type-graphql";
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
-export class ProjectSchema
+export class ProjectViewType
+{
+    @Field(type => [ProjectType])
+    rows: ProjectType[];
+
+    @Field()
+    count: number;
+}
+
+@ObjectType()
+export class ProjectType
 {
     @Field(type => Int)
     id: number;
@@ -40,7 +50,7 @@ export class ProjectSchema
 }
 
 @InputType()
-export class ProjectInputSchema
+export class ProjectInput
 {
     @Field(type => Int, { nullable: true })
     id: number;

@@ -59,13 +59,16 @@ export default class Database
                 collate: 'utf8_general_ci',
                 timestamps: true
             },
-            logging: config.loggingEnabled,
+            logging: config.loggingEnabled ? console.log : false,
         });
     }
 
     async setup()
     {
-        return this.db.sync()
-            .then(() => Role.populateDefaultPermissions());
+        return this.db.sync({
+            alter: false, // set to true to adapt db model
+            logging: false,
+        })
+        .then(() => Role.populateDefaultPermissions());
     }
 }

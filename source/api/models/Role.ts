@@ -61,8 +61,11 @@ export default class Role extends Model<Role>
     @Column({ primaryKey: true })
     id: string;
 
-    @Column
+    @Column({ allowNull: false })
     name: string;
+
+    @Column
+    description: string;
 
     @BelongsToMany(() => Permission, "RolePermissions", "roleId", "permissionId")
     permissions: Permission[];

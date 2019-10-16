@@ -18,7 +18,7 @@
 import "reflect-metadata";
 import { Field, Int, ObjectType, InputType } from "type-graphql";
 
-import { ProjectSchema } from "./Project";
+import { ProjectType } from "./Project";
 import { RoleSchema } from "./Role";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -38,8 +38,8 @@ export class UserSchema
     @Field()
     role: RoleSchema;
 
-    @Field(type => ProjectSchema, { nullable: true })
-    activeProject: ProjectSchema;
+    @Field(type => ProjectType, { nullable: true })
+    activeProject: ProjectType;
 
     @Field()
     createdAt: Date;

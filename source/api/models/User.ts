@@ -89,14 +89,17 @@ export default class User extends Model<User>
         return await bcrypt.compare(password, this.password);
     }
 
-    @Column
+    @Column({ allowNull: false })
     name: string;
 
-    @Column
+    @Column({ allowNull: false })
     email: string;
 
     @Column
     password: string;
+
+    @Column({ defaultValue: false, allowNull: false })
+    blocked: boolean;
 
     @ForeignKey(() => Role)
     @Column({ allowNull: false, defaultValue: Role.presets.admin })
