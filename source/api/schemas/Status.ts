@@ -21,7 +21,7 @@ import { Field, ObjectType } from "type-graphql";
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
-export class StatusType
+export class Status
 {
     @Field()
     ok: boolean;

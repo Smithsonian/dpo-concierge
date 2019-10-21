@@ -18,13 +18,23 @@
 import "reflect-metadata";
 import { Field, Int, ObjectType, InputType } from "type-graphql";
 
-import { ProjectType } from "./Project";
-import { RoleSchema } from "./Role";
+import { Project } from "./Project";
+import { Role } from "./Role";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
-export class UserSchema
+export class UserView
+{
+    @Field(type => [User])
+    rows: User[];
+
+    @Field(type => Int)
+    count: number;
+}
+
+@ObjectType()
+export class User
 {
     @Field(type => Int)
     id: number;
@@ -36,10 +46,10 @@ export class UserSchema
     email: string;
 
     @Field()
-    role: RoleSchema;
+    role: Role;
 
-    @Field(type => ProjectType, { nullable: true })
-    activeProject: ProjectType;
+    @Field(type => Project, { nullable: true })
+    activeProject: Project;
 
     @Field()
     createdAt: Date;
@@ -49,7 +59,7 @@ export class UserSchema
 }
 
 @InputType()
-export class UserInputSchema
+export class UserInput
 {
     @Field(type => Int, { nullable: true })
     id: number;

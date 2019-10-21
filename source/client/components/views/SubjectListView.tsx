@@ -19,14 +19,11 @@ import * as React from "react";
 
 import { useHistory } from "react-router-dom";
 
-import * as queryString from "query-string";
-
 import { useQuery, useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
 import { withStyles, StyleRules } from "@material-ui/core/styles";
 
-import CircularProgress from "@material-ui/core/CircularProgress";
 import Paper from "@material-ui/core/Paper";
 import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
@@ -36,16 +33,30 @@ import DeleteIcon from "@material-ui/icons/DeleteForever";
 
 import { FilesIcon, SceneIcon } from "../icons";
 
+import { getStorageObject, setStorageObject } from "../../utils/LocalStorage";
 
-import DataTable, { ITableColumn, TableCellFormatter, CellIconButton, formatText } from "../DataTable";
-import ErrorCard from "../ErrorCard";
+import SearchInput from "../common/SearchInput";
+import Spacer from "../common/Spacer";
+import ErrorCard from "../common/ErrorCard";
+
+import DataTable, {
+    ITableColumn,
+    TableCellFormatter,
+    IDataTableView,
+    CellIconButton,
+    formatText,
+    defaultView,
+} from "../common/DataTable";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export const FIND_SUBJECTS_QUERY = gql`
-query {
-    subjects(offset: 0, limit: 0) {
-        id, name, unitCode, edanRecordId, description
+export const SUBJECT_VIEW_QUERY = gql`
+query SubjectView($view: ViewParameters!) {
+    subjectView(view: $view) {
+        rows {
+            id, name, unitCode, edanRecordId, description
+        }
+        count
     }
 }`;
 
@@ -55,6 +66,8 @@ mutation DeleteSubject($subjectId: Int!) {
         ok, message
     }
 }`;
+
+const VIEW_STORAGE_KEY = "repository/subjects/view";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -96,14 +109,15 @@ function SubjectListView(props: ISubjectListViewProps)
     const { classes } = props;
     const history = useHistory();
 
-    const { loading, error, data } = useQuery(FIND_SUBJECTS_QUERY);
+    const initialView: IDataTableView = getStorageObject(VIEW_STORAGE_KEY, defaultView);
+    const [ view, setView ] = React.useState(initialView);
+
+    const variables = { view };
+    const queryResult = useQuery(SUBJECT_VIEW_QUERY, { variables });
     const [ deleteSubjectMutation ] = useMutation(DELETE_SUBJECT_MUTATION);
 
-    if (loading) {
-        return (<CircularProgress className={classes.progress} />);
-    }
-    if (error) {
-        return (<ErrorCard title="Query Error" error={error}/>);
+    if (queryResult.error) {
+        return (<ErrorCard title="Query Error" error={queryResult.error}/>);
     }
 
     const columns: ITableColumn[] = [
@@ -116,7 +130,9 @@ function SubjectListView(props: ISubjectListViewProps)
         { id: "description", label: "Description", format: formatText },
     ];
 
-    const rows = data.subjects;
+    const subjectView = queryResult.data && queryResult.data.subjectView;
+    const rows = subjectView ? subjectView.rows : [];
+    const count = subjectView ? subjectView.count : 0;
 
     return (
         <Paper className={classes.paper}>
@@ -124,13 +140,26 @@ function SubjectListView(props: ISubjectListViewProps)
                 <Typography variant="subtitle2">
                     All Subjects
                 </Typography>
-                <div style={{ flex: 1 }}/>
+                <Spacer/>
+                <SearchInput
+                    search={view.search}
+                    onSearchChange={search => {
+                        const nextView = { ...view, search };
+                        setStorageObject(VIEW_STORAGE_KEY, nextView);
+                        setView(nextView);
+                    }}
+                />
             </Toolbar>
             <DataTable
-                storageKey="repository/subjects"
+                loading={queryResult.loading}
                 rows={rows}
                 columns={columns}
-                history={history}
+                count={count}
+                view={view}
+                onViewChange={view => {
+                    setStorageObject(VIEW_STORAGE_KEY, view);
+                    setView(view);
+                }}
             />
         </Paper>
     )
@@ -138,14 +167,11 @@ function SubjectListView(props: ISubjectListViewProps)
 
 const styles = theme => ({
     paper: {
+        overflow: "auto",
         alignSelf: "stretch",
-    },
-    progress: {
-        alignSelf: "center",
     },
     toolbar: {
         display: "flex",
-        justifyContent: "flex-end",
         paddingLeft: theme.spacing(2),
         backgroundColor: theme.palette.primary.light,
     },

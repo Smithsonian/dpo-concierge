@@ -26,7 +26,6 @@ import gql from "graphql-tag";
 
 import { withStyles, StyleRules } from "@material-ui/core/styles";
 
-import CircularProgress from "@material-ui/core/CircularProgress";
 import Paper from "@material-ui/core/Paper";
 import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
@@ -34,15 +33,30 @@ import Typography from "@material-ui/core/Typography";
 import ViewIcon from "@material-ui/icons/Visibility";
 import DeleteIcon from "@material-ui/icons/DeleteForever";
 
-import DataTable, { ITableColumn, TableCellFormatter, CellIconButton, formatDateTime } from "../DataTable";
-import ErrorCard from "../ErrorCard";
+import { getStorageObject, setStorageObject } from "../../utils/LocalStorage";
+
+import SearchInput from "../common/SearchInput";
+import Spacer from "../common/Spacer";
+import ErrorCard from "../common/ErrorCard";
+
+import DataTable, {
+    ITableColumn,
+    TableCellFormatter,
+    IDataTableView,
+    CellIconButton,
+    formatDateTime,
+    defaultView
+} from "../common/DataTable";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export const FIND_ASSETS_QUERY = gql`
-query FindAssets($binId: Int!) {
-    assets(binId: $binId, offset: 0, limit: 0) {
-        binUuid, filePath, path, name, mimeType, createdAt
+export const ASSET_VIEW_QUERY = gql`
+query AssetView($binId: Int!, $view: ViewParameters!) {
+    assetView(binId: $binId, view: $view) {
+        rows {
+            id, binUuid, filePath, path, name, mimeType, createdAt
+        }
+        count
     }
     bin(id: $binId) {
         name
@@ -55,6 +69,8 @@ mutation DeleteAsset($assetId: Int!) {
         ok, message
     }
 }`;
+
+const VIEW_STORAGE_KEY = "repository/assets/view";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -87,20 +103,20 @@ export interface IAssetListViewProps
 function AssetListView(props: IAssetListViewProps)
 {
     const { classes } = props;
+    const history = useHistory();
 
     const params = queryString.parse(location.search);
     const binId = parseInt(params.binId as string) || 0;
 
-    const history = useHistory();
+    const initialView: IDataTableView = getStorageObject(VIEW_STORAGE_KEY, defaultView);
+    const [ view, setView ] = React.useState(initialView);
 
+    const variables = { view, binId };
+    const queryResult = useQuery(ASSET_VIEW_QUERY, { variables });
     const [ deleteAssetMutation ] = useMutation(DELETE_ASSET_MUTATION);
-    const { loading, error, data } = useQuery(FIND_ASSETS_QUERY, { variables: { binId }});
 
-    if (loading) {
-        return (<CircularProgress className={classes.progress} />);
-    }
-    if (error) {
-        return (<ErrorCard title="Query Error" error={error}/>);
+    if (queryResult.error) {
+        return (<ErrorCard title="Query Error" error={queryResult.error}/>);
     }
 
     const columns: ITableColumn[] = [
@@ -113,8 +129,10 @@ function AssetListView(props: IAssetListViewProps)
         { id: "createdAt", label: "Created", format: formatDateTime },
     ];
 
-    const rows = data.assets;
-    const bin = data.bin;
+    const assetView = queryResult.data && queryResult.data.assetView;
+    const rows = assetView ? assetView.rows : [];
+    const count = assetView ? assetView.count : 0;
+    const bin = queryResult.data && queryResult.data.bin;
 
     return (
         <Paper className={classes.paper}>
@@ -122,13 +140,26 @@ function AssetListView(props: IAssetListViewProps)
                 <Typography variant="subtitle2">
                     { bin ? `Assets in Bin: ${bin.name}` : "All Assets" }
                 </Typography>
-                <div style={{ flex: 1 }}/>
+                <Spacer />
+                <SearchInput
+                    search={view.search}
+                    onSearchChange={search => {
+                        const nextView = { ...view, search };
+                        setStorageObject(VIEW_STORAGE_KEY, nextView);
+                        setView(nextView);
+                    }}
+                />
             </Toolbar>
             <DataTable
-                storageKey="repository/assets"
+                loading={queryResult.loading}
                 rows={rows}
                 columns={columns}
-                history={history}
+                count={count}
+                view={view}
+                onViewChange={view => {
+                    setStorageObject(VIEW_STORAGE_KEY, view);
+                    setView(view);
+                }}
             />
         </Paper>
     )
@@ -136,15 +167,11 @@ function AssetListView(props: IAssetListViewProps)
 
 const styles = theme => ({
     paper: {
-        alignSelf: "stretch",
         overflow: "auto",
-    },
-    progress: {
-        alignSelf: "center",
+        alignSelf: "stretch",
     },
     toolbar: {
         display: "flex",
-        justifyContent: "flex-end",
         paddingLeft: theme.spacing(2),
         backgroundColor: theme.palette.primary.light,
     },

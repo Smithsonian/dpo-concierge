@@ -21,7 +21,17 @@ import { Field, Int, ID, ObjectType } from "type-graphql";
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
-export class SubjectSchema
+export class SubjectView
+{
+    @Field(type => [Subject])
+    rows: Subject[];
+
+    @Field(type => Int)
+    count: number;
+}
+
+@ObjectType()
+export class Subject
 {
     @Field(type => Int)
     id: number;

@@ -82,7 +82,8 @@ class Application extends React.Component<IApplicationProps, IApplicationState>
             isNavigatorOpen: false,
         };
 
-        const subscriptionsEndpoint = `ws://${location.host}/subscriptions`;
+        const wsProto = location.protocol === "https:" ? "wss:" : "ws:";
+        const subscriptionsEndpoint = `${wsProto}//${location.host}/subscriptions`;
         const client = new SubscriptionClient(subscriptionsEndpoint, { reconnect: true });
 
         const link = ApolloLink.from([

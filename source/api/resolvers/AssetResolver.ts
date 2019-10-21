@@ -17,59 +17,65 @@
 
 import { Arg, Int, Query, Resolver } from "type-graphql";
 
-import { AssetSchema } from "../schemas/Asset";
-import Asset from "../models/Asset";
-import Bin from "../models/Bin";
+import { Asset, AssetView } from "../schemas/Asset";
+import { ViewParameters, getFindOptions } from "../schemas/View";
+
+import AssetModel from "../models/Asset";
+import BinModel from "../models/Bin";
 
 ////////////////////////////////////////////////////////////////////////////////
+
+const searchFields = [
+    "filePath",
+];
 
 @Resolver()
 export default class AssetResolver
 {
-    @Query(returns => [ AssetSchema ])
-    assets(
+    @Query(returns => AssetView)
+    async assetView(
         @Arg("binId", type => Int, { nullable: true }) binId: number,
-        @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
-        @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
-    ): Promise<AssetSchema[]>
+        @Arg("view", type => ViewParameters) view: ViewParameters,
+    ): Promise<AssetView>
     {
-        limit = limit ? limit : undefined;
-        let query;
+        let options;
 
         if (binId) {
-            query = Asset.findAll({
-                include: [ { model: Bin, attributes: [ "uuid", "version" ] }],
+            options = {
+                include: [ { model: BinModel, attributes: [ "uuid", "version" ] }],
                 where: { binId },
-                offset,
-                limit,
-            });
+            };
         }
         else {
-            query = Asset.findAll({
-                include: [ { model: Bin, attributes: [ "uuid", "version" ] }],
-                offset,
-                limit,
-            });
+            options = {
+                include: [ { model: BinModel, attributes: [ "uuid", "version" ] }],
+            };
         }
 
-        return query.then(rows => rows.map(row => {
-            const asset = row.toJSON() as AssetSchema;
-            asset.path = row.path;
-            asset.name = row.name;
-            asset.extension = row.extension;
-            asset.mimeType = row.mimeType;
-            asset.binUuid = row.bin.uuid;
-            return asset;
-        }));
+        const findOptions = getFindOptions(view, searchFields, options);
+
+        return AssetModel.findAndCountAll(findOptions)
+            .then(result => ({
+                rows: result.rows.map(row => {
+                    const asset = row.toJSON() as Asset;
+                    asset.path = row.path;
+                    asset.name = row.name;
+                    asset.extension = row.extension;
+                    asset.mimeType = row.mimeType;
+                    asset.binUuid = row.bin.uuid;
+                    return asset;
+                }),
+                count: result.count,
+            }));
     }
 
-    @Query(returns => AssetSchema, { nullable: true })
+    @Query(returns => Asset, { nullable: true })
     asset(
         @Arg("id", type => Int) id: number,
         @Arg("uuid") uuid: string,
-    ): Promise<AssetSchema | null>
+    ): Promise<Asset | null>
     {
-        return (id ? Asset.findByPk(id) : Asset.findOne({ where: { uuid }}))
-            .then(row => row ? row.toJSON() as AssetSchema : null);
+        return (id ? AssetModel.findByPk(id) : AssetModel.findOne({ where: { uuid }}))
+            .then(row => row ? row.toJSON() as Asset : null);
     }
 }

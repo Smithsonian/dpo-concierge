@@ -21,7 +21,7 @@ import { Field, ObjectType } from "type-graphql";
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
-export class RoleSchema
+export class Role
 {
     @Field()
     id: string;

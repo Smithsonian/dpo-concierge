@@ -17,35 +17,47 @@
 
 import { Arg, Int, Query, Resolver } from "type-graphql";
 
-import { SubjectSchema } from "../schemas/Subject";
-import Subject from "../models/Subject";
+import { SubjectView, Subject } from "../schemas/Subject";
+import { ViewParameters, getFindOptions } from "../schemas/View";
+
+import SubjectModel from "../models/Subject";
 
 ////////////////////////////////////////////////////////////////////////////////
+
+const searchFields = [
+    "name",
+    "description",
+    "unitCode",
+    "unitRecordId",
+    "edanRecordId",
+];
 
 @Resolver()
 export default class SubjectResolver
 {
-    @Query(returns => [ SubjectSchema ])
-    async subjects(
-        @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
-        @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
-    ): Promise<SubjectSchema[]>
+    @Query(returns => SubjectView)
+    async subjectView(
+        @Arg("view", type => ViewParameters) view: ViewParameters,
+    ): Promise<SubjectView>
     {
-        limit = limit ? limit : undefined;
+        const findOptions = getFindOptions(view, searchFields);
 
-        return Subject.findAll({ offset, limit })
-        .then(rows => rows.map(row => row.toJSON() as SubjectSchema));
+        return SubjectModel.findAndCountAll(findOptions)
+        .then(result => ({
+            rows: result.rows.map(row => row.toJSON() as Subject),
+            count: result.count,
+        }));
     }
 
-    @Query(returns => SubjectSchema, { nullable: true })
+    @Query(returns => Subject, { nullable: true })
     async subject(
         @Arg("id", type => Int, { nullable: true }) id: number,
         @Arg("uuid", { nullable: true }) uuid: string,
-    ): Promise<SubjectSchema | null>
+    ): Promise<Subject | null>
     {
         if (id || uuid) {
-            return (id ? Subject.findByPk(id) : Subject.findOne({ where: { uuid }}))
-                .then(row => row ? row.toJSON() as SubjectSchema : null);
+            return (id ? SubjectModel.findByPk(id) : SubjectModel.findOne({ where: { uuid }}))
+                .then(row => row ? row.toJSON() as Subject : null);
         }
 
         return Promise.resolve(null);

@@ -17,71 +17,73 @@
 
 import { Arg, Int, Query, Mutation, Resolver, Ctx } from "type-graphql";
 
-import { UserSchema, UserInputSchema } from "../schemas/User";
-import { StatusType } from "../schemas/Status";
+import { User, UserView, UserInput } from "../schemas/User";
+import { Status } from "../schemas/Status";
+import { ViewParameters, getFindOptions } from "../schemas/View";
 
-import User from "../models/User";
-import Role from "../models/Role";
-import Permission from "../models/Permission";
+import UserModel from "../models/User";
+import RoleModel from "../models/Role";
+import PermissionModel from "../models/Permission";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export interface IContext
 {
-    user?: User;
+    user?: UserModel;
 }
 
 @Resolver()
 export default class UserResolver
 {
-    @Query(returns => [ UserSchema ])
-    async users(
-        @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
-        @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
-    ): Promise<UserSchema[]>
+    @Query(returns => UserView)
+    async userView(
+        @Arg("view", type => ViewParameters) view: ViewParameters,
+    ): Promise<UserView>
     {
-        limit = limit ? limit : undefined;
+        const findOptions = getFindOptions(view, null, { include: [ RoleModel ]});
 
-        return User.findAll({ offset, limit, include: [ Role ] })
-        .then(rows => rows.map(row => row.toJSON() as UserSchema));
+        return UserModel.findAndCountAll(findOptions)
+        .then(result => ({
+            rows: result.rows.map(row => row.toJSON() as User),
+            count: result.count,
+        }));
     }
 
-    @Query(returns => UserSchema)
+    @Query(returns => User)
     async user(
         @Arg("id") id: string
-    ): Promise<UserSchema>
+    ): Promise<User>
     {
-        console.log("[UserResolver] - query user");
-        return User.findByPk(id, { include: [Role, Permission] })
-            .then(row => row ? row.toJSON() as UserSchema : null);
+        return UserModel.findByPk(id, { include: [RoleModel, PermissionModel] })
+            .then(row => row ? row.toJSON() as User : null);
     }
 
-    @Query(returns => UserSchema, { nullable: true })
+    @Query(returns => User, { nullable: true })
     async me(
         @Ctx() context: IContext
-    ): Promise<UserSchema>
+    ): Promise<User>
     {
         const user = context.user;
-        return Promise.resolve(user ? user.toJSON() as UserSchema : null);
+        return Promise.resolve(user ? user.toJSON() as User : null);
     }
 
-    @Mutation(returns => StatusType)
+    @Mutation(returns => Status)
     async createUser(
-        @Arg("user", { nullable: false }) user: UserInputSchema
-    ): Promise<StatusType>
+        @Arg("user", { nullable: false }) user: UserInput
+    ): Promise<Status>
     {
-        return User.createWithProject(user.name, user.email, user.password)
+        return UserModel.createWithProject(user.name, user.email, user.password)
             .then(user => ({ ok: true, message: null }))
             .catch(error => ({ ok: false, message: error.message }));
     }
 
-    @Mutation(returns => UserSchema)
+    @Mutation(returns => User)
     async updateUser(
-        @Arg("user", { nullable: false }) user: UserInputSchema
-    ): Promise<unknown>
+        @Arg("user", { nullable: false }) user: UserInput
+    ): Promise<User>
     {
-        return User.update(user, { where: { id: user.id }}).then(() =>
-            User.findByPk(user.id).then(user => user.toJSON())
+        return UserModel.update(user, { where: { id: user.id }}).then(() =>
+            UserModel.findByPk(user.id).then(user => user.toJSON() as User)
         );
     }
 }

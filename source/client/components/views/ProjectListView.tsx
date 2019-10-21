@@ -36,18 +36,26 @@ import DeleteIcon from "@material-ui/icons/DeleteForever";
 
 import { getStorageObject, setStorageObject } from "../../utils/LocalStorage";
 
-import ErrorCard from "../ErrorCard";
-import DataTable, { IDataTableView, ITableColumn, TableCellFormatter, defaultView, formatDateTime } from "../data/DataTable";
+import ErrorCard from "../common/ErrorCard";
+import Spacer from "../common/Spacer";
+
+import DataTable, {
+    IDataTableView,
+    ITableColumn,
+    TableCellFormatter,
+    formatDateTime,
+    defaultView,
+} from "../common/DataTable";
 
 import ProjectEditView from "./ProjectEditView";
 
 import { ACTIVE_USER_QUERY } from "../Header";
-import { ALL_JOBS_QUERY } from "./JobListView";
+import { JOB_VIEW_QUERY } from "./JobListView";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export const PROJECT_VIEW_QUERY = gql`
-query ProjectView($view: ViewInputType!) {
+query ProjectView($view: ViewParameters!) {
     projectView(view: $view) {
         rows {
             id, name, description, createdAt
@@ -93,8 +101,8 @@ const actionButtons: TableCellFormatter = (value, row, column) => (
                 variables: { id: row["id"] },
                 refetchQueries: [
                     { query: ACTIVE_USER_QUERY },
-                    { query: ALL_JOBS_QUERY },
-                ]
+                    { query: JOB_VIEW_QUERY, variables: { view: defaultView } },
+                ],
             });
         }}>
             {column.data.activeProjectId === row["id"] ? <CheckedIcon/> : <UncheckedIcon/>}
@@ -137,8 +145,12 @@ function ProjectListView(props: IProjectListViewProps)
 
     const variables = { view };
     const queryResult = useQuery(PROJECT_VIEW_QUERY, { variables });
-
     const [setActiveProject, mutationResult] = useMutation(ACTIVATE_PROJECT_MUTATION);
+
+    const error = queryResult.error || mutationResult.error;
+    if (error) {
+        return (<ErrorCard title="Query Error" error={error}/>);
+    }
 
     const columns: ITableColumn[] = [
         { id: "_actions", label: "Actions", format: actionButtons, width: 1, data: {
@@ -148,11 +160,6 @@ function ProjectListView(props: IProjectListViewProps)
         { id: "description", label: "Description" },
         { id: "createdAt", label: "Created", format: formatDateTime },
     ];
-
-    const error = queryResult.error || mutationResult.error;
-    if (error) {
-        return (<ErrorCard title="Query Error" error={error}/>);
-    }
 
     const entries = queryResult.data && queryResult.data.projectView;
     const rows = entries ? entries.rows : [];
@@ -167,6 +174,7 @@ function ProjectListView(props: IProjectListViewProps)
             <Route path={`${match.path}`}>
                 <Paper className={classes.paper}>
                     <Toolbar className={classes.toolbar}>
+                        <Spacer />
                         <Link to="projects/edit" style={{ textDecoration: "none "}}>
                             <Button color="primary">
                                 Create Project

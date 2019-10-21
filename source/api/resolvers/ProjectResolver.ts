@@ -17,12 +17,11 @@
 
 import { Arg, Query, Mutation, Resolver, Ctx, Int } from "type-graphql";
 
-import { ProjectViewType, ProjectType, ProjectInput } from "../schemas/Project";
+import { ProjectView, Project, ProjectInput } from "../schemas/Project";
+import { ViewParameters, getFindOptions } from "../schemas/View";
 
-import { ViewInputType, getFindOptions } from "../schemas/View";
-
-import Project from "../models/Project";
-import User from "../models/User";
+import ProjectModel from "../models/Project";
+import UserModel from "../models/User";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -32,72 +31,72 @@ const searchFields = [
 
 export interface IContext
 {
-    user?: User;
+    user?: UserModel;
 }
 
 @Resolver()
 export default class ProjectResolver
 {
-    @Query(returns => ProjectViewType)
+    @Query(returns => ProjectView)
     async projectView(
-        @Arg("view", type => ViewInputType) view: ViewInputType,
+        @Arg("view", type => ViewParameters) view: ViewParameters,
         @Ctx() context: IContext,
-    ): Promise<ProjectViewType>
+    ): Promise<ProjectView>
     {
         const where = { ownerId: context.user.id };
         const findOptions = getFindOptions(view, searchFields, { where });
 
-        return Project.findAndCountAll(findOptions)
+        return ProjectModel.findAndCountAll(findOptions)
             .then(result => ({
-                rows: result.rows.map(row => row.toJSON() as ProjectType),
+                rows: result.rows.map(row => row.toJSON() as Project),
                 count: result.count,
             }));
     }
 
-    @Query(returns => ProjectType, { nullable: true })
+    @Query(returns => Project, { nullable: true })
     async project(
         @Arg("id", type => Int) id: number,
         @Ctx() context: IContext,
-    ): Promise<ProjectType>
+    ): Promise<Project>
     {
         const ownerId = context.user.id;
 
-        return Project.findOne({ where: { id, ownerId }})
-            .then(row => row ? row.toJSON() as ProjectType : null);
+        return ProjectModel.findOne({ where: { id, ownerId }})
+            .then(row => row ? row.toJSON() as Project : null);
     }
 
-    @Mutation(returns => ProjectType, { nullable: true })
+    @Mutation(returns => Project, { nullable: true })
     async upsertProject(
         @Arg("project") project: ProjectInput,
         @Ctx() context: IContext,
-    ): Promise<ProjectType>
+    ): Promise<Project>
     {
         const id = project.id;
         const ownerId = context.user.id;
 
         if (id) {
-            return Project.update(project, { where: { id, ownerId }})
-                .then(() => Project.findOne({ where: { id, ownerId }}))
-                .then(row => row ? row.toJSON() as ProjectType : null);
+            return ProjectModel.update(project, { where: { id, ownerId }})
+                .then(() => ProjectModel.findOne({ where: { id, ownerId }}))
+                .then(row => row ? row.toJSON() as Project : null);
         }
 
-        return Project.create({ ...project, ownerId })
-            .then(row => row.toJSON() as ProjectType);
+        return ProjectModel.create({ ...project, ownerId })
+            .then(row => row.toJSON() as Project);
     }
 
-    @Mutation(returns => ProjectType, { nullable: true })
+    @Mutation(returns => Project, { nullable: true })
     async setActiveProject(
         @Arg("id", type => Int) id: number,
         @Ctx() context: IContext,
-    ): Promise<ProjectType>
+    ): Promise<Project>
     {
         const ownerId = context.user.id;
 
-        return Project.findOne({ where: { id, ownerId }})
+        return ProjectModel.findOne({ where: { id, ownerId }})
             .then(project => {
                 if (project) {
                     return context.user.update({ activeProjectId: project.id })
-                        .then(() => project.toJSON() as ProjectType);
+                        .then(() => project.toJSON() as Project);
                 }
 
                 return null;

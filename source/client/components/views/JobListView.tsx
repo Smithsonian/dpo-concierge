@@ -22,28 +22,42 @@ import { useHistory } from "react-router-dom";
 import { useQuery, useMutation, useSubscription } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
-import { withStyles, styled, StyleRules } from "@material-ui/core/styles";
-import clsx from "clsx";
+import { withStyles, StyleRules } from "@material-ui/core/styles";
 
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Paper from "@material-ui/core/Paper";
 import Toolbar from "@material-ui/core/Toolbar";
 import Button from "@material-ui/core/Button";
-import IconButton from "@material-ui/core/IconButton";
 
 import PlayIcon from "@material-ui/icons/PlayArrow";
 import StopIcon from "@material-ui/icons/Stop";
 import DeleteIcon from "@material-ui/icons/DeleteForever";
 
-import DataTable, { ITableColumn, TableCellFormatter, formatText, formatDateTime } from "../DataTable";
-import ErrorCard from "../ErrorCard";
+import { getStorageObject, setStorageObject } from "../../utils/LocalStorage";
+
+import Spacer from "../common/Spacer";
+import ErrorCard from "../common/ErrorCard";
+import StateBadge from "../common/StateBadge";
+
+import DataTable, {
+    ITableColumn,
+    TableCellFormatter,
+    IDataTableView,
+    CellIconButton,
+    formatText,
+    formatDateTime,
+    defaultView,
+} from "../common/DataTable";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export const ALL_JOBS_QUERY = gql`
-query {
-    jobs(offset: 0, limit: 0) {
-        id, name, type, state, createdAt, error
+export const JOB_VIEW_QUERY = gql`
+query JobView($view: ViewParameters!) {
+    jobView(view: $view) {
+        rows {
+            id, name, type, state, createdAt, error
+        }
+        count
     }
 }`;
 
@@ -75,55 +89,30 @@ mutation DeleteJob($jobId: Int!) {
     }
 }`;
 
-////////////////////////////////////////////////////////////////////////////////
+const VIEW_STORAGE_KEY = "workflow/jobs/view";
 
-const CellIconButton = styled(IconButton)({
-    margin: "-16px 0",
-});
+////////////////////////////////////////////////////////////////////////////////
 
 const actionButtons: TableCellFormatter = (value, row, column) => (
     <div style={{ display: "flex", flexWrap: "nowrap" }}>
-        <CellIconButton onClick={() => {
+
+        <CellIconButton title="Run Job" icon={PlayIcon} onClick={() => {
             const variables = { jobId: row["id"] };
             column.data.runJobMutation({ variables });
-        }} title="Run Job">
-            <PlayIcon  fontSize="small" />
-        </CellIconButton>
-        <CellIconButton onClick={() => {
+        }}/>
+
+        <CellIconButton title="Cancel Job" icon={StopIcon} onClick={() => {
             const variables = { jobId: row["id"] };
             column.data.cancelJobMutation({ variables });
-        }} title="Cancel Job">
-            <StopIcon  fontSize="small" />
-        </CellIconButton>
-        <CellIconButton onClick={() => {
+        }}/>
+
+        <CellIconButton title="Delete Job" icon={DeleteIcon} onClick={() => {
             if (confirm("Delete job. Are you sure?")) {
                 const variables = { jobId: row["id"] };
                 column.data.deleteJobMutation({ variables });
             }
-        }} title="Delete Job">
-            <DeleteIcon fontSize="small" />
-        </CellIconButton>
+        }}/>
     </div>
-);
-
-const StateBadge = withStyles(theme => ({
-    root: {
-        borderRadius: 3,
-        color: "white",
-        fontWeight: "bold",
-        textAlign: "center",
-        padding: 1,
-        marginRight: 4,
-        flex: 1,
-    },
-    created: { background: "#b3b337" },
-    waiting: { background: "#b38937" },
-    running: { background: "#37b34c" },
-    done: { background: "#3674b3" },
-    error: { background: "#b33737" },
-    cancelled: { background: "#8f52cc" },
-}))((props: any) => (
-    <div className={clsx(props.classes.root, props.classes[props.state])}>{props.state}</div>)
 );
 
 const createLabel: TableCellFormatter = (value, row, column) => (
@@ -145,19 +134,26 @@ export interface IJobListViewProps
 function JobListView(props: IJobListViewProps)
 {
     const { classes } = props;
-
     const history = useHistory();
 
-    const { loading, error, data, refetch } = useQuery(ALL_JOBS_QUERY, { errorPolicy: "all" });
+    const initialView: IDataTableView = getStorageObject(VIEW_STORAGE_KEY, defaultView);
+    const [ view, setView ] = React.useState(initialView);
+
+    const variables = { view };
+    const queryResult = useQuery(JOB_VIEW_QUERY, { variables, errorPolicy: "all" });
 
     useSubscription(JOB_STATE_SUBSCRIPTION, { fetchPolicy: "no-cache", shouldResubscribe: true, onSubscriptionData: data => {
         console.log("[Job] state subscription - refetch");
-        refetch();
+        queryResult.refetch();
     }});
 
     const [ runJobMutation ] = useMutation(RUN_JOB_MUTATION);
     const [ cancelJobMutation ] = useMutation(CANCEL_JOB_MUTATION);
     const [ deleteJobMutation ] = useMutation(DELETE_JOB_MUTATION);
+
+    if (queryResult.error) {
+        return (<ErrorCard title="Query Error" error={queryResult.error}/>);
+    }
 
     const columns: ITableColumn[] = [
         { id: "actions", label: "Actions", format: actionButtons, width: 1, data: {
@@ -170,27 +166,28 @@ function JobListView(props: IJobListViewProps)
         { id: "error", label: "Error", format: formatText },
     ];
 
-    if (loading) {
-        return (<CircularProgress className={classes.progress} />);
-    }
-    if (error) {
-        return (<ErrorCard title="Query Error" error={error}/>);
-    }
-
-    const rows = data.jobs;
+    const jobView = queryResult.data && queryResult.data.jobView;
+    const rows = jobView ? jobView.rows : [];
+    const count = jobView ? jobView.count : 0;
 
     return (
         <Paper className={classes.paper}>
             <Toolbar className={classes.toolbar}>
-                <Button color="primary" onClick={() => refetch()}>
+                <Spacer />
+                <Button color="primary" onClick={() => queryResult.refetch()}>
                     Refresh
                 </Button>
             </Toolbar>
             <DataTable
-                storageKey="workflow/jobs"
+                loading={queryResult.loading}
                 rows={rows}
                 columns={columns}
-                history={history}
+                count={count}
+                view={view}
+                onViewChange={view => {
+                    setStorageObject(VIEW_STORAGE_KEY, view);
+                    setView(view);
+                }}
             />
         </Paper>
     );
@@ -198,15 +195,11 @@ function JobListView(props: IJobListViewProps)
 
 const styles = theme => ({
     paper: {
-        alignSelf: "stretch",
         overflow: "auto",
-    },
-    progress: {
-        alignSelf: "center",
+        alignSelf: "stretch",
     },
     toolbar: {
         display: "flex",
-        justifyContent: "flex-end",
         padding: theme.spacing(1),
         backgroundColor: theme.palette.primary.light,
     },

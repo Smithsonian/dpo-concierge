@@ -15,42 +15,20 @@
  * limitations under the License.
  */
 
-import "reflect-metadata";
-import { Field, Int, ObjectType } from "type-graphql";
+import * as React from "react";
+
+import { withStyles, StyleRules } from "@material-ui/core/styles";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-@ObjectType()
-export class JobView
-{
-    @Field(type => [Job])
-    rows: Job[];
+const styles = theme => ({
+    root: {
+        flexGrow: 1,
+    }
+}) as StyleRules;
 
-    @Field(type => Int)
-    count: number;
-}
+const Spacer = props => (
+    <div className={props.classes.root}/>
+);
 
-@ObjectType()
-export class Job
-{
-    @Field(type => Int)
-    id: number;
-
-    @Field()
-    name: string;
-
-    @Field()
-    type: string;
-
-    @Field()
-    state: string;
-
-    @Field({ nullable: true })
-    error: string;
-
-    @Field()
-    createdAt: Date;
-
-    @Field()
-    updatedAt: Date;
-}
+export default withStyles(styles)(Spacer);

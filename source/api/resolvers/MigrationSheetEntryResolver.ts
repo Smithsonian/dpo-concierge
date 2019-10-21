@@ -17,12 +17,12 @@
 
 import { Arg, Query, Resolver, Mutation } from "type-graphql";
 
-import { MigrationSheetEntryType, MigrationSheetResultType } from "../schemas/MigrationSheetEntry";
+import { MigrationSheetEntry, MigrationSheetView } from "../schemas/MigrationSheetEntry";
 
-import { StatusType } from "../schemas/Status";
-import { ViewInputType, getFindOptions } from "../schemas/View";
+import { Status } from "../schemas/Status";
+import { ViewParameters, getFindOptions } from "../schemas/View";
 
-import MigrationSheetEntry from "../models/MigrationSheetEntry";
+import MigrationSheetEntryModel from "../models/MigrationSheetEntry";
 import MigrationSheet from "../utils/MigrationSheet";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -42,37 +42,37 @@ const searchFields = [
 @Resolver()
 export default class MigrationSheetEntryResolver
 {
-    @Query(returns => MigrationSheetResultType)
-    async migrationSheetEntries(
-        @Arg("view", type => ViewInputType) view: ViewInputType,
-    ): Promise<MigrationSheetResultType>
+    @Query(returns => MigrationSheetView)
+    async migrationSheetView(
+        @Arg("view", type => ViewParameters) view: ViewParameters,
+    ): Promise<MigrationSheetView>
     {
         const findOptions = getFindOptions(view, searchFields);
 
-        return MigrationSheetEntry.findAndCountAll(findOptions)
+        return MigrationSheetEntryModel.findAndCountAll(findOptions)
             .then(result => ({
-                rows: result.rows.map(row => row.toJSON() as MigrationSheetEntryType),
+                rows: result.rows.map(row => row.toJSON() as MigrationSheetEntry),
                 count: result.count,
             }));
     }
 
-    @Query(returns => MigrationSheetEntryType)
+    @Query(returns => MigrationSheetEntry)
     async migrationSheetEntry(
         @Arg("id") id: string
-    ): Promise<MigrationSheetEntryType>
+    ): Promise<MigrationSheetEntry>
     {
-        return MigrationSheetEntry.findOne({ where: { id } })
-            .then(row => row.toJSON() as MigrationSheetEntryType);
+        return MigrationSheetEntryModel.findOne({ where: { id } })
+            .then(row => row.toJSON() as MigrationSheetEntry);
     }
 
-    @Mutation(returns => StatusType)
+    @Mutation(returns => Status)
     async fetchMigrationSheet(
-    ): Promise<StatusType>
+    ): Promise<Status>
     {
         const migration = new MigrationSheet();
 
         return migration.update()
-            .then(() => MigrationSheetEntry.importSheet(migration))
+            .then(() => MigrationSheetEntryModel.importSheet(migration))
             .then(() => ({ ok: true, message: "" }))
             .catch(err => ({ ok: false, message: err.message }));
     }

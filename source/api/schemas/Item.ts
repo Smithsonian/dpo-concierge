@@ -18,12 +18,22 @@
 import "reflect-metadata";
 import { Field, Int, ID, ObjectType } from "type-graphql";
 
-import { SubjectSchema } from "./Subject";
+import { Subject } from "./Subject";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
-export class ItemSchema
+export class ItemView
+{
+    @Field(type => [Item])
+    rows: Item[];
+
+    @Field(type => Int)
+    count: number;
+}
+
+@ObjectType()
+export class Item
 {
     @Field(type => Int)
     id: number;
@@ -38,7 +48,7 @@ export class ItemSchema
     description: string;
 
     @Field()
-    subject: SubjectSchema;
+    subject: Subject;
 
     @Field()
     createdAt: Date;

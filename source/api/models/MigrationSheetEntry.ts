@@ -15,9 +15,8 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
+import { Table, Column, Model, DataType } from "sequelize-typescript";
 
-import Job from "./Job";
 import MigrationSheet from "../utils/MigrationSheet";
 
 ////////////////////////////////////////////////////////////////////////////////

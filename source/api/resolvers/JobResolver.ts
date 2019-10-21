@@ -20,17 +20,18 @@ import { Arg, Query, Mutation, Int, Resolver, Ctx, Subscription, Root } from "ty
 import { Container } from "typedi";
 import { PubSub } from "graphql-subscriptions";
 
-import { JobSchema } from "../schemas/Job";
-import { StatusType } from "../schemas/Status";
+import { Job, JobView } from "../schemas/Job";
+import { Status } from "../schemas/Status";
+import { ViewParameters, getFindOptions } from "../schemas/View";
 
-import Job from "../models/Job";
-import User from "../models/User";
+import JobModel from "../models/Job";
+import UserModel from "../models/User";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export interface IContext
 {
-    user?: User;
+    user?: UserModel;
 }
 
 @Resolver()
@@ -38,69 +39,71 @@ export default class JobResolver
 {
     /**
      * Returns the jobs for the active project.
-     * @param offset
-     * @param limit
+     * @param view View parameters
      * @param context
      */
-    @Query(returns => [ JobSchema ])
-    async jobs(
-        @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
-        @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
+    @Query(returns => JobView)
+    async jobView(
+        @Arg("view", type => ViewParameters) view: ViewParameters,
         @Ctx() context: IContext,
-    ): Promise<JobSchema[]>
+    ): Promise<JobView>
     {
-        limit = limit ? limit : undefined;
         const projectId = context.user.activeProjectId;
 
         if (projectId === null) {
-            return Promise.resolve([]);
+            return Promise.resolve({ rows: [], count: 0 });
         }
 
-        return Job.findAll({ where: { projectId }, offset, limit })
-            .then(rows => rows.map(row => row.toJSON() as JobSchema));
+        const findOptions = getFindOptions(view, null, { where: { projectId }});
+
+        return JobModel.findAndCountAll(findOptions)
+        .then(result => ({
+            rows: result.rows.map(row => row.toJSON() as Job),
+            count: result.count,
+        }));
     }
 
-    @Query(returns => JobSchema, { nullable: true })
+    @Query(returns => Job, { nullable: true })
     async job(
         @Arg("id", type => Int) id: number,
-    ): Promise<JobSchema | null>
+    ): Promise<Job | null>
     {
         if (id) {
-            return Job.findByPk(id)
-                .then(row => row ? row.toJSON() as JobSchema : null);
+            return JobModel.findByPk(id)
+                .then(row => row ? row.toJSON() as Job : null);
         }
 
         return Promise.resolve(null);
     }
 
-    @Mutation(returns => StatusType)
+    @Mutation(returns => Status)
     async runJob(
         @Arg("jobId", type => Int) jobId: number
-    ): Promise<StatusType>
+    ): Promise<Status>
     {
-        return Job.findByPk(jobId)
+        return JobModel.findByPk(jobId)
             .then(job => job.run())
             .then(() => ({ ok: true, message: null }))
             .catch(err => ({ ok: false, message: err.message }));
     }
 
-    @Mutation(returns => StatusType)
+    @Mutation(returns => Status)
     async cancelJob(
         @Arg("jobId", type => Int) jobId: number
-    ): Promise<StatusType>
+    ): Promise<Status>
     {
-        return Job.findByPk(jobId)
+        return JobModel.findByPk(jobId)
         .then(job => job.cancel())
         .then(() => ({ ok: true, message: null }))
         .catch(err => ({ ok: false, message: err.message }));
     }
 
-    @Mutation(returns => StatusType)
+    @Mutation(returns => Status)
     async deleteJob(
         @Arg("jobId", type => Int) jobId: number
-    ): Promise<StatusType>
+    ): Promise<Status>
     {
-        return Job.findByPk(jobId)
+        return JobModel.findByPk(jobId)
         .then(job => job.delete())
         .then(() => ({ ok: true, message: null }))
         .catch(err => ({ ok: false, message: err.message }));
@@ -111,7 +114,7 @@ export default class JobResolver
     })
     jobStateChange(
         @Root() payload: { ok: boolean, message: string },
-    ): StatusType
+    ): Status
     {
         console.log("[JobResolver] publish change - ", payload.message);
         return payload;

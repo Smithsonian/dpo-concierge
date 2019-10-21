@@ -19,46 +19,52 @@ import * as React from "react";
 
 import { useHistory } from "react-router-dom";
 
-import { useQuery } from "@apollo/react-hooks";
+import { useQuery, useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
-import { withStyles, styled, StyleRules } from "@material-ui/core/styles";
+import { withStyles, StyleRules } from "@material-ui/core/styles";
 
-import DataTable, { ITableColumn, formatDateTime } from "../DataTable";
-import CircularProgress from "@material-ui/core/CircularProgress";
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
-import Typography from "@material-ui/core/Typography";
 import Paper from "@material-ui/core/Paper";
+import Toolbar from "@material-ui/core/Toolbar";
+import Typography from "@material-ui/core/Typography";
+
+import { getStorageObject, setStorageObject } from "../../utils/LocalStorage";
+
+import Spacer from "../common/Spacer";
+import ErrorCard from "../common/ErrorCard";
+
+import DataTable, {
+    ITableColumn,
+    TableCellFormatter,
+    IDataTableView,
+    formatDateTime,
+    defaultView
+} from "../common/DataTable";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const columns: ITableColumn[] = [
-    { id: "name", label: "Name" },
-    { id: "email", label: "Email" },
-    { id: "role", label: "Role", format: role => role.name },
-    { id: "createdAt", label: "Created", format: formatDateTime },
-];
-
-const queryUsers = gql`
-{
-    users(offset: 0, limit: 0) {
-        name
-        email
-        createdAt
-        role {
-            name
+const USER_VIEW_QUERY = gql`
+query UserView($view: ViewParameters!) {
+    userView(view: $view) {
+        rows {
+            id, name, email, createdAt
+            role {
+                name
+            }
         }
+        count
     }
-}
-`;
+}`;
+
+const VIEW_STORAGE_KEY = "administration/users/view";
+
+////////////////////////////////////////////////////////////////////////////////
 
 export interface IUserListViewProps
 {
     classes: {
         paper: string;
-        card: string;
-        progress: string;
+        toolbar: string;
     }
 }
 
@@ -67,30 +73,45 @@ function UserListView(props: IUserListViewProps)
     const { classes } = props;
     const history = useHistory();
 
-    const { loading, error, data } = useQuery(queryUsers);
+    const initialView: IDataTableView = getStorageObject(VIEW_STORAGE_KEY, defaultView);
+    const [ view, setView ] = React.useState(initialView);
 
-    if (loading) {
-        return (<CircularProgress className={classes.progress} />)
+    const variables = { view };
+    const queryResult = useQuery(USER_VIEW_QUERY, { variables });
+
+    if (queryResult.error) {
+        return (<ErrorCard title="Query Error" error={queryResult.error}/>);
     }
 
-    if (error) {
-        return (<Card raised className={classes.card}>
-            <CardContent>
-                <Typography variant="h6">Query Error</Typography>
-                <Typography>{error.message}</Typography>
-            </CardContent>
-        </Card>)
-    }
+    const columns: ITableColumn[] = [
+        { id: "name", label: "Name" },
+        { id: "email", label: "Email" },
+        { id: "role", label: "Role", format: role => role.name },
+        { id: "createdAt", label: "Created", format: formatDateTime },
+    ];
 
-    const rows = data.users;
+    const userView = queryResult.data && queryResult.data.userView;
+    const rows = userView ? userView.rows : [];
+    const count = userView ? userView.count : 0;
 
     return (
         <Paper className={classes.paper}>
+            <Toolbar className={classes.toolbar}>
+                <Typography variant="subtitle2">
+                    All Users
+                </Typography>
+                <Spacer />
+            </Toolbar>
             <DataTable
-                storageKey="admin/users"
+                loading={queryResult.loading}
                 rows={rows}
                 columns={columns}
-                history={history}
+                count={count}
+                view={view}
+                onViewChange={view => {
+                    setStorageObject(VIEW_STORAGE_KEY, view);
+                    setView(view);
+                }}
             />
         </Paper>
     );
@@ -98,14 +119,13 @@ function UserListView(props: IUserListViewProps)
 
 const styles = theme => ({
     paper: {
+        overflow: "auto",
         alignSelf: "stretch",
     },
-    card: {
-        maxWidth: 480,
-        alignSelf: "center",
-    },
-    progress: {
-        alignSelf: "center"
+    toolbar: {
+        display: "flex",
+        padding: theme.spacing(1),
+        backgroundColor: theme.palette.primary.light,
     },
 } as StyleRules);
 

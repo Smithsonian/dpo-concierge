@@ -18,14 +18,24 @@
 import "reflect-metadata";
 import { Field, Int, ObjectType } from "type-graphql";
 
-import { BinTypeSchema } from "./BinType";
-import { ItemSchema } from "./Item";
-import { AssetSchema } from "./Asset";
+import { BinType } from "./BinType";
+import { Item } from "./Item";
+import { Asset } from "./Asset";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
-export class BinSchema
+export class BinView
+{
+    @Field(type => [Bin])
+    rows: Bin[];
+
+    @Field(type => Int)
+    count: number;
+}
+
+@ObjectType()
+export class Bin
 {
     @Field(type => Int)
     id: number;
@@ -43,13 +53,13 @@ export class BinSchema
     description: string;
 
     @Field()
-    item: ItemSchema;
+    item: Item;
 
     @Field()
-    type: BinTypeSchema;
+    type: BinType;
 
-    @Field(type => [AssetSchema])
-    assets: AssetSchema[];
+    @Field(type => [Asset])
+    assets: Asset[];
 
     @Field()
     createdAt: Date;

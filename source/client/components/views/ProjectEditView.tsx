@@ -35,6 +35,8 @@ import Button from "@material-ui/core/Button";
 import { Formik, Field } from "formik";
 import { TextField } from 'formik-material-ui';
 
+import { defaultView } from "../common/DataTable";
+
 import { PROJECT_VIEW_QUERY } from "./ProjectListView";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -116,7 +118,7 @@ function ProjectEditView(props: IProjectEditViewProps)
                     Object.assign(project, values);
                     upsertProjectMutation({
                         variables: { project },
-                        refetchQueries: [{ query: PROJECT_VIEW_QUERY }],
+                        refetchQueries: [{ query: PROJECT_VIEW_QUERY, variables: { view: defaultView } }],
                     });
                 }}
             >

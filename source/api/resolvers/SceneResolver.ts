@@ -17,92 +17,90 @@
 
 import { Arg, Int, Query, Resolver } from "type-graphql";
 
-import { SceneSchema } from "../schemas/Scene";
-import Scene from "../models/Scene";
-import Asset from "../models/Asset";
-import Bin from "../models/Bin";
-import ItemBin from "../models/ItemBin";
-import Item from "../models/Item";
+import { Scene, SceneView } from "../schemas/Scene";
+import { ViewParameters, getFindOptions } from "../schemas/View";
+
+import SceneModel from "../models/Scene";
+import AssetModel from "../models/Asset";
+import BinModel from "../models/Bin";
+import ItemBinModel from "../models/ItemBin";
+import ItemModel from "../models/Item";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @Resolver()
 export default class SceneResolver
 {
-    @Query(returns => [ SceneSchema ])
-    async scenes(
+    @Query(returns => SceneView)
+    async sceneView(
         @Arg("subjectId", type => Int, { nullable: true }) subjectId: number,
         @Arg("itemId", type => Int, { nullable: true }) itemId: number,
         @Arg("binId", type => Int, { nullable: true }) binId: number,
-        @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
-        @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
-    ): Promise<SceneSchema[]>
+        @Arg("view", type => ViewParameters) view: ViewParameters,
+    ): Promise<SceneView>
     {
-        limit = limit ? limit : undefined;
-        let query;
+        let options;
 
         if (binId) {
-            query = Scene.findAll({
+            options = {
                 where: { binId },
-                include: [ Bin, Asset ],
-                offset,
-                limit
-            });
+                include: [ BinModel, AssetModel ],
+            };
         }
         else if (itemId) {
-            query = Scene.findAll({
-                include: [ Asset, {
-                    model: Bin,
+            options = {
+                include: [ AssetModel, {
+                    model: BinModel,
                     required: true,
                     include: [{
-                        model: ItemBin,
+                        model: ItemBinModel,
                         attributes: [],
                         where: { itemId }
                     }],
                 }],
-                offset,
-                limit
-            });
+            };
         }
         else if (subjectId) {
-            query = Scene.findAll({
-                include: [ Asset, {
-                    model: Bin,
+            options = {
+                include: [ AssetModel, {
+                    model: BinModel,
                     required: true,
                     include: [{
-                        model: ItemBin,
+                        model: ItemBinModel,
                         required: true,
                         attributes: [],
                         include: [{
-                            model: Item,
+                            model: ItemModel,
                             attributes: [],
                             where: { subjectId }
                         }],
                     }],
                 }],
-                offset,
-                limit,
-            })
+            };
         }
         else {
-            query = Scene.findAll({
-                include: [ Bin, Asset ]
-            });
+            options = {
+                include: [ BinModel, AssetModel ]
+            };
         }
 
-        return query.then(rows =>
-            rows.map(row => row.toJSON() as SceneSchema)
-        );
+        const findOptions = getFindOptions(view, null, options);
+
+        return SceneModel.findAndCountAll(findOptions)
+        .then(result => ({
+            rows: result.rows.map(row => row.toJSON() as Scene),
+            count: result.count,
+        }));
     }
 
-    @Query(returns => SceneSchema, { nullable: true })
+    @Query(returns => Scene, { nullable: true })
     async scene(
         @Arg("id", type => Int) id: number,
-    ): Promise<SceneSchema | null>
+    ): Promise<Scene | null>
     {
         if (id) {
-            return Scene.findByPk(id, { include: [ Asset ]})
-                .then(row => row ? row.toJSON() as SceneSchema : null);
+            return SceneModel.findByPk(id, { include: [ AssetModel ]})
+                .then(row => row ? row.toJSON() as Scene : null);
         }
 
         return Promise.resolve(null);

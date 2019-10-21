@@ -45,7 +45,7 @@ export interface IRegisterProps
 }
 
 const REGISTER_USER_MUTATION = gql`
-mutation CreateUser($user: UserInputSchema!) {
+mutation CreateUser($user: UserInput!) {
     createUser(user: $user) {
         ok, message
     }

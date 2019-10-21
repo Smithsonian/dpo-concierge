@@ -22,7 +22,7 @@ import { FindOptions, Op } from "sequelize";
 ////////////////////////////////////////////////////////////////////////////////
 
 @InputType()
-export class ViewInputType
+export class ViewParameters
 {
     @Field(() => Int)
     page: number;
@@ -40,7 +40,7 @@ export class ViewInputType
     search: string;
 }
 
-export function getFindOptions(view: ViewInputType, searchFields: string[] = [], options?: FindOptions): FindOptions
+export function getFindOptions(view: ViewParameters, searchFields: string[] = [], options?: FindOptions): FindOptions
 {
     let where = options ? options.where : undefined;
 
@@ -53,7 +53,7 @@ export function getFindOptions(view: ViewInputType, searchFields: string[] = [],
         }
     }
 
-    const params: any = {};
+    const params: any = { ...options };
 
     if (where) {
         params.where = where;

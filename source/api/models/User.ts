@@ -21,7 +21,6 @@ import * as bcrypt from "bcrypt";
 import Project from "./Project";
 import Role from "./Role";
 import Permission from "./Permission";
-import { UserSchema } from "../schemas/User";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -50,13 +49,13 @@ export default class User extends Model<User>
         })
         .then(() => User.getPasswordHash(password))
         .then(hash => User.create({ name, email, password: hash }))
-        .then(user => (
+        .then(user =>
             Project.create({ ownerId: user.id, name: "My First Project" })
-                .then(project => {
-                    user.activeProjectId = project.id;
-                    return user.save().then(user => user.toJSON() as UserSchema);
-                })
-        ));
+            .then(project => ({ user, project })))
+        .then(({ user, project }) => {
+            user.activeProjectId = project.id;
+            return user.save();
+        });
     }
 
     static async login(email: string, password: string): Promise<{ ok: boolean, user?: User, message?: string }>

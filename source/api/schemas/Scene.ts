@@ -18,13 +18,23 @@
 import "reflect-metadata";
 import { Field, Int, ObjectType } from "type-graphql";
 
-import { AssetSchema } from "./Asset";
-import { BinSchema } from "./Bin";
+import { Asset } from "./Asset";
+import { Bin } from "./Bin";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
-export class SceneSchema
+export class SceneView
+{
+    @Field(type => [Scene])
+    rows: Scene[];
+
+    @Field(type => Int)
+    count: number;
+}
+
+@ObjectType()
+export class Scene
 {
     @Field(type => Int)
     id: number;
@@ -36,15 +46,21 @@ export class SceneSchema
     name: string;
 
     @Field()
-    bin: BinSchema;
+    bin: Bin;
 
     @Field()
-    voyagerDocument: AssetSchema;
+    voyagerDocument: Asset;
 
     @Field()
     voyagerVersion: string;
 
     @Field()
     published: boolean;
+
+    @Field()
+    createdAt: Date;
+
+    @Field()
+    updatedAt: Date;
 }
 

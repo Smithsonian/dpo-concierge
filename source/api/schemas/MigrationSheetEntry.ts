@@ -21,17 +21,17 @@ import { Field, Int, ID, ObjectType } from "type-graphql";
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
-export class MigrationSheetResultType
+export class MigrationSheetView
 {
-    @Field(type => [MigrationSheetEntryType])
-    rows: MigrationSheetEntryType[];
+    @Field(type => [MigrationSheetEntry])
+    rows: MigrationSheetEntry[];
 
     @Field()
     count: number;
 }
 
 @ObjectType()
-export class MigrationSheetEntryType
+export class MigrationSheetEntry
 {
     @Field(type => ID)
     id: string;

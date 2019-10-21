@@ -26,7 +26,6 @@ import gql from "graphql-tag";
 
 import { withStyles, StyleRules } from "@material-ui/core/styles";
 
-import CircularProgress from "@material-ui/core/CircularProgress";
 import Paper from "@material-ui/core/Paper";
 import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
@@ -36,18 +35,33 @@ import DeleteIcon from "@material-ui/icons/DeleteForever";
 
 import { FilesIcon, SceneIcon } from "../icons";
 
-import DataTable, { ITableColumn, TableCellFormatter, CellIconButton, formatDateTime } from "../DataTable";
-import ErrorCard from "../ErrorCard";
+import { getStorageObject, setStorageObject } from "../../utils/LocalStorage";
+
+import SearchInput from "../common/SearchInput";
+import Spacer from "../common/Spacer";
+import ErrorCard from "../common/ErrorCard";
+
+import DataTable, {
+    ITableColumn,
+    TableCellFormatter,
+    IDataTableView,
+    CellIconButton,
+    formatDateTime,
+    defaultView,
+} from "../common/DataTable";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export const FIND_BINS_QUERY = gql`
-query FindBins($itemId: Int!, $jobId: Int!) {
-    bins(itemId: $itemId, jobId: $jobId, offset: 0, limit: 0) {
-        id, name, uuid, version, createdAt
-        type {
-            name
+export const BIN_VIEW_QUERY = gql`
+query BinView($itemId: Int!, $jobId: Int!, $view: ViewParameters!) {
+    binView(itemId: $itemId, jobId: $jobId, view: $view) {
+        rows {
+            id, name, uuid, version, createdAt
+            type {
+                name
+            }
         }
+        count
     }
     item(id: $itemId) {
         name
@@ -70,6 +84,8 @@ mutation DeleteBin($binId: Int!) {
         ok, message
     }
 }`;
+
+const VIEW_STORAGE_KEY = "repository/bins/view";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -109,21 +125,21 @@ export interface IBinListViewProps
 function BinListView(props: IBinListViewProps)
 {
     const { classes } = props;
+    const history = useHistory();
 
     const params = queryString.parse(location.search);
     const itemId = parseInt(params.itemId as string) || 0;
     const jobId = parseInt(params.jobId as string) || 0;
 
-    const history = useHistory();
+    const initialView: IDataTableView = getStorageObject(VIEW_STORAGE_KEY, defaultView);
+    const [ view, setView ] = React.useState(initialView);
 
+    const variables = { itemId, jobId, view };
+    const queryResult = useQuery(BIN_VIEW_QUERY, { variables });
     const [ deleteBinMutation ] = useMutation(DELETE_BIN_MUTATION);
-    const { loading, error, data } = useQuery(FIND_BINS_QUERY, { variables: { itemId, jobId }});
 
-    if (loading) {
-        return (<CircularProgress className={classes.progress} />);
-    }
-    if (error) {
-        return (<ErrorCard title="Query Error" error={error}/>);
+    if (queryResult.error) {
+        return (<ErrorCard title="Query Error" error={queryResult.error}/>);
     }
 
     const columns: ITableColumn[] = [
@@ -137,9 +153,11 @@ function BinListView(props: IBinListViewProps)
         { id: "createdAt", label: "Created", format: formatDateTime },
     ];
 
-    const rows = data.bins;
-    const item = data.item;
-    const job = data.job;
+    const binView = queryResult.data && queryResult.data.binView;
+    const rows = binView ? binView.rows : [];
+    const count = binView ? binView.count : 0;
+    const item = queryResult.data && queryResult.data.item;
+    const job = queryResult.data && queryResult.data.job;
 
     return (
         <Paper className={classes.paper}>
@@ -147,13 +165,26 @@ function BinListView(props: IBinListViewProps)
                 <Typography variant="subtitle2">
                     { item ? `Bins in Item: ${item.name}` : (job ? `Bins in Job: ${job.name}` : "All Bins") }
                 </Typography>
-                <div style={{ flex: 1 }}/>
+                <Spacer />
+                <SearchInput
+                    search={view.search}
+                    onSearchChange={search => {
+                        const nextView = { ...view, search };
+                        setStorageObject(VIEW_STORAGE_KEY, nextView);
+                        setView(nextView);
+                    }}
+                />
             </Toolbar>
             <DataTable
-                storageKey="repository/bins"
+                loading={queryResult.loading}
                 rows={rows}
                 columns={columns}
-                history={history}
+                count={count}
+                view={view}
+                onViewChange={view => {
+                    setStorageObject(VIEW_STORAGE_KEY, view);
+                    setView(view);
+                }}
             />
         </Paper>
     )
@@ -161,14 +192,11 @@ function BinListView(props: IBinListViewProps)
 
 const styles = theme => ({
     paper: {
+        overflow: "auto",
         alignSelf: "stretch",
-    },
-    progress: {
-        alignSelf: "center",
     },
     toolbar: {
         display: "flex",
-        justifyContent: "flex-end",
         paddingLeft: theme.spacing(2),
         backgroundColor: theme.palette.primary.light,
     },

@@ -26,7 +26,6 @@ import gql from "graphql-tag";
 
 import { withStyles, StyleRules } from "@material-ui/core/styles";
 
-import CircularProgress from "@material-ui/core/CircularProgress";
 import Paper from "@material-ui/core/Paper";
 import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
@@ -35,23 +34,37 @@ import ViewIcon from "@material-ui/icons/Visibility";
 import EditIcon from "@material-ui/icons/Edit";
 import LaunchIcon from "@material-ui/icons/Launch";
 
-import DataTable, { ITableColumn, TableCellFormatter, CellIconButton } from "../DataTable";
-import ErrorCard from "../ErrorCard";
+import { getStorageObject, setStorageObject } from "../../utils/LocalStorage";
+
+import SearchInput from "../common/SearchInput";
+import Spacer from "../common/Spacer";
+import ErrorCard from "../common/ErrorCard";
+
+import DataTable, {
+    ITableColumn,
+    TableCellFormatter,
+    IDataTableView,
+    CellIconButton,
+    formatDateTime,
+    defaultView
+} from "../common/DataTable";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export const FETCH_SCENES_QUERY = gql`
-query Scenes($subjectId: Int!, $itemId: Int!, $binId: Int!) {
-    scenes(subjectId: $subjectId, itemId: $itemId, binId: $binId, offset: 0, limit: 0) {
-        name
-        published
-        bin {
-            uuid
-            name
+export const SCENE_VIEW_QUERY = gql`
+query SceneView($subjectId: Int!, $itemId: Int!, $binId: Int!, $view: ViewParameters!) {
+    sceneView(subjectId: $subjectId, itemId: $itemId, binId: $binId, view: $view) {
+        rows {
+            id, name, published, createdAt
+            bin {
+                uuid
+                name
+            }
+            voyagerDocument {
+                filePath
+            }
         }
-        voyagerDocument {
-            filePath
-        }
+        count
     },
     subject(id: $subjectId) {
         name
@@ -77,6 +90,8 @@ mutation RevokeBinAccess($uuid: String!) {
         ok, message
     }
 }`;
+
+const VIEW_STORAGE_KEY = "repository/scenes/view";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -124,6 +139,7 @@ export interface ISceneListViewProps
 function SceneListView(props: ISceneListViewProps)
 {
     const { classes } = props;
+    const history = useHistory();
 
     const params = queryString.parse(location.search);
     const subjectId = parseInt(params.subjectId as string) || 0;
@@ -131,9 +147,15 @@ function SceneListView(props: ISceneListViewProps)
     const binId = parseInt(params.binId as string) || 0;
     const revokeId = params.revokeId as string;
 
-    const history = useHistory();
+    const initialView: IDataTableView = getStorageObject(VIEW_STORAGE_KEY, defaultView);
+    const [ view, setView ] = React.useState(initialView);
 
-    const { loading, error, data } = useQuery(FETCH_SCENES_QUERY, { variables: { subjectId, itemId, binId } });
+    const variables = { view, subjectId, itemId, binId };
+    const queryResult = useQuery(SCENE_VIEW_QUERY, { variables });
+
+    if (queryResult.error) {
+        return (<ErrorCard title="Query Error" error={queryResult.error}/>);
+    }
 
     const [ grantAccessMutation ] = useMutation(GRANT_ACCESS_MUTATION);
     const [ revokeAccessMutation ] = useMutation(REVOKE_ACCESS_MUTATION);
@@ -159,19 +181,16 @@ function SceneListView(props: ISceneListViewProps)
         //{ id: "bin", label: "Bin", format: bin => bin.name },
         { id: "voyagerDocument", label: "Voyager Document", format: asset => asset.filePath },
         { id: "published", label: "Published" },
+        { id: "createdAt", label: "Created", format: formatDateTime },
     ];
 
-    if (loading) {
-        return (<CircularProgress className={classes.progress} />);
-    }
-    if (error) {
-        return (<ErrorCard title="Query Error" error={error}/>);
-    }
+    const sceneView = queryResult.data && queryResult.data.sceneView;
+    const rows = sceneView ? sceneView.rows : [];
+    const count = sceneView ? sceneView.count : 0;
 
-    const rows = data.scenes;
-    const subject = data.subject;
-    const item = data.item;
-    const bin = data.bin;
+    const subject = queryResult.data && queryResult.data.subject;
+    const item = queryResult.data && queryResult.data.item;
+    const bin = queryResult.data && queryResult.data.bin;
 
     return (
         <Paper className={classes.paper}>
@@ -181,13 +200,18 @@ function SceneListView(props: ISceneListViewProps)
                         (subject ? `Scenes in subject: ${subject.name}` :
                             (bin ? `Scenes in bin: ${bin.name}` : "All Scenes")) }
                 </Typography>
-                <div style={{ flex: 1 }}/>
+                <Spacer/>
             </Toolbar>
             <DataTable
-                storageKey="repository/scenes"
+                loading={queryResult.loading}
                 rows={rows}
                 columns={columns}
-                history={history}
+                count={count}
+                view={view}
+                onViewChange={view => {
+                    setStorageObject(VIEW_STORAGE_KEY, view);
+                    setView(view);
+                }}
             />
         </Paper>
     )
@@ -195,14 +219,11 @@ function SceneListView(props: ISceneListViewProps)
 
 const styles = theme => ({
     paper: {
+        overflow: "auto",
         alignSelf: "stretch",
-    },
-    progress: {
-        alignSelf: "center",
     },
     toolbar: {
         display: "flex",
-        justifyContent: "flex-end",
         padding: theme.spacing(1),
         backgroundColor: theme.palette.primary.light,
     }

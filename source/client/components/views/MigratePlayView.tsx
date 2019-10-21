@@ -38,7 +38,9 @@ import InputLabel from "@material-ui/core/InputLabel";
 import { Formik, Field } from "formik";
 import { TextField, Switch, Select } from 'formik-material-ui';
 
-import { ALL_JOBS_QUERY } from "./JobListView";
+import { defaultView } from "../common/DataTable";
+
+import { JOB_VIEW_QUERY } from "./JobListView";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -138,7 +140,7 @@ function MigratePlayView(props: IMigratePlayViewProps)
                     const variables = { job: { ...values, sheetEntryId }};
                     createPlayMigrationJobMutation({
                         variables,
-                        refetchQueries: [{ query: ALL_JOBS_QUERY }],
+                        refetchQueries: [{ query: JOB_VIEW_QUERY, variables: { view: defaultView } }],
                     });
                     setSubmitting(false);
                 }}

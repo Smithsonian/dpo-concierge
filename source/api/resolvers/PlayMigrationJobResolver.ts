@@ -18,17 +18,16 @@
 import { Arg, Query, Mutation, Resolver, Ctx, Int } from "type-graphql";
 
 import { PlayMigrationJobSchema, PlayMigrationJobInput } from "../schemas/PlayMigrationJob";
-import { JobSchema } from "../schemas/Job";
 
-import PlayMigrationJob from "../models/PlayMigrationJob";
-import Job from "../models/Job";
-import User from "../models/User";
+import PlayMigrationJobModel from "../models/PlayMigrationJob";
+import JobModel from "../models/Job";
+import UserModel from "../models/User";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export interface IContext
 {
-    user?: User;
+    user?: UserModel;
 }
 
 @Resolver()
@@ -51,8 +50,8 @@ export default class PlayMigrationJobResolver
             projectId
         };
 
-        const jobEntry = await Job.create(baseData);
-        const playMigrationJobEntry = await PlayMigrationJob.create(playMigrationJob);
+        const jobEntry = await JobModel.create(baseData);
+        const playMigrationJobEntry = await PlayMigrationJobModel.create(playMigrationJob);
         await playMigrationJobEntry.$set("job", jobEntry);
 
         return playMigrationJobEntry.toJSON() as PlayMigrationJobSchema;

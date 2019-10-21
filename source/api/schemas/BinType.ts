@@ -21,7 +21,7 @@ import { Field, ID, ObjectType } from "type-graphql";
 ////////////////////////////////////////////////////////////////////////////////
 
 @ObjectType()
-export class BinTypeSchema
+export class BinType
 {
     @Field(type => ID)
     id: string;

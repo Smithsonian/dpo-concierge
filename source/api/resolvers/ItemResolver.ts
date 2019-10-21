@@ -17,53 +17,59 @@
 
 import { Arg, Int, Query, Resolver } from "type-graphql";
 
-import { ItemSchema } from "../schemas/Item";
+import { Item, ItemView } from "../schemas/Item";
+import { ViewParameters, getFindOptions } from "../schemas/View";
 
-import Item from "../models/Item";
-import Subject from "../models/Subject";
+import ItemModel from "../models/Item";
+import SubjectModel from "../models/Subject";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-@Resolver(of => Item)
+const searchFields = [
+    "name",
+    "description",
+];
+
+@Resolver()
 export default class ItemResolver
 {
-    @Query(returns => [ ItemSchema ])
-    async items(
+    @Query(returns => ItemView)
+    async itemView(
         @Arg("subjectId", type => Int, { nullable: true }) subjectId: number,
-        @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
-        @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
-    ): Promise<ItemSchema[]>
+        @Arg("view", type => ViewParameters) view: ViewParameters,
+    ): Promise<ItemView>
     {
-        limit = limit ? limit : undefined;
-        let query;
+        let options;
 
         if (subjectId) {
-            query = Item.findAll({
-                include: [ Subject ],
+            options = {
+                include: [ SubjectModel ],
                 where: { subjectId },
-                offset,
-                limit,
-            });
+            };
         }
         else {
-            query = Item.findAll({
-                include: [ Subject ],
-                offset,
-                limit,
-            });
+            options = {
+                include: [ SubjectModel ],
+            };
         }
 
-        return query.then(rows => rows.map(row => row.toJSON() as ItemSchema));
+        const findOptions = getFindOptions(view, searchFields, options);
+
+        return ItemModel.findAndCountAll(findOptions)
+            .then(result => ({
+                rows: result.rows.map(row => row.toJSON() as Item),
+                count: result.count,
+            }));
     }
 
-    @Query(returns => ItemSchema, { nullable: true })
+    @Query(returns => Item, { nullable: true })
     async item(
         @Arg("id", type => Int) id: number,
-    ): Promise<ItemSchema | null>
+    ): Promise<Item | null>
     {
         if (id) {
-            return Item.findByPk(id)
-                .then(row => row ? row.toJSON() as ItemSchema : null);
+            return ItemModel.findByPk(id)
+                .then(row => row ? row.toJSON() as Item : null);
         }
 
         return Promise.resolve(null);

@@ -18,85 +18,89 @@
 import { Arg, Int, Query, Mutation, Resolver } from "type-graphql";
 import { Container } from "typedi";
 
-import Bin from "../models/Bin";
-import { BinSchema } from "../schemas/Bin";
-import { StatusType } from "../schemas/Status";
+import { Bin, BinView } from "../schemas/Bin";
+import { Status } from "../schemas/Status";
+import { ViewParameters, getFindOptions } from "../schemas/View";
 
-import ItemBin from "../models/ItemBin";
-import JobBin from "../models/JobBin";
-import BinType from "../models/BinType";
-import Asset from "../models/Asset";
+import BinModel from "../models/Bin";
+import ItemBinModel from "../models/ItemBin";
+import JobBinModel from "../models/JobBin";
+import BinTypeModel from "../models/BinType";
+import AssetModel from "../models/Asset";
 
 import ManagedRepository from "../utils/ManagedRepository";
 
 ////////////////////////////////////////////////////////////////////////////////
 
+const searchFields = [
+    "name",
+    "description",
+];
+
 @Resolver()
 export default class BinResolver
 {
-    @Query(returns => [ BinSchema ])
-    async bins(
+    @Query(returns => BinView)
+    async binView(
         @Arg("itemId", type => Int, { nullable: true }) itemId: number,
         @Arg("jobId", type => Int, { nullable: true }) jobId: number,
-        @Arg("offset", type => Int, { defaultValue: 0 }) offset: number,
-        @Arg("limit", type => Int, { defaultValue: 50 }) limit: number,
+        @Arg("view", type => ViewParameters) view: ViewParameters,
     )
     {
-        limit = limit ? limit : undefined;
-        let query;
+        let options;
 
         if (itemId) {
-            query = Bin.findAll({
-                include: [ BinType, {
-                    model: ItemBin,
+            options = {
+                include: [ BinTypeModel, {
+                    model: ItemBinModel,
                     attributes: [],
                     where: { itemId },
                 }],
-                offset,
-                limit,
-            });
+            };
         }
         else if (jobId) {
-            query = Bin.findAll({
-                include: [ BinType, {
-                    model: JobBin,
+            options = {
+                include: [ BinTypeModel, {
+                    model: JobBinModel,
                     attributes: [],
                     where: { jobId }
                 }],
-                offset,
-                limit,
-            });
+            };
         }
         else {
-            query = Bin.findAll({
-                include: [ BinType ],
-                offset,
-                limit,
-            });
+            options = {
+                include: [ BinTypeModel ],
+            };
         }
 
-        return query.then(rows => rows.map(row => row.toJSON() as BinSchema));
+        const findOptions = getFindOptions(view, searchFields, options);
+
+        return BinModel.findAndCountAll(findOptions)
+            .then(result => ({
+                rows: result.rows.map(row => row.toJSON() as Bin),
+                count: result.count,
+            }));
     }
 
-    @Query(returns => BinSchema, { nullable: true })
+    @Query(returns => Bin, { nullable: true })
     async bin(
         @Arg("id", type => Int) id: number,
-    ): Promise<BinSchema | null>
+    ): Promise<Bin | null>
     {
         if (id) {
-            return Bin.findByPk(id, { include: [BinType, Asset] })
-                .then(row => row ? row.toJSON() as BinSchema : null);
+            return BinModel.findByPk(id, { include: [BinTypeModel, AssetModel] })
+                .then(row => row ? row.toJSON() as Bin : null);
         }
 
         return Promise.resolve(null);
     }
 
-    @Mutation(returns => StatusType)
+    @Mutation(returns => Status)
     async grantBinAccess(
         @Arg("uuid", type => String) uuid: string,
-    ): Promise<StatusType>
+    ): Promise<Status>
     {
-        return Bin.getLatestVersion(uuid)
+        return BinModel.getLatestVersion(uuid)
             .then(bin => {
                 if (!bin) {
                     return { ok: false, message: `bin not found with uuid: ${uuid}` };
@@ -108,12 +112,12 @@ export default class BinResolver
             });
     }
 
-    @Mutation(returns => StatusType)
+    @Mutation(returns => Status)
     async revokeBinAccess(
         @Arg("uuid", type => String) uuid: string,
-    ): Promise<StatusType>
+    ): Promise<Status>
     {
-        return Bin.getLatestVersion(uuid)
+        return BinModel.getLatestVersion(uuid)
         .then(bin => {
             if (!bin) {
                 return { ok: false, message: `bin not found with uuid: ${uuid}` };

@@ -28,16 +28,21 @@ import CircularProgress from "@material-ui/core/CircularProgress";
 import Paper from "@material-ui/core/Paper";
 import Toolbar from "@material-ui/core/Toolbar";
 import Button from "@material-ui/core/Button";
-import Input from "@material-ui/core/Input";
-import Typography from "@material-ui/core/Typography";
-
-import SearchIcon from "@material-ui/icons/Search";
 import InputIcon from "@material-ui/icons/Input";
 
 import { getStorageObject, setStorageObject } from "../../utils/LocalStorage";
 
-import ErrorCard from "../ErrorCard";
-import DataTable, { IDataTableView, ITableColumn, TableCellFormatter, defaultView, formatText } from "../data/DataTable";
+import SearchInput from "../common/SearchInput";
+import Spacer from "../common/Spacer";
+import ErrorCard from "../common/ErrorCard";
+
+import DataTable, {
+    IDataTableView,
+    ITableColumn,
+    TableCellFormatter,
+    defaultView,
+    formatText
+} from "../common/DataTable";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -75,9 +80,9 @@ const queryColumns = columns.map(column => column.id).join(", ");
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const SHEET_ENTRIES_QUERY = gql`
-query MigrationSheetEntries($view: ViewInputType!) {
-    migrationSheetEntries(view: $view) {
+const SHEET_VIEW_QUERY = gql`
+query MigrationSheetView($view: ViewParameters!) {
+    migrationSheetView(view: $view) {
         rows {
             id, ${queryColumns}
         }
@@ -95,25 +100,6 @@ mutation FetchMigrationSheet {
 const VIEW_STORAGE_KEY = "migration/sheet/view";
 
 ////////////////////////////////////////////////////////////////////////////////
-
-const styles = theme => ({
-    paper: {
-        overflow: "auto",
-        alignSelf: "stretch",
-    },
-    toolbar: {
-        display: "flex",
-        justifyContent: "flex-end",
-        padding: theme.spacing(1),
-        backgroundColor: theme.palette.primary.light,
-    },
-    progress: {
-        alignSelf: "center",
-    },
-    grow: {
-        flexGrow: 1,
-    },
-} as StyleRules);
 
 const FlatButton = styled(Button)({
     margin: "-16px 0",
@@ -149,7 +135,6 @@ export interface IMigrationSpreadsheetViewProps
         card: string;
         progress: string;
         toolbar: string;
-        grow: string;
     };
 }
 
@@ -161,7 +146,7 @@ function MigrationSpreadsheetView(props: IMigrationSpreadsheetViewProps)
     const [ view, setView ] = React.useState(initialView);
 
     const variables = { view };
-    const queryResult = useQuery(SHEET_ENTRIES_QUERY, { variables });
+    const queryResult = useQuery(SHEET_VIEW_QUERY, { variables });
     const [ updateData, updateResult ] = useMutation(FETCH_SHEET_MUTATION);
 
     const error = queryResult.error || updateResult.error;
@@ -178,34 +163,24 @@ function MigrationSpreadsheetView(props: IMigrationSpreadsheetViewProps)
         return (<CircularProgress className={classes.progress} />);
     }
 
-    const entries = queryResult.data && queryResult.data.migrationSheetEntries;
+    const entries = queryResult.data && queryResult.data.migrationSheetView;
     const rows = entries ? entries.rows : [];
     const count = entries ? entries.count : 0;
 
     return (
         <Paper className={classes.paper}>
             <Toolbar className={classes.toolbar}>
-                <SearchIcon />
-                <Input
-                    type="search"
-                    defaultValue={view.search}
-                    onBlur={e => {
-                        const nextView = { ...view, search: e.target.value };
+                <SearchInput
+                    search={view.search}
+                    onSearchChange={search => {
+                        const nextView = { ...view, search };
                         setStorageObject(VIEW_STORAGE_KEY, nextView);
                         setView(nextView);
-                    }}
-                    onKeyDown={(e: any) => {
-                        if (e.key === "Enter") {
-                            const nextView = { ...view, search: e.target.value };
-                            setStorageObject(VIEW_STORAGE_KEY, nextView);
-                            setView(nextView);
-                        }
-                    }}
-                />
-                <Typography className={classes.grow}/>
+                    }} />
+                <Spacer/>
                 <Button color="primary" onClick={() => updateData({ variables })}>
                     <InputIcon style={{ marginRight: 8 }} />
-                    <span>Fetch Spreadsheet Data</span>
+                    <span>Fetch Spreadsheet</span>
                 </Button>
             </Toolbar>
 
@@ -223,5 +198,20 @@ function MigrationSpreadsheetView(props: IMigrationSpreadsheetViewProps)
         </Paper>
     );
 }
+
+const styles = theme => ({
+    paper: {
+        overflow: "auto",
+        alignSelf: "stretch",
+    },
+    toolbar: {
+        display: "flex",
+        padding: theme.spacing(1),
+        backgroundColor: theme.palette.primary.light,
+    },
+    progress: {
+        alignSelf: "center",
+    },
+} as StyleRules);
 
 export default withStyles(styles)(MigrationSpreadsheetView);
