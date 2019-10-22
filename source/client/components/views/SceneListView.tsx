@@ -200,7 +200,15 @@ function SceneListView(props: ISceneListViewProps)
                         (subject ? `Scenes in subject: ${subject.name}` :
                             (bin ? `Scenes in bin: ${bin.name}` : "All Scenes")) }
                 </Typography>
-                <Spacer/>
+                <Spacer />
+                <SearchInput
+                    search={view.search}
+                    onSearchChange={search => {
+                        const nextView: IDataTableView = { ...view, page: 0, search };
+                        setStorageObject(VIEW_STORAGE_KEY, nextView);
+                        setView(nextView);
+                    }}
+                />
             </Toolbar>
             <DataTable
                 loading={queryResult.loading}
@@ -224,7 +232,7 @@ const styles = theme => ({
     },
     toolbar: {
         display: "flex",
-        padding: theme.spacing(1),
+        paddingLeft: theme.spacing(2),
         backgroundColor: theme.palette.primary.light,
     }
 } as StyleRules);

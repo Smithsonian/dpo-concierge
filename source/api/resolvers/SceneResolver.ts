@@ -28,6 +28,10 @@ import ItemModel from "../models/Item";
 
 ////////////////////////////////////////////////////////////////////////////////
 
+const searchFields = [
+    "name",
+];
+
 @Resolver()
 export default class SceneResolver
 {
@@ -84,7 +88,7 @@ export default class SceneResolver
             };
         }
 
-        const findOptions = getFindOptions(view, null, options);
+        const findOptions = getFindOptions(view, searchFields, options);
 
         return SceneModel.findAndCountAll(findOptions)
         .then(result => ({

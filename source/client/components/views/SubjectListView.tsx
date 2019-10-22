@@ -144,7 +144,7 @@ function SubjectListView(props: ISubjectListViewProps)
                 <SearchInput
                     search={view.search}
                     onSearchChange={search => {
-                        const nextView = { ...view, search };
+                        const nextView: IDataTableView = { ...view, page: 0, search };
                         setStorageObject(VIEW_STORAGE_KEY, nextView);
                         setView(nextView);
                     }}

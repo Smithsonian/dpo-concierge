@@ -32,6 +32,7 @@ require('dotenv').config();
 const fs = require("fs-extra");
 const path = require("path");
 const childProcess = require("child_process");
+const webpack = require("webpack");
 
 const TerserPlugin = require("terser-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
@@ -158,6 +159,11 @@ WEBPACK BUILD SCRIPT
         },
 
         plugins: [
+            new webpack.DefinePlugin({
+                ENV_PRODUCTION: JSON.stringify(!isDevMode),
+                ENV_DEVELOPMENT: JSON.stringify(isDevMode),
+                ENV_VERSION: JSON.stringify(appTitle),
+            }),
             new MiniCssExtractPlugin({
                 filename: isDevMode ? "css/[name].dev.css" : "css/[name].min.css",
                 allChunks: true
