@@ -102,6 +102,11 @@ export default class ManagedRepository
         });
     }
 
+    async deleteAssetFile(asset: Asset)
+    {
+        return this.fileStore.deleteFile(asset.getStoragePath());
+    }
+
     async readFile(targetFilePath: string, filePath: string, binUuid: string, binVersion?: number)
     {
         return Asset.findByBinVersion(filePath, binUuid, binVersion)

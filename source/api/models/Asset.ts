@@ -59,17 +59,6 @@ export default class Asset extends Model<Asset>
         });
     }
 
-
-
-    static async getLatestVersionNumber(groupId: string, filePath: string): Promise<number | undefined>
-    {
-        const where = { groupId, filePath };
-        const order = [ "version", "DESC" ];
-
-        return Asset.findOne({ where, order, attributes: ["version"] })
-            .then(asset => asset ? asset.version : 0);
-    }
-
     ////////////////////////////////////////////////////////////////////////////////
 
     @ForeignKey(() => Bin)
@@ -115,7 +104,8 @@ export default class Asset extends Model<Asset>
     /**
      * Returns the path where the asset is stored in repository storage
      */
-    getStoragePath() {
+    getStoragePath()
+    {
         // bin UUID / bin version / asset file path
         return `${this.bin.getStoragePath()}/${this.filePath}`;
     }

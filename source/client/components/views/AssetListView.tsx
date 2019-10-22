@@ -64,8 +64,8 @@ query AssetView($binId: Int!, $view: ViewParameters!) {
 }`;
 
 export const DELETE_ASSET_MUTATION = gql`
-mutation DeleteAsset($assetId: Int!) {
-    deleteAsset(assetId: $assetId) {
+mutation DeleteAsset($id: Int!) {
+    deleteAsset(id: $id) {
         ok, message
     }
 }`;
@@ -83,7 +83,7 @@ const actionButtons: TableCellFormatter = (value, row, column) => (
 
         <CellIconButton title="Delete Asset" icon={DeleteIcon} onClick={() => {
             if (confirm("Delete asset. Are you sure?")) {
-                const variables = { assetId: row["id"] };
+                const variables = { id: row["id"] };
                 column.data.deleteAssetMutation({ variables });
             }
         }} />

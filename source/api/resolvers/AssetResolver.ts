@@ -15,13 +15,17 @@
  * limitations under the License.
  */
 
-import { Arg, Int, Query, Resolver } from "type-graphql";
+import { Arg, Int, Query, Mutation, Resolver } from "type-graphql";
+import { Container } from "typedi";
 
 import { Asset, AssetView } from "../schemas/Asset";
 import { ViewParameters, getFindOptions } from "../schemas/View";
+import { Status } from "../schemas/Status";
 
 import AssetModel from "../models/Asset";
 import BinModel from "../models/Bin";
+
+import ManagedRepository from "../utils/ManagedRepository";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -77,5 +81,33 @@ export default class AssetResolver
     {
         return (id ? AssetModel.findByPk(id) : AssetModel.findOne({ where: { uuid }}))
             .then(row => row ? row.toJSON() as Asset : null);
+    }
+
+    @Mutation(returns => Status)
+    deleteAsset(
+        @Arg("id", type => Int) id: number,
+    ): Promise<Status>
+    {
+        let asset;
+
+        return AssetModel.findByPk(id, { include: [BinModel] })
+            .then(_asset => {
+                asset = _asset;
+
+                if (!asset) {
+                    return { ok: false, message: `can't delete, asset ${id} not found`};
+                }
+
+                const repo = Container.get(ManagedRepository);
+
+                return repo.deleteAssetFile(asset)
+                    .catch(error =>
+                        console.log(`[AssetResolver] - failed to delete asset file: '${asset.filePath}'`)
+                    );
+
+            })
+            .then(() => asset.destroy())
+            .then(() => ({ ok: true, message: "" }))
+            .catch(error => ({ ok: false, message: error.message }));
     }
 }
