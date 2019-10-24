@@ -152,7 +152,10 @@ export default class ManagedRepository
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(message),
                 })
-                .then(() => {
+                .then(result => {
+                    if (!result.ok) {
+                        reject(new Error(`Post to API failed with code: ${result.status} ${result.statusText}`));
+                    }
                     //fs.unlinkSync(uploadFilePath); // TODO: Uncomment after testing
                     resolve()
                 })
