@@ -15,10 +15,14 @@
  * limitations under the License.
  */
 
-import { Arg, Int, Query, Resolver } from "type-graphql";
+import { Arg, Int, Query, Mutation, Resolver } from "type-graphql";
+import { Container } from "typedi";
+
+import ManagedRepository from "../utils/ManagedRepository";
 
 import { Scene, SceneView } from "../schemas/Scene";
 import { ViewParameters, getFindOptions } from "../schemas/View";
+import { Status } from "../schemas/Status";
 
 import SceneModel from "../models/Scene";
 import AssetModel from "../models/Asset";
@@ -109,4 +113,30 @@ export default class SceneResolver
 
         return Promise.resolve(null);
     }
+
+    @Mutation(returns => Status)
+    async publishScene(
+        @Arg("id", type => Int) id: number,
+    ): Promise<Status>
+    {
+        return SceneModel.findByPk(id, { include: [ BinModel ]})
+            .then(scene => {
+                if (!scene) {
+                    throw new Error(`scene not found with id ${id}`);
+                }
+                if (scene.published) {
+                    throw new Error(`scene already published`);
+                }
+
+                const repo = Container.get(ManagedRepository);
+                return repo.publishSceneBin(scene.bin)
+                    .then(() => {
+                        scene.published = true;
+                        return scene.save();
+                    });
+            })
+            .then(() => ({ ok: true, message: "" }))
+            .catch(error => ({ ok: false, message: error.toString() }));
+    }
+
 }

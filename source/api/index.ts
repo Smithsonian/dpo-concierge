@@ -25,7 +25,7 @@ import { PubSub } from "graphql-subscriptions";
 import Server, { IServerConfiguration } from "./app/Server";
 import Database, { IDatabaseConfiguration } from "./app/Database";
 
-import ManagedRepository from "./utils/ManagedRepository";
+import ManagedRepository, { IAPISettings } from "./utils/ManagedRepository";
 import LocalFileStore from "./utils/LocalFileStore";
 import CookClient from "./utils/CookClient";
 import EDANClient from "./utils/EDANClient";
@@ -38,6 +38,9 @@ const isDevMode = process.env["NODE_ENV"] !== "production";
 const mySQLPassword = process.env["MYSQL_PASSWORD"];
 
 const fileStorePath = process.env["FILE_STORE_BASEPATH"];
+const uploadPath = process.env["API_UPLOAD_BASEPATH"];
+const uploadUrl = process.env["API_UPLOAD_URL"];
+const upsertEndpoint = process.env["API_UPSERT_ENDPOINT"];
 
 const cookMachineAddress = process.env["COOK_MACHINE_ADDRESS"];
 const cookClientId = process.env["COOK_CLIENT_ID"];
@@ -88,20 +91,22 @@ Cook Server:             ${process.env["COOK_MACHINE_ADDRESS"]}
 ////////////////////////////////////////////////////////////////////////////////
 // INIT SERVICES AND START
 
+const apiSettings: IAPISettings = {
+    uploadPath,
+    uploadUrl,
+    endpoints: {
+        upsert: upsertEndpoint
+    }
+};
+
 const server = new Server(serverConfig);
 const database = new Database(databaseConfig);
 const pubSub = new PubSub();
-
-// setInterval(() => {
-//     console.log("[index] interval publish");
-//     pubSub.publish("JOB_STATE", { ok: true, message: "interval!" });
-// }, 5000);
-//
-// pubSub.subscribe("JOB_STATE", m => { console.log("[index] message received: ", m)})
+const repo = new ManagedRepository(new LocalFileStore(fileStorePath), apiSettings);
 
 Container.set(Server, server);
 Container.set(Database, database);
-Container.set(ManagedRepository, new ManagedRepository(new LocalFileStore(fileStorePath)));
+Container.set(ManagedRepository, repo);
 Container.set(CookClient, new CookClient(cookMachineAddress, cookClientId));
 Container.set(EDANClient, new EDANClient(edanAppId, edanAppKey));
 Container.set(PubSub, pubSub);

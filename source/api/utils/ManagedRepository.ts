@@ -15,6 +15,10 @@
  * limitations under the License.
  */
 
+import * as fs from "fs";
+import * as path from "path";
+import * as archiver from "archiver";
+import * as fetch from "node-fetch";
 import { v2 as webdav } from "webdav-server";
 
 import Asset from "../models/Asset";
@@ -24,16 +28,27 @@ import { IFileStore, ReadStream, WriteStream } from "./FileStore";
 
 ////////////////////////////////////////////////////////////////////////////////
 
+export interface IAPISettings
+{
+    uploadPath: string;
+    uploadUrl: string;
+    endpoints: {
+        upsert: string;
+    }
+}
+
 export default class ManagedRepository
 {
     protected readonly fileStore: IFileStore;
+    protected readonly apiSettings: IAPISettings;
 
     protected webDAVServer: webdav.WebDAVServer;
     protected activeBins: { [id:string]: boolean };
 
-    constructor(fileStore: IFileStore)
+    constructor(fileStore: IFileStore, apiSettings: IAPISettings)
     {
         this.fileStore = fileStore;
+        this.apiSettings = apiSettings;
 
         this.webDAVServer = new webdav.WebDAVServer(/* { port: webDAVPort } */);
 
@@ -105,6 +120,65 @@ export default class ManagedRepository
     async deleteAssetFile(asset: Asset)
     {
         return this.fileStore.deleteFile(asset.getStoragePath());
+    }
+
+    async publishSceneBin(bin: Bin)
+    {
+        return new Promise((resolve, reject) => {
+
+            const apiSettings = this.apiSettings;
+            const binPath = this.fileStore.getStoreFilePath(bin.getStoragePath());
+
+            const uploadFileName = `${bin.uuid}.zip`;
+            const uploadFilePath = path.resolve(apiSettings.uploadPath, uploadFileName);
+            console.log(`[ManagedRepository] zipping bin: '${binPath}'`);
+            console.log(`[ManagedRepository] to: '${uploadFilePath}'`);
+
+            const stream = fs.createWriteStream(uploadFilePath);
+            const archive = archiver("zip", { zlib: { level: 9 }});
+
+            stream.on("close", () => {
+                console.log("[ManagedRepository] bin zipped successfully, posting to API");
+
+                const message = {
+                    resource: `${apiSettings.uploadUrl}/${uploadFileName}`
+                };
+
+                fetch(apiSettings.endpoints.upsert, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(message),
+                })
+                .then(() => {
+                    //fs.unlinkSync(uploadFilePath);
+                    resolve()
+                })
+                .catch(error => {
+                    //fs.unlinkSync(uploadFilePath);
+                    console.log(`[ManagedRepository] failed to publish to '${apiSettings.endpoints.upsert}': ${error}`);
+                    reject(error)
+                });
+            });
+
+            archive.on("warning", error => {
+                if (error.code === "ENOENT") {
+                    console.log(`[ManagedRepository] - Warning while writing ZIP archive: ${error.toString()}`);
+                }
+                else {
+                    reject(error);
+                }
+            });
+
+            archive.on("error", error => {
+                console.log(`[ManagedRepository] - Error while writing ZIP archive: ${error.toString()}`);
+                reject(error);
+            });
+
+            archive.pipe(stream);
+            archive.directory(binPath, false); // archive root folder
+            archive.finalize();
+        });
+
     }
 
     async readFile(targetFilePath: string, filePath: string, binUuid: string, binVersion?: number)

@@ -91,6 +91,13 @@ mutation RevokeBinAccess($uuid: String!) {
     }
 }`;
 
+export const PUBLISH_SCENE_MUTATION = gql`
+mutation PublishScene($id: Int!) {
+    publishScene(id: $id) {
+        ok, message
+    }
+}`;
+
 const VIEW_STORAGE_KEY = "repository/scenes/view";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -122,7 +129,11 @@ const actionButtons: TableCellFormatter = (value, row, column) => (
         }}/>
 
         <CellIconButton title="Publish to API" icon={LaunchIcon} onClick={() => {
-            // TODO            
+            const id = row["id"];
+            column.data.publishSceneMutation({
+                variables: { id },
+                refetchQueries: [ { query: SCENE_VIEW_QUERY, variables: column.data.variables }],
+            });
         }}/>
     </div>
 );
@@ -153,12 +164,9 @@ function SceneListView(props: ISceneListViewProps)
     const variables = { view, subjectId, itemId, binId };
     const queryResult = useQuery(SCENE_VIEW_QUERY, { variables });
 
-    if (queryResult.error) {
-        return (<ErrorCard title="Query Error" error={queryResult.error}/>);
-    }
-
     const [ grantAccessMutation ] = useMutation(GRANT_ACCESS_MUTATION);
     const [ revokeAccessMutation ] = useMutation(REVOKE_ACCESS_MUTATION);
+    const [ publishSceneMutation, { data: publishData } ] = useMutation(PUBLISH_SCENE_MUTATION);
 
     const [ revoked, setRevoked ] = React.useState(false);
 
@@ -173,9 +181,18 @@ function SceneListView(props: ISceneListViewProps)
         setRevoked(true);
     }
 
+    if (queryResult.error) {
+        return (<ErrorCard title="Query Error" error={queryResult.error}/>);
+    }
+
+    const publishStatus = publishData && publishData.publishScene;
+    if (publishStatus && !publishStatus.ok) {
+        return (<ErrorCard title="Failed to publish" error={publishStatus}/>);
+    }
+
     const columns: ITableColumn[] = [
         { id: "actions", label: "Actions", format: actionButtons, width: 1, data: {
-            grantAccessMutation, revokeAccessMutation,
+            grantAccessMutation, revokeAccessMutation, publishSceneMutation, variables
         }},
         { id: "name", label: "Name" },
         //{ id: "bin", label: "Bin", format: bin => bin.name },
