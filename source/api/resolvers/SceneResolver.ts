@@ -119,7 +119,7 @@ export default class SceneResolver
         @Arg("id", type => Int) id: number,
     ): Promise<Status>
     {
-        return SceneModel.findByPk(id, { include: [ BinModel ]})
+        return SceneModel.findByPk(id, { include: [ BinModel, AssetModel ]})
             .then(scene => {
                 if (!scene) {
                     throw new Error(`scene not found with id ${id}`);
@@ -129,7 +129,7 @@ export default class SceneResolver
                 }
 
                 const repo = Container.get(ManagedRepository);
-                return repo.publishSceneBin(scene.bin)
+                return repo.publishSceneBin(scene.bin, scene.voyagerDocument)
                     .then(() => {
                         scene.published = true;
                         return scene.save();

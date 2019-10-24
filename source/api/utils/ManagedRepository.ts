@@ -122,7 +122,7 @@ export default class ManagedRepository
         return this.fileStore.deleteFile(asset.getStoragePath());
     }
 
-    async publishSceneBin(bin: Bin)
+    async publishSceneBin(bin: Bin, document: Asset)
     {
         return new Promise((resolve, reject) => {
 
@@ -141,8 +141,11 @@ export default class ManagedRepository
                 console.log("[ManagedRepository] bin zipped successfully, posting to API");
 
                 const message = {
-                    resource: `${apiSettings.uploadUrl}/${uploadFileName}`
+                    resource: `${apiSettings.uploadUrl}/${uploadFileName}`,
+                    document: document.filePath,
                 };
+
+                console.log("[ManagedRepository] message: " + JSON.stringify(message));
 
                 fetch(apiSettings.endpoints.upsert, {
                     method: "POST",
@@ -150,11 +153,11 @@ export default class ManagedRepository
                     body: JSON.stringify(message),
                 })
                 .then(() => {
-                    //fs.unlinkSync(uploadFilePath);
+                    //fs.unlinkSync(uploadFilePath); // TODO: Uncomment after testing
                     resolve()
                 })
                 .catch(error => {
-                    //fs.unlinkSync(uploadFilePath);
+                    //fs.unlinkSync(uploadFilePath); // TODO: Uncomment after testing
                     console.log(`[ManagedRepository] failed to publish to '${apiSettings.endpoints.upsert}': ${error}`);
                     reject(error)
                 });
