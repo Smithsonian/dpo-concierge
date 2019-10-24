@@ -124,9 +124,10 @@ export default class SceneResolver
                 if (!scene) {
                     throw new Error(`scene not found with id ${id}`);
                 }
-                if (scene.published) {
-                    throw new Error(`scene already published`);
-                }
+                // We allow multi-publishing for now
+                //if (scene.published) {
+                //    throw new Error(`scene already published`);
+                //}
 
                 const repo = Container.get(ManagedRepository);
                 return repo.publishSceneBin(scene.bin, scene.voyagerDocument)
