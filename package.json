@@ -10,12 +10,13 @@
     "build-api": "tsc -b source/api",
     "build-dev": "cd source/client; webpack --mode=development --app=all; cd ../..",
     "build-prod": "cd source/client; webpack --mode=production --app=all; cd../..",
-    "clean": "cd services/api && rm -rf bin && mkdir bin && cd ../..",
+    "clean": "cd /app && rm -rf dist && mkdir dist && cd services/api && rm -rf bin && mkdir bin && cd ../..",
     "clean-models": "cd services/api/bin && rm -rf models && cd ../../..",
     "test": "echo \"Error: no test specified\" && exit 1",
     "up": "docker-compose up -d; docker-compose logs -f",
     "down": "docker-compose stop; docker-compose rm -f -v",
-    "restart": "docker-compose stop; docker-compose rm -f -v; docker-compose up -d; docker-compose logs -f",
+    "restart": "npm run down; npm run up",
+    "rebuild": "npm run down && npm run clean && npm run up",
     "bash": "docker-compose exec api bash"
   },
   "nodemonConfig": {
@@ -31,7 +32,7 @@
   "contributors": [
     {
       "name": "Ralph Wiedemeier",
-      "url": "https://github.com/framelab"
+      "url": "https://github.com/framefactory"
     }
   ],
   "license": "Apache-2.0",
@@ -45,7 +46,7 @@
     "bcrypt": "^3.0.6",
     "body-parser": "^1.19.0",
     "colors": "^1.4.0",
-    "dataloader-sequelize": "^2.0.1",
+    "dataloader-sequelize": "^2.1.0",
     "entities": "^2.0.0",
     "express": "^4.17.1",
     "express-graphql": "^0.9.0",
@@ -55,8 +56,8 @@
     "graphql-relay": "^0.6.0",
     "graphql-sequelize": "^9.3.6",
     "graphql-subscriptions": "^1.1.0",
-    "graphql-upload": "^8.0.7",
-    "mariadb": "^2.1.1",
+    "graphql-upload": "^8.1.0",
+    "mariadb": "^2.1.2",
     "memorystore": "^1.6.1",
     "mime": "^2.4.4",
     "mkdirp": "^0.5.1",
@@ -66,7 +67,7 @@
     "passport-ldapauth": "^2.1.3",
     "passport-local": "^1.0.0",
     "reflect-metadata": "^0.1.13",
-    "sequelize": "^5.19.1",
+    "sequelize": "^5.21.1",
     "sequelize-typescript": "^1.0.0",
     "source-map-support": "^0.5.13",
     "subscriptions-transport-ws": "^0.9.16",
@@ -76,28 +77,28 @@
     "webdav-server": "^2.4.6"
   },
   "devDependencies": {
-    "@types/bluebird": "^3.5.27",
+    "@types/bluebird": "^3.5.28",
     "@types/express": "^4.17.1",
     "@types/graphql": "^14.5.0",
-    "@types/node": "^12.7.8",
+    "@types/node": "^12.11.7",
     "@types/validator": "^10.11.3",
     "awesome-typescript-loader": "^5.2.1",
-    "concurrently": "^4.1.2",
+    "concurrently": "^5.0.0",
     "css-loader": "^3.2.0",
-    "dotenv": "^8.1.0",
+    "dotenv": "^8.2.0",
     "handlebars-loader": "^1.7.1",
     "html-webpack-plugin": "^3.2.0",
     "mini-css-extract-plugin": "^0.8.0",
-    "node-sass": "^4.12.0",
-    "nodemon": "^1.19.3",
+    "node-sass": "^4.13.0",
+    "nodemon": "^1.19.4",
     "optimize-css-assets-webpack-plugin": "^5.0.3",
     "raw-loader": "^3.1.0",
     "sass-loader": "^8.0.0",
     "source-map-loader": "^0.2.4",
-    "terser-webpack-plugin": "^2.1.2",
+    "terser-webpack-plugin": "^2.2.1",
     "typedoc": "^0.15.0",
-    "typescript": "^3.6.3",
-    "webpack": "^4.41.0",
+    "typescript": "^3.6.4",
+    "webpack": "^4.41.2",
     "webpack-cli": "^3.3.9"
   }
 }
