@@ -27,6 +27,7 @@ import ItemBinModel from "../models/ItemBin";
 import JobBinModel from "../models/JobBin";
 import BinTypeModel from "../models/BinType";
 import AssetModel from "../models/Asset";
+import SceneModel from "../models/Scene";
 
 import ManagedRepository from "../utils/ManagedRepository";
 
@@ -127,5 +128,33 @@ export default class BinResolver
             .then(() => ({ ok: true, message: "" }))
             .catch(err => ({ ok: false, message: err.message }));
         });
+    }
+
+    @Mutation(returns => Status)
+    deleteBin(
+        @Arg("id", type => Int) id: number,
+    ): Promise<Status>
+    {
+        let bin;
+
+        return BinModel.findByPk(id, { include: [ AssetModel ]})
+            .then(_bin => {
+                bin = _bin;
+
+                if (!bin) {
+                    return { ok: false, message: `can't delete, bin ${id} not found`};
+                }
+
+                const repo = Container.get(ManagedRepository);
+
+                return repo.deleteBinFolder(bin)
+                    .catch(error => {
+                        console.log(`[BinResolver] failed to delete bin folder: '${bin.getStoragePath()}'`);
+                        throw error;
+                    });
+            })
+            .then(() => BinModel.deleteBin(bin.uuid))
+            .then(() => ({ ok: true, message: "" }))
+            .catch(error => ({ ok: false, message: error.message }));
     }
 }

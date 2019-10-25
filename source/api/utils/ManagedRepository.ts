@@ -81,7 +81,7 @@ export default class ManagedRepository
 
             this.activeBins[bin.uuid] = true;
 
-            const physicalPath = this.fileStore.getStoreFilePath(bin.getStoragePath());
+            const physicalPath = this.fileStore.getStoreFilePath(bin.getStoragePathWithVersion());
 
             this.webDAVServer.setFileSystem("/" + bin.uuid, new webdav.PhysicalFileSystem(physicalPath), success => {
                 if (!success) {
@@ -122,12 +122,17 @@ export default class ManagedRepository
         return this.fileStore.deleteFile(asset.getStoragePath());
     }
 
+    async deleteBinFolder(bin: Bin)
+    {
+        return this.fileStore.deleteFolder(bin.getStoragePath());
+    }
+
     async publishSceneBin(bin: Bin, document: Asset)
     {
         return new Promise((resolve, reject) => {
 
             const apiSettings = this.apiSettings;
-            const binPath = this.fileStore.getStoreFilePath(bin.getStoragePath());
+            const binPath = this.fileStore.getStoreFilePath(bin.getStoragePathWithVersion());
 
             const uploadFileName = `${bin.uuid}.zip`;
             const uploadFilePath = path.resolve(apiSettings.uploadPath, uploadFileName);

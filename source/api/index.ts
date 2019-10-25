@@ -33,20 +33,36 @@ import EDANClient from "./utils/EDANClient";
 ////////////////////////////////////////////////////////////////////////////////
 // ENVIRONMENT VARIABLES
 
-const isDevMode = process.env["NODE_ENV"] !== "production";
+const getEnvVariable = function(name: string, nothrow: boolean = false)
+{
+    const value = process.env[name];
+    if (!value) {
+        console.warn(`[Server] WARNING: environment variable not set: ${name}`);
+        if (!nothrow) {
+            throw new Error(`environment variable not set: ${name}`);
+        }
+    }
 
-const mySQLPassword = process.env["MYSQL_PASSWORD"];
+    return value;
+};
 
-const fileStorePath = process.env["FILE_STORE_BASEPATH"];
-const uploadPath = process.env["API_UPLOAD_BASEPATH"];
-const uploadUrl = process.env["API_UPLOAD_URL"];
-const upsertEndpoint = process.env["API_UPSERT_ENDPOINT"];
+const isDevMode = getEnvVariable("NODE_ENV") !== "production";
 
-const cookMachineAddress = process.env["COOK_MACHINE_ADDRESS"];
-const cookClientId = process.env["COOK_CLIENT_ID"];
+const mySQLHost = getEnvVariable("MYSQL_HOST");
+const mySQLDatabase = getEnvVariable("MYSQL_DATABASE");
+const mySQLUser = getEnvVariable("MYSQL_USER");
+const mySQLPassword = getEnvVariable("MYSQL_PASSWORD");
 
-const edanAppId = process.env["EDAN_APP_ID"];
-const edanAppKey = process.env["EDAN_APP_KEY"];
+const fileStorePath = getEnvVariable("FILE_STORE_BASEPATH");
+const uploadPath = getEnvVariable("API_UPLOAD_BASEPATH");
+const uploadUrl = getEnvVariable("API_UPLOAD_URL");
+const upsertEndpoint = getEnvVariable("API_UPSERT_ENDPOINT");
+
+const cookMachineAddress = getEnvVariable("COOK_MACHINE_ADDRESS");
+const cookClientId = getEnvVariable("COOK_CLIENT_ID");
+
+const edanAppId = getEnvVariable("EDAN_APP_ID");
+const edanAppKey = getEnvVariable("EDAN_APP_KEY");
 
 ////////////////////////////////////////////////////////////////////////////////
 // CONFIGURATION
@@ -60,10 +76,10 @@ const serverConfig: IServerConfiguration = {
 };
 
 const databaseConfig: IDatabaseConfiguration = {
-    host: "db",
-    database: "concierge",
+    host: mySQLHost,
+    database: mySQLDatabase,
     password: mySQLPassword,
-    user: "concierge",
+    user: mySQLUser,
     loggingEnabled: isDevMode,
 };
 
@@ -114,5 +130,3 @@ Container.set(PubSub, pubSub);
 database.setup()
 .then(() => server.setup())
 .then(() => server.start());
-
-

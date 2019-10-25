@@ -18,6 +18,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as mkdirp from "mkdirp";
+import * as rimraf from "rimraf";
 
 import { IFileStore, IFileInfo, ReadStream, WriteStream } from "./FileStore";
 
@@ -69,6 +70,19 @@ export default class LocalFileStore implements IFileStore
     async deleteFile(filePath: string): Promise<unknown>
     {
         return fs.promises.unlink(this.getStoreFilePath(filePath));
+    }
+
+    async deleteFolder(folderPath: string): Promise<unknown>
+    {
+        return new Promise((resolve, reject) => {
+            rimraf(this.getStoreFilePath(folderPath), error => {
+                if (error) {
+                    return reject(error);
+                }
+
+                return resolve(error);
+            });
+        });
     }
 
     async getFileInfo(filePath: string): Promise<IFileInfo>

@@ -97,11 +97,11 @@ export default class EDANClient
 
         console.log(`[EDANClient] fetching record for id: '${id}'`);
 
-        return this.search({ fqs: "id:" + id, rows: 1, facet: true })
-            .then(result =>
-                fs.promises.writeFile("edan-search-result.json", JSON.stringify(result, null, 2))
-                    .then(() => result)
-            );
+        return this.search({ fqs: "id:" + id, rows: 1, facet: true });
+            // .then(result =>
+            //     fs.promises.writeFile("edan-search-result.json", JSON.stringify(result, null, 2))
+            //         .then(() => result)
+            // );
     }
 
     async search(query: IEdanQuery, metadataSearch: boolean = false): Promise<IEdanQueryResult>

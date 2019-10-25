@@ -79,8 +79,8 @@ mutation UpdateBin($bin: BinInputSchema) {
 }`;
 
 export const DELETE_BIN_MUTATION = gql`
-mutation DeleteBin($binId: Int!) {
-    deleteBin(binId: $binId) {
+mutation DeleteBin($id: Int!) {
+    deleteBin(id: $id) {
         ok, message
     }
 }`;
@@ -100,14 +100,16 @@ const actionButtons: TableCellFormatter = (value, row, column) => (
             column.data.history.push(`scenes?binId=${row["id"]}`);
         }}/>
 
-        <CellIconButton title="Edit Bin Details" icon={EditIcon} onClick={() => {
+        <CellIconButton disabled title="Edit Bin Details" icon={EditIcon} onClick={() => {
 
         }} />
 
         <CellIconButton title="Delete Bin and Assets" icon={DeleteIcon} onClick={() => {
-            if (confirm("Delete bin and all assets. Are you sure?")) {
-                const variables = { binId: row["id"] };
-                column.data.deleteBinMutation({ variables });
+            if (confirm(`Delete bin '${row["name"]}' and all assets. Are you sure?`)) {
+                column.data.deleteBinMutation({
+                    variables: { id: row["id"] },
+                    refetchQueries: [ { query: BIN_VIEW_QUERY, variables: column.data.variables }],
+                });
             }
         }} />
     </div>
@@ -136,15 +138,19 @@ function BinListView(props: IBinListViewProps)
 
     const variables = { itemId, jobId, view };
     const queryResult = useQuery(BIN_VIEW_QUERY, { variables });
-    const [ deleteBinMutation ] = useMutation(DELETE_BIN_MUTATION);
+    const [ deleteBinMutation, deleteResult ] = useMutation(DELETE_BIN_MUTATION);
 
     if (queryResult.error) {
         return (<ErrorCard title="Query Error" error={queryResult.error}/>);
     }
+    const deleteStatus = deleteResult.data && deleteResult.data.deleteBin;
+    if (deleteStatus && !deleteStatus.ok) {
+        return (<ErrorCard title="Failed to delete bin" error={deleteStatus}/>);
+    }
 
     const columns: ITableColumn[] = [
         { id: "actions", label: "Actions", format: actionButtons, width: 1, data: {
-                history, deleteBinMutation,
+                history, deleteBinMutation, variables,
             }},
         { id: "name", label: "Name" },
         { id: "type", label: "Type", format: value => value.name },

@@ -33,7 +33,7 @@ import Typography from "@material-ui/core/Typography";
 import EditIcon from "@material-ui/icons/Edit";
 import DeleteIcon from "@material-ui/icons/DeleteForever";
 
-import { FilesIcon, SceneIcon } from "../icons";
+import { FilesIcon, SceneIcon, CabinetIcon } from "../icons";
 
 import { getStorageObject, setStorageObject } from "../../utils/LocalStorage";
 
@@ -76,8 +76,8 @@ mutation UpdateItem($item: ItemInputSchema) {
 }`;
 
 export const DELETE_ITEM_MUTATION = gql`
-mutation DeleteItem($itemId: Int!) {
-    deleteItem(id: $itemId) {
+mutation DeleteItem($id: Int!) {
+    deleteItem(id: $id) {
         ok, message
     }
 }`;
@@ -89,7 +89,7 @@ const VIEW_STORAGE_KEY = "repository/items/view";
 const actionButtons: TableCellFormatter = (value, row, column) => (
     <div style={{ display: "flex", flexWrap: "nowrap" }}>
 
-        <CellIconButton title="View Bin List" icon={FilesIcon} onClick={() => {
+        <CellIconButton title="View Bin List" icon={CabinetIcon} onClick={() => {
             column.data.history.push(`bins?itemId=${row["id"]}`);
         }} />
 
@@ -97,14 +97,16 @@ const actionButtons: TableCellFormatter = (value, row, column) => (
             column.data.history.push(`scenes?itemId=${row["id"]}`);
         }}/>
 
-        <CellIconButton title="Edit Item Details" icon={EditIcon} onClick={() => {
+        <CellIconButton disabled title="Edit Item Details" icon={EditIcon} onClick={() => {
 
         }} />
 
-        <CellIconButton title="Delete Item, Bins, and Assets" icon={DeleteIcon} onClick={() => {
-            if (confirm("Delete item with all bins and assets. Are you sure?")) {
-                const variables = { itemId: row["id"] };
-                column.data.deleteItemMutation({ variables });
+        <CellIconButton disabled  title="Delete Item, Bins, and Assets" icon={DeleteIcon} onClick={() => {
+            if (confirm(`Delete item '${row["name"]}' with all bins and assets. Are you sure?`)) {
+                column.data.deleteItemMutation({
+                    variables: { id: row["id"] },
+                    refetchQueries: [ { query: ITEM_VIEW_QUERY, variables: column.data.variables }],
+                });
             }
         }} />
     </div>
@@ -132,15 +134,20 @@ function ItemListView(props: IItemListViewProps)
 
     const variables = { view, subjectId };
     const queryResult = useQuery(ITEM_VIEW_QUERY, { variables });
-    const [ deleteItemMutation ] = useMutation(DELETE_ITEM_MUTATION);
+    const [ deleteItemMutation, deleteResult ] = useMutation(DELETE_ITEM_MUTATION);
 
     if (queryResult.error) {
         return (<ErrorCard title="Query Error" error={queryResult.error}/>);
     }
+    const deleteStatus = deleteResult.data && deleteResult.data.deleteItem;
+    if (deleteStatus && !deleteStatus.ok) {
+        return (<ErrorCard title="Failed to delete item" error={deleteStatus}/>);
+    }
+
 
     const columns: ITableColumn[] = [
         { id: "actions", label: "Actions", format: actionButtons, width: 1, data: {
-            history, deleteItemMutation,
+            history, deleteItemMutation, variables,
         }},
         { id: "name", label: "Name" },
         { id: "description", label: "Description", format: formatText },

@@ -28,6 +28,7 @@ import ListItem from "@material-ui/core/ListItem";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
 import Divider from "@material-ui/core/Divider";
+import Typography from "@material-ui/core/Typography";
 
 import PersonIcon from "@material-ui/icons/Person";
 import GroupIcon from "@material-ui/icons/Group";
@@ -36,7 +37,7 @@ import WorkIcon from "@material-ui/icons/Work";
 import AirportShuttleIcon from "@material-ui/icons/AirportShuttle";
 import ImportIcon from "@material-ui/icons/Input";
 
-import { ConciergeIcon, BookIcon, CabinetIcon, BoneIcon, FilesIcon, SceneIcon } from "./icons";
+import { ConciergeIcon, BookIcon, CabinetIcon, CubeIcon, FilesIcon, SceneIcon } from "./icons";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -55,7 +56,7 @@ const categories = [{
     name: "Repository",
     items: [
         { name: "Subjects", icon: <BookIcon />, link: "/repository/subjects" },
-        { name: "Items", icon: <BoneIcon />, link: "/repository/items" },
+        { name: "Items", icon: <CubeIcon />, link: "/repository/items" },
         { name: "Bins", icon: <CabinetIcon />, link: "/repository/bins" },
         { name: "Assets", icon: <FilesIcon />, link: "/repository/assets" },
         { name: "Scenes", icon: <SceneIcon />, link: "/repository/scenes" },
@@ -102,6 +103,12 @@ const sidebarStyles: any = theme => ({
         background: "rgba(130,193,255,0.06)",
         color: "rgba(230,242,255,0.8)",
         fontSize: 26,
+    },
+    label: {
+        paddingTop: 2,
+        paddingBottom: 2,
+        background: "#cc3d3d",
+        color: "white",
     },
     titleIcon: {
         marginRight: theme.spacing(1),
@@ -150,6 +157,10 @@ const Sidebar = withStyles(sidebarStyles)(function(props: any) {
             <ListItem className={classes.title}>
                 <ConciergeIcon fontSize="inherit" className={classes.titleIcon} />
                 <span>Concierge</span>
+            </ListItem>
+            <Divider />
+            <ListItem className={classes.label}>
+                Development Prototype
             </ListItem>
             <Divider />
 

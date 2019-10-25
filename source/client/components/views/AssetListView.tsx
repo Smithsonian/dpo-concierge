@@ -82,9 +82,11 @@ const actionButtons: TableCellFormatter = (value, row, column) => (
         }}/>
 
         <CellIconButton title="Delete Asset" icon={DeleteIcon} onClick={() => {
-            if (confirm("Delete asset. Are you sure?")) {
-                const variables = { id: row["id"] };
-                column.data.deleteAssetMutation({ variables });
+            if (confirm(`Delete asset '${row["filePath"]}'. Are you sure?`)) {
+                column.data.deleteAssetMutation({
+                    variables: { id: row["id"] },
+                    refetchQueries: [ { query: ASSET_VIEW_QUERY, variables: column.data.variables }],
+                });
             }
         }} />
 
@@ -113,15 +115,19 @@ function AssetListView(props: IAssetListViewProps)
 
     const variables = { view, binId };
     const queryResult = useQuery(ASSET_VIEW_QUERY, { variables });
-    const [ deleteAssetMutation ] = useMutation(DELETE_ASSET_MUTATION);
+    const [ deleteAssetMutation, deleteResult ] = useMutation(DELETE_ASSET_MUTATION);
 
     if (queryResult.error) {
         return (<ErrorCard title="Query Error" error={queryResult.error}/>);
     }
+    const deleteStatus = deleteResult.data && deleteResult.data.deleteAsset;
+    if (deleteStatus && !deleteStatus.ok) {
+        return (<ErrorCard title="Failed to delete asset" error={deleteStatus}/>);
+    }
 
     const columns: ITableColumn[] = [
         { id: "actions", label: "Actions", format: actionButtons, width: 1, data: {
-            history, deleteAssetMutation,
+            history, deleteAssetMutation, variables,
         }},
         { id: "name", label: "Name" },
         { id: "path", label: "Path" },

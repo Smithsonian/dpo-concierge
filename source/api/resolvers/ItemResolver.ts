@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
-import { Arg, Int, Query, Resolver } from "type-graphql";
+import { Arg, Int, Query, Mutation, Resolver } from "type-graphql";
 
 import { Item, ItemView } from "../schemas/Item";
 import { ViewParameters, getFindOptions } from "../schemas/View";
+import { Status } from "../schemas/Status";
 
 import ItemModel from "../models/Item";
 import SubjectModel from "../models/Subject";
@@ -73,5 +74,13 @@ export default class ItemResolver
         }
 
         return Promise.resolve(null);
+    }
+
+    @Mutation(returns => Status)
+    async deleteItem(
+        @Arg("id", type => Int) id: number,
+    ): Promise<Status>
+    {
+        return { ok: false, message: "Not implemented yet" };
     }
 }

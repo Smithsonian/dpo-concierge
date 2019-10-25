@@ -97,8 +97,10 @@ const actionButtons: TableCellFormatter = (value, row, column) => (
     <div style={{ display: "flex", flexWrap: "nowrap" }}>
 
         <CellIconButton title="Run Job" icon={PlayIcon} onClick={() => {
-            const variables = { jobId: row["id"] };
-            column.data.runJobMutation({ variables });
+            column.data.runJobMutation({
+                variables: { jobId: row["id"] },
+                refetchQueries: [ { query: JOB_VIEW_QUERY, variables: column.data.variables }],
+            });
         }}/>
 
         <CellIconButton title="Cancel Job" icon={StopIcon} onClick={() => {
@@ -157,7 +159,7 @@ function JobListView(props: IJobListViewProps)
 
     const columns: ITableColumn[] = [
         { id: "actions", label: "Actions", format: actionButtons, width: 1, data: {
-            runJobMutation, cancelJobMutation, deleteJobMutation
+            runJobMutation, cancelJobMutation, deleteJobMutation, variables
         }},
         { id: "createdAt", label: "Created", format: formatDateTime },
         { id: "state", label: "State", format: createLabel, width: 120 },

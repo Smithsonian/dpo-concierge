@@ -31,7 +31,7 @@ import Typography from "@material-ui/core/Typography";
 import EditIcon from "@material-ui/icons/Edit";
 import DeleteIcon from "@material-ui/icons/DeleteForever";
 
-import { FilesIcon, SceneIcon } from "../icons";
+import { CubeIcon, SceneIcon } from "../icons";
 
 import { getStorageObject, setStorageObject } from "../../utils/LocalStorage";
 
@@ -74,7 +74,7 @@ const VIEW_STORAGE_KEY = "repository/subjects/view";
 const actionButtons: TableCellFormatter = (value, row, column) => (
     <div style={{ display: "flex", flexWrap: "nowrap" }}>
 
-        <CellIconButton title="View Item List" icon={FilesIcon} onClick={() => {
+        <CellIconButton title="View Item List" icon={CubeIcon} onClick={() => {
             column.data.history.push(`items?subjectId=${row["id"]}`);
         }} />
 
@@ -82,11 +82,11 @@ const actionButtons: TableCellFormatter = (value, row, column) => (
             column.data.history.push(`scenes?subjectId=${row["id"]}`);
         }}/>
 
-        <CellIconButton title="Edit Subject Details" icon={EditIcon} onClick={() => {
+        <CellIconButton disabled title="Edit Subject Details" icon={EditIcon} onClick={() => {
 
         }} />
 
-        <CellIconButton title="Delete Subject, Items, Bins, and Assets" icon={DeleteIcon} onClick={() => {
+        <CellIconButton disabled title="Delete Subject, Items, Bins, and Assets" icon={DeleteIcon} onClick={() => {
             if (confirm("Delete subject with all items, bins, and assets. Are you sure?")) {
                 const variables = { subjectId: row["id"] };
                 column.data.deleteSubjectMutation({ variables });

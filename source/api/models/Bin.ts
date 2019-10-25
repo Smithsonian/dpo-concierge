@@ -23,6 +23,7 @@ import ItemBin from "./ItemBin";
 import Item from "./Item";
 import JobBin from "./JobBin";
 import Job from "./Job";
+import Scene from "./Scene";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -45,6 +46,22 @@ export default class Bin extends Model<Bin>
             attributes: [ "version" ]
         })
         .then(bin => bin ? bin.version : 0);
+    }
+
+    static async deleteBin(uuid: string)
+    {
+        let bin;
+
+        return Bin.findOne({ where: { uuid }})
+            .then(_bin => {
+                bin = _bin;
+                if (!bin) {
+                    throw new Error(`bin not found: ${uuid}`);
+                }
+            })
+            .then(() => Scene.destroy({ where: { binId: bin.id }}))
+            .then(() => Asset.destroy({ where: { binId: bin.id }}))
+            .then(() => Bin.destroy({ where: { id: bin.id }}));
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -78,7 +95,10 @@ export default class Bin extends Model<Bin>
     jobBin: JobBin;
 
 
-    getStoragePath() {
+    getStoragePathWithVersion() {
         return `bins/${this.uuid}/v${this.version}`;
+    }
+    getStoragePath() {
+        return `bins/${this.uuid}`;
     }
 }

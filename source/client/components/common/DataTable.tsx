@@ -100,18 +100,21 @@ export const formatTime: TableCellFormatter = value => moment(value).format("HH:
 
 export interface ICellIconButtonProps
 {
+    disabled?: boolean;
     title: string;
     icon: React.ComponentType<{ fontSize: string }>;
     onClick: (event: React.MouseEvent) => void;
 }
 
 export const CellIconButton = (props: ICellIconButtonProps) => {
-    const { title, onClick, icon: Icon } = props;
+    const { disabled, title, onClick, icon: Icon } = props;
     return (
         <Tooltip title={title}>
-            <IconButton onClick={onClick} style={{ margin: "-16px 0" }}>
-                <Icon fontSize="small"/>
-            </IconButton>
+            <div>
+                <IconButton onClick={onClick} style={{ margin: "-16px 0" }} disabled={disabled}>
+                    <Icon fontSize="small"/>
+                </IconButton>
+            </div>
         </Tooltip>
     );
 };

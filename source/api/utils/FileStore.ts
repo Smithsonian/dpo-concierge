@@ -38,6 +38,7 @@ export interface IFileStore
     writeFile: (sourcePath: string, filePath: string) => Promise<unknown>;
     moveFile: (sourcePath: string, destinationPath: string) => Promise<unknown>;
     deleteFile: (filePath: string) => Promise<unknown>;
+    deleteFolder: (folderPath: string) => Promise<unknown>;
     getFileInfo: (filePath: string) => Promise<IFileInfo>;
     createReadStream: (filePath: string) => Promise<ReadStream>;
     createWriteStream: (filePath: string) => Promise<WriteStream>;
