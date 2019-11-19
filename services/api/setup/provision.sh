@@ -3,7 +3,7 @@
 # INSTALL UBUNTU WITH NODE.JS
 
 # Create application directory
-mkdir /app
+mkdir -p /app
 
 # Install utilities
 apt-get install -y vim wget curl bzip2 git
@@ -34,6 +34,10 @@ npm --version
 
 # increase file watch count
 echo fs.inotify.max_user_watches=524288 | tee -a /etc/sysctl.conf && sysctl -p
+
+# add repository storage mount directory
+apt-get install -y cifs-utils
+mkdir -p /storage
 
 # some helpful bash aliases
 cat <<EOF >> ~/.bash_aliases
