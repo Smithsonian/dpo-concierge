@@ -69,7 +69,7 @@ export class MigrationSheetEntry
     @Field()
     publishstatus: string;
 
-    @Field()
+    @Field({ nullable: true })
     rights: string;
 
     @Field(type => Int, { nullable: true })
@@ -107,6 +107,12 @@ export class MigrationSheetEntry
 
     @Field()
     mastermodellocation: string;
+
+    @Field()
+    mastermodelgeometryfile: string;
+
+    @Field()
+    mastermodeltexturefile: string;
 
     @Field({ nullable: true })
     rawdatasizegb: number;

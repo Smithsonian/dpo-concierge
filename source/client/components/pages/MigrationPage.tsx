@@ -18,7 +18,7 @@
 import * as React from "react";
 
 import MigrationSpreadsheetView from "../views/MigrationSpreadsheetView";
-import MigratePlayView from "../views/MigratePlayView";
+import MigratePlayJobView from "../views/MigratePlayJobView";
 import NotYetImplementedView from "../views/NotYetImplementedView";
 
 import Page, { IPageView } from "../Page";
@@ -27,7 +27,7 @@ import Page, { IPageView } from "../Page";
 
 const views: IPageView[] = [
     { title: "Spreadsheet", component: MigrationSpreadsheetView, route: "/spreadsheet" },
-    { title: "Migrate Play", component: MigratePlayView, route: "/play" },
+    { title: "Migrate Play", component: MigratePlayJobView, route: "/play" },
     { title: "Migrate Legacy", component: NotYetImplementedView, route: "/legacy" },
 ];
 

@@ -36,9 +36,6 @@ export class PlayMigrationJobSchema
     edanRecordId: string;
 
     @Field()
-    sharedDriveFolder: string;
-
-    @Field()
     masterModelGeometry: string;
 
     @Field()
@@ -75,9 +72,6 @@ export class PlayMigrationJobInput
 
     @Field()
     unitRecordId: string;
-
-    @Field()
-    sharedDriveFolder: string;
 
     @Field()
     masterModelGeometry: string;

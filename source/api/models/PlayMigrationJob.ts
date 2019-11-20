@@ -19,20 +19,20 @@ import { Container } from "typedi";
 
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
 
-import Asset from "./Asset";
+import CookClient, { IParameters } from "../utils/CookClient";
+import { IJobReport } from "../utils/cookTypes";
+import EDANClient, { IEdanEntry, IEdanQueryResult } from "../utils/EDANClient";
+import ManagedRepository from "../utils/ManagedRepository";
+
 import Bin from "./Bin";
+import BinType from "./BinType";
 import Item from "./Item";
 import ItemBin from "./ItemBin";
 import Subject from "./Subject";
 import Scene from "./Scene";
-
 import Job, { IJobImplementation } from "./Job";
 
-import CookClient, { IParameters } from "../utils/CookClient";
-import { IJobReport } from "../utils/cookTypes";
-import EDANClient, { IEdanEntry, IEdanQueryResult } from "../utils/EDANClient";
-import BinType from "./BinType";
-import ManagedRepository from "../utils/ManagedRepository";
+import MasterMigrationJob from "./MasterMigrationJob";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -63,6 +63,13 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
     @BelongsTo(() => Item)
     item: Item;
 
+    // the Voyager scene generated from this job
+    @ForeignKey(() => Scene)
+    sceneId: number;
+
+    @BelongsTo(() => Scene)
+    scene: Scene;
+
     @Column({ type: DataType.STRING, defaultValue: "" })
     step: MigrationJobStep;
 
@@ -80,9 +87,6 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
 
     @Column
     unitRecordId: string;
-
-    @Column
-    sharedDriveFolder: string;
 
     @Column
     masterModelGeometry: string;
@@ -246,7 +250,7 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
         const repo = Container.get(ManagedRepository);
 
         let report: IJobReport = undefined;
-        let name;
+        let name, scene;
 
         return cookClient.jobReport(this.cookJobId)
             .then(_report => {
@@ -309,6 +313,11 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
                                         name,
                                         binId: sceneItemBin.binId,
                                         voyagerDocumentId: asset.id
+                                    }).then(_scene => {
+                                        scene = _scene;
+                                        this.scene = scene;
+                                        this.sceneId = scene.id;
+                                        return this.save();
                                     })
                                 );
                             }
@@ -317,9 +326,22 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
                         });
                 }));
             })
-            //.then(() =>
-            //    cookClient.deleteJob(this.cookJobId)
-            //)
+            .then(() => {
+                // if scene has been created successfully and migration entry has a master geometry,
+                // create a successor job for processing the master model
+                if (scene && this.masterModelGeometry) {
+                    return Job.create({
+                        name: "",
+                        type: "MasterMigrationJob",
+                        projectId: this.job.projectId,
+                    }).then(job => MasterMigrationJob.create({
+                        jobId: job.id,
+                        sourceSceneId: scene.id,
+                        masterModelGeometry: this.masterModelGeometry,
+                        masterModelTexture: this.masterModelTexture,
+                    }));
+                }
+            })
             .then(() => {
                 //this.cookJobId = "";
                 this.step = "";

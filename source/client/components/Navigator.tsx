@@ -66,14 +66,14 @@ const categories = [{
     items: [
         { name: "Projects", icon: <WorkIcon />, link: "/workflow/projects" },
         { name: "Jobs", icon: <AssignmentIcon />, link: "/workflow/jobs" },
-        { name: "Ingest", icon: <ImportIcon />, link: "/ingest/start" },
+        //{ name: "Ingest", icon: <ImportIcon />, link: "/ingest/start" },
         { name: "Migration", icon: <AirportShuttleIcon />, link: "/migration/spreadsheet" },
     ],
 }, {
     name: "Administration",
     items: [
         { name: "Users", icon: <PersonIcon />, link: "/admin/users" },
-        { name: "Roles", icon: <GroupIcon />, link: "/admin/roles" },
+        //{ name: "Roles", icon: <GroupIcon />, link: "/admin/roles" },
     ],
 }];
 

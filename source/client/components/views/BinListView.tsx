@@ -155,7 +155,7 @@ function BinListView(props: IBinListViewProps)
         { id: "name", label: "Name" },
         { id: "type", label: "Type", format: value => value.name },
         { id: "uuid", label: "UUID" },
-        { id: "version", label: "version" },
+        { id: "version", label: "Version" },
         { id: "createdAt", label: "Created", format: formatDateTime },
     ];
 

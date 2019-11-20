@@ -112,6 +112,12 @@ export default class MigrationSheetEntry extends Model<MigrationSheetEntry>
     mastermodellocation: string;
 
     @Column
+    mastermodelgeometryfile: string;
+
+    @Column
+    mastermodeltexturefile: string;
+
+    @Column
     rawdatasizegb: number;
 
     @Column

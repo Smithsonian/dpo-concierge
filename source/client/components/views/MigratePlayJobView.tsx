@@ -47,7 +47,7 @@ import { JOB_VIEW_QUERY } from "./JobListView";
 const MIGRATION_SHEET_ENTRY_QUERY = gql`
 query MigrationSheetEntry($id: String!) {
     migrationSheetEntry(id: $id) {
-        id, object, unitrecordid, edanrecordid, playboxid, shareddrivefolder, mastermodellocation
+        id, object, unitrecordid, edanrecordid, playboxid, mastermodelgeometryfile, mastermodeltexturefile
     }
 }`;
 
@@ -58,7 +58,7 @@ mutation CreatePlayMigrationJob($job: PlayMigrationJobInput!) {
     }
 }`;
 
-export interface IMigratePlayViewProps
+export interface IMigratePlayJobViewProps
 {
     classes: {
         paper: string;
@@ -67,7 +67,7 @@ export interface IMigratePlayViewProps
     }
 }
 
-function MigratePlayView(props: IMigratePlayViewProps)
+function MigratePlayJobView(props: IMigratePlayJobViewProps)
 {
     const { classes } = props;
 
@@ -114,9 +114,8 @@ function MigratePlayView(props: IMigratePlayViewProps)
         playboxId: entry ? entry.playboxid : "",
         edanRecordId: entry ? entry.edanrecordid : "",
         unitRecordId: entry ? entry.unitrecordid : "",
-        sharedDriveFolder: entry ? entry.shareddrivefolder : "",
-        masterModelGeometry: entry ? entry.mastermodellocation : "",
-        masterModelTexture: "",
+        masterModelGeometry: entry ? entry.mastermodelgeometryfile : "",
+        masterModelTexture: entry ? entry.mastermodeltexturefile : "",
         annotationStyle: "Circle",
         migrateAnnotationColor: false,
         createReadingSteps: false,
@@ -188,15 +187,6 @@ function MigratePlayView(props: IMigratePlayViewProps)
                                 <Field
                                     name="unitRecordId"
                                     label="Unit Record ID"
-                                    component={TextField}
-                                    margin="normal"
-                                    fullWidth
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <Field
-                                    name="sharedDriveFolder"
-                                    label="Shared Drive Folder"
                                     component={TextField}
                                     margin="normal"
                                     fullWidth
@@ -287,4 +277,4 @@ const styles = theme => ({
     },
 });
 
-export default withStyles(styles)(MigratePlayView);
+export default withStyles(styles)(MigratePlayJobView);
