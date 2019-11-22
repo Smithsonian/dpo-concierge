@@ -127,6 +127,11 @@ export default class ManagedRepository
         return this.fileStore.deleteFolder(bin.getStoragePath());
     }
 
+    async copyBin(bin: Bin, newBinName: string, newBinType: string)
+    {
+        // TODO: Implement
+    }
+
     async publishSceneBin(bin: Bin, document: Asset)
     {
         return new Promise((resolve, reject) => {

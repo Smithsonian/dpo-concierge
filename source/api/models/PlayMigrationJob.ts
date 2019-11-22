@@ -38,11 +38,41 @@ import MasterMigrationJob from "./MasterMigrationJob";
 
 export type MigrationJobStep = "process" | "fetch" | "";
 
+export interface IPlayMigrationJobParams
+{
+    name: string;
+    projectId: number;
+
+    object: string;
+    playboxId: string;
+    edanRecordId: string;
+    //unitRecordId: string;
+    masterModelGeometry: string;
+    masterModelTexture: string;
+    annotationStyle: string;
+    migrateAnnotationColor: boolean;
+    createReadingSteps: boolean;
+    sheetEntryId: string;
+}
+
 @Table
 export default class PlayMigrationJob extends Model<PlayMigrationJob> implements IJobImplementation
 {
     static readonly typeName: string = "PlayMigrationJob";
     protected static cookPollingInterval = 3000;
+
+    static async createJob(params: IPlayMigrationJobParams)
+    {
+        return Job.create({
+            name: params.name,
+            type: "PlayMigrationJob",
+            projectId: params.projectId,
+        }).then(job => PlayMigrationJob.create({
+            ...params,
+            jobId: job.id,
+            job
+        }));
+    }
 
     ////////////////////////////////////////////////////////////////////////////////
     // SCHEMA
@@ -330,16 +360,13 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
                 // if scene has been created successfully and migration entry has a master geometry,
                 // create a successor job for processing the master model
                 if (scene && this.masterModelGeometry) {
-                    return Job.create({
-                        name: "",
-                        type: "MasterMigrationJob",
+                    return MasterMigrationJob.createJob({
+                        name: `Master Model Migration: #${this.playboxId} - ${this.object}`,
                         projectId: this.job.projectId,
-                    }).then(job => MasterMigrationJob.create({
-                        jobId: job.id,
                         sourceSceneId: scene.id,
                         masterModelGeometry: this.masterModelGeometry,
                         masterModelTexture: this.masterModelTexture,
-                    }));
+                    });
                 }
             })
             .then(() => {

@@ -51,7 +51,10 @@ export default class Database
         const connectionString = `mariadb://${config.user}:${config.password}@${config.host}/${config.database}`;
 
         const modelPath = path.resolve(__dirname, "../models");
-        console.log(`Database Model Path: ${modelPath}`);
+
+        console.log(`Database connection string: ${connectionString}`);
+        console.log(`Database model path: ${modelPath}`);
+
         this._db = new Sequelize(connectionString, {
             modelPaths: [ modelPath ],
             define: {

@@ -109,7 +109,6 @@ function MigratePlayJobView(props: IMigratePlayJobViewProps)
     }
 
     const formValues = {
-        name: `Play Scene Migration${entry ? `: #${entry.playboxid}` : ""}${entry && entry.object ? ` - ${entry.object}` : ""}`,
         object: entry ? entry.object : "",
         playboxId: entry ? entry.playboxid : "",
         edanRecordId: entry ? entry.edanrecordid : "",
@@ -147,15 +146,6 @@ function MigratePlayJobView(props: IMigratePlayJobViewProps)
                 {({ handleSubmit }) => (
                     <form onSubmit={handleSubmit}>
                         <Grid container spacing={2}>
-                            <Grid item xs={12}>
-                                <Field
-                                    name="name"
-                                    label="Job Name"
-                                    component={TextField}
-                                    margin="normal"
-                                    fullWidth
-                                />
-                            </Grid>
                             <Grid item xs={12}>
                                 <Field
                                     name="object"

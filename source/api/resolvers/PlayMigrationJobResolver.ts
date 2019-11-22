@@ -20,7 +20,6 @@ import { Arg, Query, Mutation, Resolver, Ctx, Int } from "type-graphql";
 import { PlayMigrationJobSchema, PlayMigrationJobInput } from "../schemas/PlayMigrationJob";
 
 import PlayMigrationJobModel from "../models/PlayMigrationJob";
-import JobModel from "../models/Job";
 import UserModel from "../models/User";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -44,17 +43,26 @@ export default class PlayMigrationJobResolver
             throw new Error("no active project set");
         }
 
-        const baseData = {
-            name: playMigrationJob.name,
-            type: "PlayMigrationJob",
-            projectId
+        const params = {
+            ...playMigrationJob,
+            name: `Play Box Migration: #${playMigrationJob.playboxId} - ${playMigrationJob.object}`,
+            projectId,
         };
 
-        const jobEntry = await JobModel.create(baseData);
-        const playMigrationJobEntry = await PlayMigrationJobModel.create(playMigrationJob);
-        await playMigrationJobEntry.$set("job", jobEntry);
+        return PlayMigrationJobModel.createJob(params)
+            .then(migrationJob => migrationJob.toJSON() as PlayMigrationJobSchema);
 
-        return playMigrationJobEntry.toJSON() as PlayMigrationJobSchema;
+        // const baseData = {
+        //     name: playMigrationJob.name,
+        //     type: "PlayMigrationJob",
+        //     projectId
+        // };
+        //
+        // const jobEntry = await JobModel.create(baseData);
+        // const playMigrationJobEntry = await PlayMigrationJobModel.create(playMigrationJob);
+        // await playMigrationJobEntry.$set("job", jobEntry);
+        //
+        // return playMigrationJobEntry.toJSON() as PlayMigrationJobSchema;
     }
 
 }

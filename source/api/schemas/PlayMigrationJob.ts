@@ -59,9 +59,6 @@ export class PlayMigrationJobInput
     id: number;
 
     @Field()
-    name: string;
-
-    @Field()
     object: string;
 
     @Field()

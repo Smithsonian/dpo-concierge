@@ -15,18 +15,41 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
+import { Table, Column, Model, ForeignKey, BelongsTo } from "sequelize-typescript";
 
 import Job, { IJobImplementation } from "./Job";
 import Scene from "./Scene";
 
 ////////////////////////////////////////////////////////////////////////////////
 
+export interface IMasterMigrationJobParams
+{
+    name: string;
+    projectId: number;
+
+    sourceSceneId: number;
+    masterModelGeometry: string;
+    masterModelTexture: string;
+}
+
 @Table
 export default class MasterMigrationJob extends Model<MasterMigrationJob> implements IJobImplementation
 {
     static readonly typeName: string = "MasterMigrationJob";
     protected static cookPollingInterval = 3000;
+
+    static async createJob(params: IMasterMigrationJobParams)
+    {
+        return Job.create({
+            name: params.name,
+            type: "MasterMigrationJob",
+            projectId: params.projectId,
+        }).then(job => MasterMigrationJob.create({
+            ...params,
+            jobId: job.id,
+            job
+        }));
+    }
 
     ////////////////////////////////////////////////////////////////////////////////
     // SCHEMA
