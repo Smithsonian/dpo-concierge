@@ -58,6 +58,15 @@ export default class LocalFileStore implements IFileStore
             .then(() => fs.promises.copyFile(sourcePath, storageFilePath));
     }
 
+    async copyFile(sourcePath: string, destinationPath: string): Promise<unknown>
+    {
+        const sourceFilePath = this.getStoreFilePath(sourcePath);
+        const destinationFilePath = this.getStoreFilePath(destinationPath);
+
+        return this.createPath(destinationFilePath)
+            .then(() => fs.promises.copyFile(sourceFilePath, destinationFilePath));
+    }
+
     async moveFile(sourcePath: string, destinationPath: string): Promise<unknown>
     {
         const storageSourcePath = this.getStoreFilePath(sourcePath);

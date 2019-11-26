@@ -93,10 +93,12 @@ export default class CookClient
             mkdirp(basePath);
         }
 
-        return fetch(endpoint).then(result => {
+        return fetch(endpoint).then(result => new Promise((resolve, reject) => {
             const stream = writeStream || fs.createWriteStream(filePath);
+            result.body.on("end", resolve);
+            result.body.on("error", error => reject(error));
             result.body.pipe(stream);
-        });
+        }));
     }
 
     async waitForState(jobId: string, state: TTaskState, timeoutMilliseconds: number): Promise<void>

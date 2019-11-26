@@ -16,12 +16,12 @@
  */
 
 import { Container } from "typedi";
+import uuidv4 from "uuidv4";
 
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
 
 import CookClient, { IParameters } from "../utils/CookClient";
-import { IJobReport } from "../utils/cookTypes";
-import EDANClient, { IEdanEntry, IEdanQueryResult } from "../utils/EDANClient";
+import EDANClient, { IEdanQueryResult } from "../utils/EDANClient";
 import ManagedRepository from "../utils/ManagedRepository";
 
 import Bin from "./Bin";
@@ -35,8 +35,6 @@ import Job, { IJobImplementation } from "./Job";
 import MasterMigrationJob from "./MasterMigrationJob";
 
 ////////////////////////////////////////////////////////////////////////////////
-
-export type MigrationJobStep = "process" | "fetch" | "";
 
 export interface IPlayMigrationJobParams
 {
@@ -100,10 +98,7 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
     @BelongsTo(() => Scene)
     scene: Scene;
 
-    @Column({ type: DataType.STRING, defaultValue: "" })
-    step: MigrationJobStep;
-
-    @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4 })
+    @Column({ type: DataType.UUID })
     cookJobId: string;
 
     @Column({ allowNull: false })
@@ -137,244 +132,226 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
 
     protected timerHandle = null;
 
-    async run(job: Job)
+    async run()
     {
-        if (this.jobId !== job.id) {
-            throw new Error(`job id mismatch: Job ${job.id } !== ${this.jobId}`);
-        }
+        const job = this.job;
 
         const cookClient = Container.get(CookClient);
         const edanClient = Container.get(EDANClient);
 
-        this.job = job;
-        this.step = "process";
+        // fetch EDAN MDM record and create new subject and item
+        await job.setStep("Fetching EDAN Record");
 
-        let edanRecord: IEdanQueryResult;
-        let edanEntry: IEdanEntry;
-        let name, description;
+        const edanRecord = await edanClient.fetchMdmRecord(this.edanRecordId).catch(() => ({} as IEdanQueryResult));
+        const edanEntry = edanRecord && edanRecord.rows ? edanRecord.rows[0] : null;
+        const name = edanEntry ? edanEntry.title : this.object;
+        const description = `Play Scene Migration: Box ID #${this.playboxId}`;
 
-        return this.save()
-        .then(() => edanClient.fetchMdmRecord(this.edanRecordId)
-            .then(_record => edanRecord = _record).catch(() => {})
-        )
-        .then(() => {
-            edanEntry = edanRecord && edanRecord.rows ? edanRecord.rows[0] : null;
-            name = edanEntry ? edanEntry.title : this.object;
-            description = `Play Scene Migration: Box ID #${this.playboxId}`;
+        const subjectParams: any = {
+            name,
+            description,
+            unitRecordId: this.unitRecordId,
+        };
 
-            const subject: any = {
-                name,
-                description,
-                unitRecordId: this.unitRecordId,
-            };
-            if (edanEntry) {
-                subject.edanRecordId = edanEntry.url;
-                subject.edanRecordCache = edanEntry;
-                subject.unitCode = edanEntry.unitCode;
-            }
+        if (edanEntry) {
+            subjectParams.edanRecordId = edanEntry.url;
+            subjectParams.edanRecordCache = edanEntry;
+            subjectParams.unitCode = edanEntry.unitCode;
+        }
 
-            return Subject.findByNameOrCreate(subject);
-        })
-        .then(subject =>
-            Item.findByNameAndSubjectOrCreate({
-                name: this.object,
-                subjectId: subject.id,
-            })
-        )
-        .then(item => {
-            this.item = item;
-            this.itemId = item.id;
-            return this.save();
-        })
-        .then(() => {
-            const params: IParameters = {
-                boxId: parseInt(this.playboxId),
-                annotationStyle: this.annotationStyle,
-                migrateAnnotationColor: !!this.migrateAnnotationColor,
-                createReadingSteps: !!this.createReadingSteps,
-            };
+        await job.setStep("Creating Subject/Item");
 
-            if (edanEntry) {
-                params.edanEntry = JSON.stringify(edanEntry);
-            }
-
-            return cookClient.createJob(this.cookJobId, "migrate-play", params);
-        })
-        .then(() => cookClient.runJob(this.cookJobId))
-        .then(() => {
-            this.timerHandle = setInterval(() => this.monitor(job), PlayMigrationJob.cookPollingInterval);
-        })
-        .catch(err => {
-            this.step = "";
-            return this.save().then(() => { throw err; });
+        const subject = await Subject.findByNameOrCreate(subjectParams);
+        const item = await Item.findByNameAndSubjectOrCreate({
+            name: this.object,
+            subjectId: subject.id,
         });
+
+        this.item = item;
+        this.itemId = item.id;
+        this.cookJobId = uuidv4();
+        await this.save();
+
+        // create and run cook job using "migrate-play" recipe
+        await job.setStep("Running Migration Recipe");
+
+        const cookJobParams: IParameters = {
+            boxId: parseInt(this.playboxId),
+            annotationStyle: this.annotationStyle,
+            migrateAnnotationColor: !!this.migrateAnnotationColor,
+            createReadingSteps: !!this.createReadingSteps,
+        };
+
+        if (edanEntry) {
+            cookJobParams.edanEntry = JSON.stringify(edanEntry);
+        }
+
+        await cookClient.createJob(this.cookJobId, "migrate-play", cookJobParams);
+        await cookClient.runJob(this.cookJobId);
+
+        this.timerHandle = setInterval(() => {
+            this.monitor()
+                .catch(error => {
+                    console.log("[PlayMigrationJob] - ERROR");
+                    console.log(error);
+                    return job.setState("error", error.message);
+                });
+        }, PlayMigrationJob.cookPollingInterval);
     }
 
     async cancel()
     {
         const cookClient = Container.get(CookClient);
 
-        const step = this.step;
-        this.step = "";
+        const job = this.job;
 
-        return this.save()
-        .then(() => {
-            if (step === "process") {
-                return cookClient.cancelJob(this.cookJobId);
-            }
-        });
+        if (job.step === "Running Migration Recipe") {
+            await cookClient.cancelJob(this.cookJobId);
+        }
+
+        job.setStep("");
     }
 
     async delete()
     {
         const cookClient = Container.get(CookClient);
 
+        const job = this.job;
+
         // can't delete during fetch
-        if (this.step === "fetch") {
-            return Promise.reject(new Error("can't delete while fetching assets"));
+        if (job.step === "Fetching Assets") {
+            throw new Error("can't delete while fetching assets");
         }
 
-        return cookClient.deleteJob(this.cookJobId).catch(() => {})
+        await cookClient.deleteJob(this.cookJobId)
+            .catch(() => {})
             .finally(() => this.destroy());
     }
 
-    protected async monitor(job: Job)
+    protected async monitor()
     {
+        const job = this.job;
         console.log(`[PlayMigrationJob] - monitoring job ${job.id} (${job.state}): ${job.name}`);
 
-        if (this.step !== "process") {
+        if (job.step !== "Running Migration Recipe") {
             return;
         }
 
         const cookClient = Container.get(CookClient);
 
-        return cookClient.jobInfo(this.cookJobId)
-        .then(jobInfo => {
-            if (jobInfo.state === "done") {
-                clearInterval(this.timerHandle);
-                this.step = "fetch";
-                return this.save()
-                    .then(() => this.postProcessingStep(job));
-            }
-            if (!jobInfo || jobInfo.state !== "running") {
-                clearInterval(this.timerHandle);
-                const message = jobInfo ? jobInfo.error || "Cook job not running" : "Cook job not found";
-                throw new Error(message);
-            }
+        const jobInfo = await cookClient.jobInfo(this.cookJobId);
 
-        })
-        .catch(error => {
-            console.log("[PlayMigrationJob] - ERROR");
-            console.log(error);
-
-            this.step = "";
-            job.state = "error";
-            job.error = error.message;
-            return Promise.all([ this.save(), this.job.save() ]);
-        });
+        if (jobInfo.state === "done") {
+            clearInterval(this.timerHandle);
+            await this.postProcessingStep(job);
+        }
+        else if (!jobInfo || jobInfo.state !== "running") {
+            clearInterval(this.timerHandle);
+            const message = jobInfo ? jobInfo.error || "Cook job not running" : "Cook job not found";
+            throw new Error(message);
+        }
     }
 
     protected async postProcessingStep(job: Job)
     {
+        await job.setStep("Fetching Assets");
+
         const cookClient = Container.get(CookClient);
         const repo = Container.get(ManagedRepository);
 
-        let report: IJobReport = undefined;
         let name, scene;
 
-        return cookClient.jobReport(this.cookJobId)
-            .then(_report => {
-                report = _report;
-                const edanJson = report.parameters.edanEntry as string;
-                const edanEntry = edanJson ? JSON.parse(edanJson) : null;
-                name = this.object || edanEntry.title;
-            })
-            .then(() => {
-                const item = this.item;
-                return Promise.all([
-                    Bin.create({
-                        name: `Play Migration #${this.playboxId} - Voyager Scene`,
-                        typeId: BinType.presets.voyagerScene,
-                    }).then(bin => ItemBin.create({
-                        binId: bin.id,
-                        itemId: item.id,
-                    })),
-                    Bin.create({
-                        name: `Play Migration #${this.playboxId} - Processing Files`,
-                        typeId: BinType.presets.processing,
-                    }).then(bin => ItemBin.create({
-                        binId: bin.id,
-                        itemId: item.id,
-                    })),
-                    Bin.create({
-                        name: `Play Migration #${this.playboxId} - Playbox Assets`,
-                        typeId: BinType.presets.processing,
-                    }).then(bin => ItemBin.create({
-                        binId: bin.id,
-                        itemId: item.id,
-                    })),
-                ]);
-            })
-            .then(([sceneItemBin, tempItemBin, boxItemBin]) => {
-                const deliveryStep = report.steps["delivery"];
-                if (!deliveryStep) {
-                    throw new Error("job has no delivery step");
+        const report = await cookClient.jobReport(this.cookJobId);
+
+        const edanJson = report.parameters.edanEntry as string;
+        const edanEntry = edanJson ? JSON.parse(edanJson) : null;
+        name = this.object || edanEntry.title;
+
+        const item = this.item;
+
+        const [ sceneItemBin, tempItemBin, boxItemBin ] = await Promise.all([
+            Bin.create({
+                name: `Play Migration #${this.playboxId} - Voyager Scene`,
+                typeId: BinType.presets.voyagerScene,
+            }).then(bin => ItemBin.create({
+                binId: bin.id,
+                itemId: item.id,
+            })),
+            Bin.create({
+                name: `Play Migration #${this.playboxId} - Processing Files`,
+                typeId: BinType.presets.processing,
+            }).then(bin => ItemBin.create({
+                binId: bin.id,
+                itemId: item.id,
+            })),
+            Bin.create({
+                name: `Play Migration #${this.playboxId} - Playbox Assets`,
+                typeId: BinType.presets.processing,
+            }).then(bin => ItemBin.create({
+                binId: bin.id,
+                itemId: item.id,
+            })),
+        ]);
+
+        const deliveryStep = report.steps["delivery"];
+        if (!deliveryStep) {
+            throw new Error("job has no delivery step");
+        }
+
+        const fileMap = deliveryStep.result["files"];
+        if (!fileMap) {
+            throw new Error("job delivery contains no files");
+        }
+
+        await Promise.all(Object.keys(fileMap).map(fileKey => {
+
+            const binId = fileKey.startsWith("box:") ? boxItemBin.binId :
+                (fileKey.startsWith("temp:") ? tempItemBin.binId : sceneItemBin.binId);
+
+            const filePath = fileMap[fileKey];
+
+            return repo.createWriteStream(filePath, binId, true)
+            .then(({ stream, asset }) => {
+                const proms = [ cookClient.downloadFile(this.cookJobId, filePath, stream) ];
+
+                if (fileKey === "scene:document") {
+                    proms.push(
+                        Scene.create({
+                            name,
+                            binId: sceneItemBin.binId,
+                            voyagerDocumentId: asset.id
+                        }).then(_scene => {
+                            scene = _scene;
+                            this.scene = scene;
+                            this.sceneId = scene.id;
+                            return this.save();
+                        })
+                    );
                 }
 
-                const fileMap = deliveryStep.result["files"];
-                if (!fileMap) {
-                    throw new Error("job delivery contains no files");
-                }
-
-                return Promise.all(Object.keys(fileMap).map(fileKey => {
-
-                    const binId = fileKey.startsWith("box:") ? boxItemBin.binId :
-                        (fileKey.startsWith("temp:") ? tempItemBin.binId : sceneItemBin.binId);
-
-                    const filePath = fileMap[fileKey];
-
-                    return repo.createWriteStream(filePath, binId, true)
-                        .then(({ stream, asset }) => {
-                            const proms = [ cookClient.downloadFile(this.cookJobId, filePath, stream) ];
-
-                            if (fileKey === "scene:document") {
-                                proms.push(
-                                    Scene.create({
-                                        name,
-                                        binId: sceneItemBin.binId,
-                                        voyagerDocumentId: asset.id
-                                    }).then(_scene => {
-                                        scene = _scene;
-                                        this.scene = scene;
-                                        this.sceneId = scene.id;
-                                        return this.save();
-                                    })
-                                );
-                            }
-
-                            return Promise.all(proms);
-                        });
-                }));
-            })
-            .then(() => {
-                // if scene has been created successfully and migration entry has a master geometry,
-                // create a successor job for processing the master model
-                if (scene && this.masterModelGeometry) {
-                    return MasterMigrationJob.createJob({
-                        name: `Master Model Migration: #${this.playboxId} - ${this.object}`,
-                        projectId: this.job.projectId,
-                        sourceSceneId: scene.id,
-                        masterModelGeometry: this.masterModelGeometry,
-                        masterModelTexture: this.masterModelTexture,
-                    });
-                }
-            })
-            .then(() => {
-                //this.cookJobId = "";
-                this.step = "";
-                job.state = "done";
-
-                return Promise.all([ this.save(), job.save() ]);
+                return Promise.all(proms);
             });
+        }));
+
+        // if scene has been created successfully and migration entry has a master geometry,
+        // create a successor job for processing the master model
+        if (scene && this.masterModelGeometry) {
+            await MasterMigrationJob.createJob({
+                name: `Master Model Migration: #${this.playboxId} - ${this.object}`,
+                projectId: this.job.projectId,
+                sourceSceneId: scene.id,
+                masterModelGeometry: this.masterModelGeometry,
+                masterModelTexture: this.masterModelTexture,
+            });
+        }
+
+        job.step = "";
+        job.state = "done";
+        await this.saveAll();
+    }
+
+    async saveAll()
+    {
+        return Promise.all([ this.save(), this.job.save() ]);
     }
 }

@@ -127,9 +127,28 @@ export default class ManagedRepository
         return this.fileStore.deleteFolder(bin.getStoragePath());
     }
 
-    async copyBin(bin: Bin, newBinName: string, newBinType: string)
+    /**
+     * Copies all assets in the source bin to the target bin.
+     * @param sourceBin
+     * @param targetBin
+     */
+    async copyBin(sourceBin: Bin, targetBin: Bin)
     {
-        // TODO: Implement
+        if (!sourceBin.assets) {
+            throw new Error("missing assets array in source bin");
+        }
+
+        return Promise.all(sourceBin.assets.map(sourceAsset => {
+            return Asset.create({
+                filePath: sourceAsset.filePath,
+                byteSize: sourceAsset.byteSize,
+                binId: targetBin.id,
+                bin: targetBin,
+            })
+            .then(targetAsset =>
+                this.fileStore.copyFile(sourceAsset.getStoragePath(), targetAsset.getStoragePath())
+            );
+        }));
     }
 
     async publishSceneBin(bin: Bin, document: Asset)
@@ -221,7 +240,7 @@ export default class ManagedRepository
             });
     }
 
-    async writeFile(sourceFilePath: string, filePath: string, binId: number, overwrite?: boolean)
+    async writeFile(sourceFilePath: string, filePath: string, binId: number, overwrite?: boolean): Promise<Asset>
     {
         let bin: Bin = undefined;
         let asset: Asset = undefined;

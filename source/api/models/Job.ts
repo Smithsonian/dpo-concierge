@@ -38,9 +38,9 @@ import JobBin from "./JobBin";
 
 export interface IJobImplementation extends BaseModel
 {
-    run: (job: Job) => Promise<unknown>;
-    cancel: (job: Job) => Promise<unknown>;
-    delete: (job: Job) => Promise<unknown>;
+    run: () => Promise<unknown>;
+    cancel: () => Promise<unknown>;
+    delete: () => Promise<unknown>;
 }
 
 export type JobState = "created" | "running" | "done" | "error" | "cancelled";
@@ -67,7 +67,7 @@ export default class Job extends Model<Job>
     @Column({ defaultValue: "created" })
     state: JobState;
 
-    @Column
+    @Column({ defaultValue: "" })
     step: string;
 
     @Column({ type: DataType.TEXT })
@@ -91,16 +91,10 @@ export default class Job extends Model<Job>
             return Promise.resolve();
         }
 
-        this.state = "running";
-
-        this.save()
+        return this.setState("running")
             .then(() => this.getJobImplementation())
-            .then(impl => impl.run(this))
-            .catch(error => {
-                this.state = "error";
-                this.error = error.message;
-                return this.save();
-            });
+            .then(impl => impl.run())
+            .catch(error => this.setState("error", error.message));
     }
 
     async cancel()
@@ -111,16 +105,10 @@ export default class Job extends Model<Job>
             return Promise.resolve();
         }
 
-        this.state = "cancelled";
-
-        this.save()
+        return this.setState("cancelled")
             .then(() => this.getJobImplementation())
-            .then(impl => impl.cancel(this))
-            .catch(error => {
-                this.state = "error";
-                this.error = error.message;
-                return this.save();
-            });
+            .then(impl => impl.cancel())
+            .catch(error => this.setState("error", error.message));
     }
 
     async delete()
@@ -128,8 +116,24 @@ export default class Job extends Model<Job>
         console.log(`[Job] - delete job ${this.id} (${this.state}): ${this.name}`);
 
         this.getJobImplementation()
-            .then(impl => impl.delete(this))
+            .then(impl => impl.delete())
             .then(() => this.destroy());
+    }
+
+    async setState(state: JobState, error?: string)
+    {
+        this.state = state;
+        if (error) {
+            this.error = error;
+        }
+
+        return this.save();
+    }
+
+    async setStep(step: string)
+    {
+        this.step = step;
+        return this.save();
     }
 
     protected async getJobImplementation(): Promise<IJobImplementation>
@@ -144,6 +148,7 @@ export default class Job extends Model<Job>
                     throw new Error(`Can't find implementation for job id ${this.id}`);
                 }
 
+                impl["job"] = this;
                 return impl as IJobImplementation;
             });
     }

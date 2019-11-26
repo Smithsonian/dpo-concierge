@@ -30,6 +30,24 @@ import Scene from "./Scene";
 @Table({ indexes: [ { fields: ["uuid", "version"] } ] })
 export default class Bin extends Model<Bin>
 {
+    static async createItemBin(item: Item, params: any)
+    {
+        return Bin.create(params)
+            .then(bin => ItemBin.create({
+                binId: bin.id,
+                itemId: item.id,
+            }).then(() => bin));
+    }
+
+    static async createJobBin(job: Job, params: any)
+    {
+        return Bin.create(params)
+            .then(bin => JobBin.create({
+                binId: bin.id,
+                jobId: job.id,
+            }).then(() => bin));
+    }
+
     static async getLatestVersion(binUuid: string)
     {
         return Bin.findOne({

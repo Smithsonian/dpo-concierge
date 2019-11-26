@@ -15,10 +15,27 @@
  * limitations under the License.
  */
 
-import { Table, Column, Model, ForeignKey, BelongsTo } from "sequelize-typescript";
+import * as fs from "fs";
+import * as path from "path";
+import { Container } from "typedi";
+
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
 
 import Job, { IJobImplementation } from "./Job";
 import Scene from "./Scene";
+import Item from "./Item";
+import ItemBin from "./ItemBin";
+import Bin from "./Bin";
+import BinType from "./BinType";
+import Asset from "./Asset";
+
+import ManagedRepository from "../utils/ManagedRepository";
+import CookClient from "../utils/CookClient";
+
+////////////////////////////////////////////////////////////////////////////////
+// ENVIRONMENT VARIABLES
+
+const digiDriveBasePath = process.env["DIGITIZATION_DRIVE_BASEPATH"];
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -70,11 +87,37 @@ export default class MasterMigrationJob extends Model<MasterMigrationJob> implem
     @BelongsTo(() => Scene)
     sourceScene: Scene;
 
+    // the Voyager scene generated from this job
     @ForeignKey(() => Scene)
+    @Column
     targetSceneId: number;
 
     @BelongsTo(() => Scene)
     targetScene: Scene;
+
+    // temporary bin holding a local copy of the master model files
+    @ForeignKey(() => Bin)
+    @Column
+    processingBinId: number;
+
+    @BelongsTo(() => Bin)
+    processingBin: Bin;
+
+    // master model geometry asset
+    @ForeignKey(() => Asset)
+    @Column
+    geometryAssetId: number;
+
+    @BelongsTo(() => Asset)
+    geometryAsset: Asset;
+
+    // master model texture asset
+    @ForeignKey(() => Asset)
+    @Column
+    textureAssetId: number;
+
+    @BelongsTo(() => Asset)
+    textureAsset: Asset;
 
     @Column
     cookThumbJobId: string;
@@ -90,20 +133,120 @@ export default class MasterMigrationJob extends Model<MasterMigrationJob> implem
 
     ////////////////////////////////////////////////////////////////////////////////
 
-    async run(job: Job)
+    async run()
     {
-        // 1. copy all assets from source bin to target bin, including voyager document
-        // 2. fetch geometry/texture from shared drive
+        this.sourceScene = await this.$get("sourceScene") as Scene;
+
+        const job = this.job;
+        await job.setStep("Fetching Master Model");
+
+        // Create temporary processing bin
+
+        this.processingBin = await Bin.createJobBin(job, {
+            name: `${this.sourceScene.name} - Temp master model data`,
+            typeId: BinType.presets.processing,
+        });
+
+        this.processingBinId = this.processingBin.id;
+        await this.save();
+
+        // Validate paths to master model files
+
+        let geoFilePath = this.masterModelGeometry;
+        let texFilePath = this.masterModelTexture;
+
+        const repo = Container.get(ManagedRepository);
+
+        if (!geoFilePath || !geoFilePath.startsWith("Y:\\01_Projects\\")) {
+            throw new Error("invalid geometry file path");
+        }
+        if (texFilePath && !texFilePath.startsWith("Y:\\01_Projects\\")) {
+            throw new Error("invalid texture file path");
+        }
+        if (!digiDriveBasePath) {
+            throw new Error("missing digitization drive path");
+        }
+
+        geoFilePath = geoFilePath.replace("Y:\\", "").replace(/\\/gi, "/");
+        geoFilePath = path.resolve(digiDriveBasePath, geoFilePath);
+
+        if (texFilePath) {
+            texFilePath = texFilePath.replace("Y:\\", "").replace(/\\/gi, "/");
+            texFilePath = path.resolve(digiDriveBasePath, texFilePath);
+        }
+
+        // Copy master model files from digitization drive to processing bin
+
+        let proms = [];
+
+        const extension = geoFilePath.split(".").pop().toLowerCase();
+        proms.push(repo.writeFile(geoFilePath, `geometry.${extension}`, this.processingBinId)
+            .then(asset => {
+                this.geometryAsset = asset;
+                this.geometryAssetId = asset.id;
+            }));
+
+        if (texFilePath) {
+            const extension = texFilePath.split(".").pop().toLowerCase();
+            proms.push(repo.writeFile(texFilePath, `texture.${extension}`, this.processingBinId)
+                .then(asset => {
+                    this.textureAsset = asset;
+                    this.textureAssetId = asset.id;
+                }));
+        }
+
+        await Promise.all(proms);
+        await this.save();
+
+        // Copy scene
+        await job.setStep("Copying Voyager Scene Bin");
+
+        const sourceBin = await Bin.findOne({ where: { id: this.sourceScene.binId }, include: [ Asset, BinType ]});
+        const item = await Item.findOne({ include: [ { model: ItemBin, where: { binId: sourceBin.id } } ]});
+
+        const targetBin = await Bin.createItemBin(item, {
+            name: `${sourceBin.name}/Reprocessed`,
+            typeId: BinType.presets.voyagerScene,
+        });
+
+        proms = [];
+
+        sourceBin.assets.forEach(asset => {
+            if (asset.path === "articles" || asset.name === "scene.svx.json") {
+                proms.push(repo.writeFile(asset.getStoragePath(sourceBin), asset.filePath, targetBin.id));
+            }
+        });
+
+        await Promise.all(proms);
+
         // 3. create web-thumb job, run
         // 4.
     }
 
-    async cancel(job: Job)
+    async cancel()
     {
-
+        await this.job.setStep("");
     }
 
-    async delete(job: Job)
+    async delete()
+    {
+        const repo = Container.get(ManagedRepository);
+        const cookClient = Container.get(CookClient);
+
+        if (this.cookThumbJobId) {
+            await cookClient.deleteJob(this.cookThumbJobId);
+        }
+        if (this.cookMultiJobId) {
+            await cookClient.deleteJob(this.cookMultiJobId);
+        }
+        if (this.processingBinId) {
+            await repo.deleteBinFolder(this.processingBin);
+        }
+
+        await this.destroy();
+    }
+
+    protected async monitor()
     {
 
     }

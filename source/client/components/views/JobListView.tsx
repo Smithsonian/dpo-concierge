@@ -55,7 +55,7 @@ export const JOB_VIEW_QUERY = gql`
 query JobView($view: ViewParameters!) {
     jobView(view: $view) {
         rows {
-            id, name, type, state, createdAt, error
+            id, name, type, state, createdAt, step, error
         }
         count
     }
@@ -165,6 +165,7 @@ function JobListView(props: IJobListViewProps)
         { id: "state", label: "State", format: createLabel, width: 120 },
         { id: "name", label: "Name" },
         { id: "type", label: "Type" },
+        { id: "step", label: "Step" },
         { id: "error", label: "Error", format: formatText },
     ];
 

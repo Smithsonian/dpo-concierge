@@ -36,6 +36,7 @@ export interface IFileStore
     getStoreFilePath: (filePath: string) => string;
     readFile: (filePath: string, targetPath: string) => Promise<unknown>;
     writeFile: (sourcePath: string, filePath: string) => Promise<unknown>;
+    copyFile: (sourcePath: string, destinationPath: string) => Promise<unknown>;
     moveFile: (sourcePath: string, destinationPath: string) => Promise<unknown>;
     deleteFile: (filePath: string) => Promise<unknown>;
     deleteFolder: (folderPath: string) => Promise<unknown>;

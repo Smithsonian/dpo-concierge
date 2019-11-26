@@ -104,9 +104,9 @@ export default class Asset extends Model<Asset>
     /**
      * Returns the path where the asset is stored in repository storage
      */
-    getStoragePath()
+    getStoragePath(bin?: Bin)
     {
         // bin UUID / bin version / asset file path
-        return `${this.bin.getStoragePathWithVersion()}/${this.filePath}`;
+        return `${(bin || this.bin).getStoragePathWithVersion()}/${this.filePath}`;
     }
 }

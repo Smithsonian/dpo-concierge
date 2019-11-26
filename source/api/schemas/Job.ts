@@ -45,6 +45,9 @@ export class Job
     @Field()
     state: string;
 
+    @Field()
+    step: string;
+
     @Field({ nullable: true })
     error: string;
 
