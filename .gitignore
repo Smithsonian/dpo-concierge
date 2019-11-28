@@ -8,6 +8,7 @@ storage/
 services/api/secrets/
 services/api/bin/
 services/db/bin/
+docs/resources/
 
 # FILES
 .env
