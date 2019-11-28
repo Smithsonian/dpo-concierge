@@ -1,0 +1,4 @@
+[submodule "docs/public"]
+	path = docs/public
+	url = https://github.com/Smithsonian/dpo-concierge
+	branch = gh-pages

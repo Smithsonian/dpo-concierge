@@ -1,0 +1,43 @@
+baseURL = "https://smithsonian.github.io/dpo-concierge"
+languageCode = "en-us"
+title = "Concierge Documentation"
+
+pygmentsCodeFences = true
+pygmentsCodefencesGuessSyntax = true
+pygmentsUseClasses = true
+
+[[menu.main]]
+    name = "Home"
+    url = "/"
+    weight = 1
+
+[[menu.main]]
+    name = "Documentation"
+    url = "/documentation/"
+    weight = 2
+
+[params]
+    mainSections = ["docs"]
+    github_link = "https://github.com/smithsonian/dpo-concierge"
+    github_logo = "/images/github.svg"
+    smithsonian_logo = "/images/si-digitization-logo-neg.svg"
+    google_analytics_id=""
+    homepage_button_link = "/documentation"
+    homepage_button_text = "Documentation"
+    homepage_intro = "Migration and Workflow Tool."
+    homepage_image = "/images/concierge-screen-1.png"
+
+[params.homepage_meta_tags]
+    meta_description = "Migration and Workflow Tool."
+    meta_og_title = "Smithsonian Concierge"
+    meta_og_type = "website"
+    meta_og_url = "https://3d.si.edu"
+    meta_og_description = "Migration and Workflow Tool."
+    meta_twitter_card = "summary"
+    meta_twitter_site = "@3D_Digi_SI"
+    meta_twitter_creator = "@3D_Digi_SI"
+
+[params.logo]
+    mobile = "/images/concierge-logo-white.svg"
+    standard  = "/images/concierge-logo-white.svg"
+
