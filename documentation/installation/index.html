@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title>Installation - Concierge Documentation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <link rel="icon" href="https://smithsonian.github.io/dpo-concierge/favicon.ico">
+
+  <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+
+  
+  
+  <link rel="stylesheet" href="/dpo-concierge/css/style.min.css">
+  
+
+  
+
+</head>
+
+<body class='page page-default-single'>
+  <div id="main-menu-mobile" class="main-menu-mobile">
+  <ul>
+    
+    
+    <li class="menu-item-home">
+      <a href="/dpo-concierge/">
+        <span>Home</span>
+      </a>
+    </li>
+    
+    <li class="menu-item-documentation">
+      <a href="/dpo-concierge/documentation/">
+        <span>Documentation</span>
+      </a>
+    </li>
+    
+    <li class="menu-item-github" title="Smithsonian Cook on Github">
+      <a href="https://github.com/smithsonian/dpo-concierge"><img src="/dpo-concierge/images/github.svg" alt="Github"></a>
+    </li>
+  </ul>
+</div>
+  <div class="wrapper">
+    <div class='header'>
+  <div class="container">
+    <div class="logo">
+      <a href="https://smithsonian.github.io/dpo-concierge"><img alt="Logo" src="/dpo-concierge/images/concierge-logo-white.svg" /></a>
+    </div>
+    <div class="logo-mobile">
+      <a href="https://smithsonian.github.io/dpo-concierge"><img alt="Logo" src="/dpo-concierge/images/concierge-logo-white.svg" /></a>
+    </div>
+    <div id="main-menu" class="main-menu">
+  <ul>
+    
+    
+    <li class="menu-item-home">
+      <a href="/dpo-concierge/">
+        <span>Home</span>
+      </a>
+    </li>
+    
+    <li class="menu-item-documentation">
+      <a href="/dpo-concierge/documentation/">
+        <span>Documentation</span>
+      </a>
+    </li>
+    
+    <li class="menu-item-github" title="Smithsonian Cook on Github">
+      <a href="https://github.com/smithsonian/dpo-concierge"><img src="/dpo-concierge/images/github.svg" alt="Github"></a>
+    </li>
+  </ul>
+</div>
+    <button id="toggle-main-menu-mobile" class="hamburger hamburger--slider" type="button">
+  <span class="hamburger-box">
+    <span class="hamburger-inner"></span>
+  </span>
+</button>
+  </div>
+</div>
+
+
+    
+    
+      
+        
+      
+    
+
+    
+    <div class="container pt-2 pt-md-6 pb-3 pb-md-6">
+      <div class="row">
+        <div class="col-12 col-md-3 mb-3">
+          <div class="sidebar">
+            
+
+<div class="docs-menu">
+  <h4><a href="/dpo-concierge/documentation/">Documentation</a></h4>
+  <ul>
+    
+    <li class="active ">
+      <a href="/dpo-concierge/documentation/installation/">Installation</a>
+    </li>
+    
+    <li class="">
+      <a href="/dpo-concierge/documentation/getting-started/">Getting Started</a>
+    </li>
+    
+  </ul>
+</div>
+
+
+          </div>
+        </div>
+        <div class="col-12 col-md-9">
+          
+<h1 class="title">Installation</h1>
+<div class="content">
+  
+
+<h3 id="prerequisites">Prerequisites</h3>
+
+<ul>
+<li>Linux operating system (Ubuntu 18.04 preferred)</li>
+<li>Git</li>
+<li>Docker</li>
+<li>Docker Compose</li>
+</ul>
+
+<h3 id="installation">Installation</h3>
+
+<h4 id="clone-the-repository">Clone the repository</h4>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">git clone --recurse-submodules https://github.com/Smithsonian/dpo-concierge.git</code></pre></div>
+<h4 id="create-local-environment-configuration">Create local environment configuration</h4>
+
+<ul>
+<li>Copy the environment template file</li>
+
+<li><p>Edit the variables in <code>.env</code> to reflect your local configuration</p>
+<div class="highlight"><pre class="chroma">cp .env.template .env
+vim .env</pre></div></li>
+</ul>
+
+<h4 id="build-the-docker-images-api-database">Build the Docker images (API, Database)</h4>
+
+<p>The following command creates two Docker images: one with the Concierge API server,
+and one with a MariaDB database. Based on the images, two containers are started
+and linked, and the development version of Concierge is automatically built and
+run. Source code monitoring watches the code and rebuilds the server or client
+code as changes happen.</p>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">npm run up</code></pre></div>
+<p>If the API server fails to start, you can restart the containers with the following script.</p>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">npm run restart</code></pre></div>
+<h4 id="other-useful-scripts">Other useful scripts</h4>
+
+<p>Note:scripts with a star (*) must be run from within the Docker API container.
+Start a shell using <code>npm run bash</code>, then execute the script from witin the shell.</p>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">npm run up             <span class="c1"># builds and runs Concierge in a Docker environment,</span>
+                       <span class="c1"># in dev/watch mode, with 2 containers: API, Database</span>
+npm run down           <span class="c1"># terminates and removes the Docker containers</span>
+npm run restart        <span class="c1"># restarts the Docker containers</span>
+npm run bash           <span class="c1"># runs a shell in the API container</span>
+
+*npm run api           <span class="c1"># starts the API server monitored by nodemon</span>
+*npm run watch         <span class="c1"># starts the API server and watches for client</span>
+                       <span class="c1"># and server source code changes, triggers rebuild</span>
+*npm run build-api     <span class="c1"># builds the API server code</span>
+*npm run build-dev     <span class="c1"># builds the web client in dev mode</span>
+*npm run build-prod    <span class="c1"># builds the web client in production mode</span>
+*npm run clean         <span class="c1"># remove build output</span>
+*npm run clean-models  <span class="c1"># remove build output (sequelize models only)</span></code></pre></div>
+<h3 id="troubleshooting">Troubleshooting</h3>
+
+<p>Please open an issue on Github if you encounter any bugs or problems.</p>
+
+<h3 id="tech-stack">Tech Stack</h3>
+
+<p>Concierge leverages the following 3rd party libraries and technologies</p>
+
+<ul>
+<li>API server and client written in Typescript</li>
+<li>Node.js</li>
+<li>GraphQL</li>
+<li>Sequelize ORM</li>
+<li>React</li>
+<li>Material-UI</li>
+</ul>
+
+</div>
+
+        </div>
+      </div>
+    </div>
+    
+  </div>
+
+  <div class="footer">
+  <div class="container">
+    <div class="row">
+      <div class="col-12">
+          <a href="https://3d.si.edu" target="_blank"><img class="si-logo" src="/dpo-concierge/images/si-digitization-logo-neg.svg" alt="Smithsonian Digitization Logo"></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+  
+
+  
+  
+
+  
+  <script type="text/javascript" src="/dpo-concierge/js/scripts.min.js"></script>
+  
+
+  
+  
+  
+    
+  
+
+
+</body>
+
+</html>
