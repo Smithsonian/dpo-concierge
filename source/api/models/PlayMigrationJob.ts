@@ -241,7 +241,7 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
 
         const jobInfo = await cookClient.jobInfo(this.cookJobId);
 
-        if (jobInfo.state === "done") {
+        if (jobInfo && jobInfo.state === "done") {
             clearInterval(this.timerHandle);
             await this.postProcessingStep(job);
         }

@@ -213,7 +213,22 @@ export default class ManagedRepository
             archive.directory(binPath, false); // archive root folder
             archive.finalize();
         });
+    }
 
+    async copyAsset(sourceAsset: Asset, targetFilePath: string, targetBin: Bin)
+    {
+        if (!sourceAsset.bin) {
+            sourceAsset.bin = await sourceAsset.$get("bin") as Bin;
+        }
+
+        const targetAsset = await Asset.create({
+            filePath: targetFilePath,
+            bin: targetBin,
+            binId: targetBin.id,
+            byteSize: sourceAsset.byteSize,
+        });
+
+        return this.fileStore.copyFile(sourceAsset.getStoragePath(), targetAsset.getStoragePath());
     }
 
     async readFile(targetFilePath: string, filePath: string, binUuid: string, binVersion?: number)
