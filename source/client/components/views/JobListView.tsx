@@ -104,14 +104,18 @@ const actionButtons: TableCellFormatter = (value, row, column) => (
         }}/>
 
         <CellIconButton title="Cancel Job" icon={StopIcon} onClick={() => {
-            const variables = { jobId: row["id"] };
-            column.data.cancelJobMutation({ variables });
+            column.data.cancelJobMutation({
+                variables: { jobId: row["id"] },
+                refetchQueries: [ { query: JOB_VIEW_QUERY, variables: column.data.variables }],
+            });
         }}/>
 
         <CellIconButton title="Delete Job" icon={DeleteIcon} onClick={() => {
             if (confirm("Delete job. Are you sure?")) {
-                const variables = { jobId: row["id"] };
-                column.data.deleteJobMutation({ variables });
+                column.data.deleteJobMutation({
+                    variables: { jobId: row["id"] },
+                    refetchQueries: [ { query: JOB_VIEW_QUERY, variables: column.data.variables }],
+                });
             }
         }}/>
     </div>
@@ -151,10 +155,14 @@ function JobListView(props: IJobListViewProps)
 
     const [ runJobMutation ] = useMutation(RUN_JOB_MUTATION);
     const [ cancelJobMutation ] = useMutation(CANCEL_JOB_MUTATION);
-    const [ deleteJobMutation ] = useMutation(DELETE_JOB_MUTATION);
+    const [ deleteJobMutation, deleteResult ] = useMutation(DELETE_JOB_MUTATION);
 
     if (queryResult.error) {
         return (<ErrorCard title="Query Error" error={queryResult.error}/>);
+    }
+    const deleteStatus = deleteResult.data && deleteResult.data.deleteBin;
+    if (deleteStatus && !deleteStatus.ok) {
+        return (<ErrorCard title="Failed to delete job" error={deleteStatus}/>);
     }
 
     const columns: ITableColumn[] = [

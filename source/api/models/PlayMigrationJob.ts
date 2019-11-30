@@ -223,7 +223,7 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
             throw new Error("can't delete while fetching assets");
         }
 
-        await cookClient.deleteJob(this.cookJobId)
+        return cookClient.deleteJob(this.cookJobId)
             .catch(() => {})
             .finally(() => this.destroy());
     }
@@ -271,21 +271,21 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
 
         const [ sceneItemBin, tempItemBin, boxItemBin ] = await Promise.all([
             Bin.create({
-                name: `Play Migration #${this.playboxId} - Voyager Scene`,
+                name: `${item.name} - Play Migration - Voyager Scene`,
                 typeId: BinType.presets.voyagerScene,
             }).then(bin => ItemBin.create({
                 binId: bin.id,
                 itemId: item.id,
             })),
             Bin.create({
-                name: `Play Migration #${this.playboxId} - Processing Files`,
+                name: `${item.name} - Play Migration - Processed Files`,
                 typeId: BinType.presets.processing,
             }).then(bin => ItemBin.create({
                 binId: bin.id,
                 itemId: item.id,
             })),
             Bin.create({
-                name: `Play Migration #${this.playboxId} - Playbox Assets`,
+                name: `${item.name} - Play Migration - Playbox Assets`,
                 typeId: BinType.presets.processing,
             }).then(bin => ItemBin.create({
                 binId: bin.id,
@@ -305,8 +305,8 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
 
         await Promise.all(Object.keys(fileMap).map(fileKey => {
 
-            const binId = fileKey.startsWith("box:") ? boxItemBin.binId :
-                (fileKey.startsWith("temp:") ? tempItemBin.binId : sceneItemBin.binId);
+            const binId = fileKey.startsWith("box_") ? boxItemBin.binId :
+                (fileKey.startsWith("temp_") ? tempItemBin.binId : sceneItemBin.binId);
 
             const filePath = fileMap[fileKey];
 
@@ -314,7 +314,7 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
             .then(({ stream, asset }) => {
                 const proms = [ cookClient.downloadFile(this.cookJobId, filePath, stream) ];
 
-                if (fileKey === "scene:document") {
+                if (fileKey === "scene_document") {
                     proms.push(
                         Scene.create({
                             name,

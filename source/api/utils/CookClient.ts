@@ -63,9 +63,11 @@ export default class CookClient
         }
 
         const stream = fs.createReadStream(filePath);
-        const endpoint = this.machineAddress + "/" + jobId + "/" + filePath;
 
-        console.log(`[CookClient] uploading: ${filePath}`);
+        const targetPath = filePath.startsWith("/") ? filePath.split("/").pop() : filePath;
+        const endpoint = this.machineAddress + "/" + jobId + "/" + targetPath;
+
+        console.log(`[CookClient] uploading: '${filePath}' to job '${jobId}'`);
 
         return fetch(endpoint, {
             method: "PUT",
@@ -82,7 +84,7 @@ export default class CookClient
     {
         const endpoint = this.machineAddress + "/" + jobId + "/" + filePath;
 
-        console.log(`[CookClient] downloading: ${filePath}`);
+        console.log(`[CookClient] downloading: '${filePath}' from job '${jobId}'`);
 
         // ensure target folder exists
         const parts = filePath.split("/");

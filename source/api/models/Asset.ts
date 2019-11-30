@@ -59,6 +59,11 @@ export default class Asset extends Model<Asset>
         });
     }
 
+    static async writeFile(sourceFilePath: string, targetBin: Bin, filePath: string): Promise<Asset>
+    {
+        return Promise.reject();
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
 
     @ForeignKey(() => Bin)

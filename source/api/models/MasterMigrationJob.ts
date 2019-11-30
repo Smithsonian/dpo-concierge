@@ -16,6 +16,7 @@
  */
 
 import * as path from "path";
+import * as filenamify from "filenamify";
 import { Container } from "typedi";
 import uuidv4 from "uuidv4";
 
@@ -38,6 +39,16 @@ import Asset from "./Asset";
 const digiDriveBasePath = process.env["DIGITIZATION_DRIVE_BASEPATH"];
 
 ////////////////////////////////////////////////////////////////////////////////
+
+export type MasterMigrationJobStep = "" | "pre" | "web-thumb" | "web-thumb-post" | "web-multi" | "web-multi-post";
+
+const stepText = {
+    "pre": "Fetching master model files",
+    "web-thumb": "Cooking recipe 'web-thumb'",
+    "web-thumb-post": "Fetching cooked files",
+    "web-multi": "Cooking recipe 'web-multi'",
+    "web-multi-post": "Fetching cooked files",
+};
 
 export interface IMasterMigrationJobParams
 {
@@ -79,9 +90,20 @@ export default class MasterMigrationJob extends Model<MasterMigrationJob> implem
     @BelongsTo(() => Job)
     job: Job;
 
+    @Column({ type: DataType.STRING, defaultValue: "" })
+    step: MasterMigrationJobStep;
+
+    // Path to the master model geometry file on the digitization drive
+    @Column({ allowNull: false })
+    masterModelGeometry: string;
+
+    // Path to the master model texture file on the digitization drive
+    @Column({ allowNull: false })
+    masterModelTexture: string;
+
     // the migrated Voyager scene and bin
     @ForeignKey(() => Scene)
-    @Column
+    @Column({ allowNull: false })
     sourceSceneId: number;
 
     @BelongsTo(() => Scene)
@@ -103,7 +125,7 @@ export default class MasterMigrationJob extends Model<MasterMigrationJob> implem
     @BelongsTo(() => Scene)
     targetScene: Scene;
 
-    // temporary bin holding a local copy of the master model files
+    // The new processing bin generated from this job
     @ForeignKey(() => Bin)
     @Column
     processingBinId: number;
@@ -133,35 +155,47 @@ export default class MasterMigrationJob extends Model<MasterMigrationJob> implem
     @Column
     cookMultiJobId: string;
 
-    @Column
-    masterModelGeometry: string;
-
-    @Column
-    masterModelTexture: string;
-
     ////////////////////////////////////////////////////////////////////////////////
 
     protected timerHandle = null;
 
     async run()
     {
-        this.sourceScene = await this.$get("sourceScene") as Scene;
+        switch(this.step) {
+            case "":
+                return this.executePre();
+            case "pre":
+                return this.executeWebThumb();
+        }
+    }
 
-        const repo = Container.get(ManagedRepository);
+    async cancel()
+    {
+    }
+
+    async delete()
+    {
         const cookClient = Container.get(CookClient);
 
-        const job = this.job;
-        await job.setStep("Fetching Master Model");
+        if (this.cookThumbJobId) {
+            await cookClient.deleteJob(this.cookThumbJobId).catch(() => {});
+        }
+        if (this.cookMultiJobId) {
+            await cookClient.deleteJob(this.cookMultiJobId).catch(() => {});
+        }
 
-        // Create temporary processing bin
+        return this.destroy();
+    }
 
-        this.processingBin = await Bin.createJobBin(job, {
-            name: `${this.sourceScene.name} - Temp master model data`,
-            typeId: BinType.presets.processing,
-        });
+    protected async executePre()
+    {
+        this.setStep("pre");
 
-        this.processingBinId = this.processingBin.id;
-        await this.save();
+        const repo = Container.get(ManagedRepository);
+
+        if (!this.sourceScene) {
+            this.sourceScene = await Scene.findSceneById(this.sourceSceneId);
+        }
 
         // Validate paths to master model files
 
@@ -187,43 +221,52 @@ export default class MasterMigrationJob extends Model<MasterMigrationJob> implem
             texFilePath = path.resolve(digiDriveBasePath, texFilePath);
         }
 
+        // Create scene bin and processing bin
+
+        const sourceBin = await Bin.findByPk(this.sourceScene.binId, { include: [ Asset, BinType ]});
+        const item = await Item.findOne({ include: [ { model: ItemBin, where: { binId: sourceBin.id } } ]});
+        const itemName = filenamify(item.name, { replacement: "-" }).replace(/\s/gi, "-").toLowerCase();
+
+        this.processingBin = await Bin.createItemBin(item, {
+            name: `${item.name} - Master Model - Processed Files`,
+            typeId: BinType.presets.processing,
+        });
+
+        this.processingBinId = this.processingBin.id;
+
+        this.targetBin = await Bin.createItemBin(item, {
+            name: `${item.name} - Master Model - Voyager Scene`,
+            typeId: BinType.presets.voyagerScene,
+        });
+
+        this.targetBinId = this.targetBin.id;
+
+        await this.save();
+
         // Copy master model files from digitization drive to processing bin
 
         let proms = [];
 
         const extension = geoFilePath.split(".").pop().toLowerCase();
-        proms.push(repo.writeFile(geoFilePath, `geometry.${extension}`, this.processingBinId)
-            .then(asset => {
-                this.geometryAsset = asset;
-                this.geometryAssetId = asset.id;
-            }));
+        proms.push(repo.writeFile(geoFilePath, `${itemName}-master-geometry.${extension}`, this.processingBinId)
+        .then(asset => {
+            this.geometryAsset = asset;
+            this.geometryAssetId = asset.id;
+        }));
 
         if (texFilePath) {
             const extension = texFilePath.split(".").pop().toLowerCase();
-            proms.push(repo.writeFile(texFilePath, `texture.${extension}`, this.processingBinId)
-                .then(asset => {
-                    this.textureAsset = asset;
-                    this.textureAssetId = asset.id;
-                }));
+            proms.push(repo.writeFile(texFilePath, `${itemName}-master-texture.${extension}`, this.processingBinId)
+            .then(asset => {
+                this.textureAsset = asset;
+                this.textureAssetId = asset.id;
+            }));
         }
 
         await Promise.all(proms);
         await this.save();
 
-        // Copy scene
-        await job.setStep("Copying Voyager Scene Bin");
-
-        const sourceBin = await Bin.findOne({ where: { id: this.sourceScene.binId }, include: [ Asset, BinType ]});
-        const item = await Item.findOne({ include: [ { model: ItemBin, where: { binId: sourceBin.id } } ]});
-
-        const targetBin = await Bin.createItemBin(item, {
-            name: `${sourceBin.name}/Reprocessed`,
-            typeId: BinType.presets.voyagerScene,
-        });
-
-        this.targetBin = targetBin;
-        this.targetBinId = targetBin.id;
-        await this.save();
+        // Copy Voyager scene from source to target bin
 
         proms = [];
         let sceneAsset: Asset = null;
@@ -232,7 +275,7 @@ export default class MasterMigrationJob extends Model<MasterMigrationJob> implem
             asset.bin = sourceBin;
 
             if (asset.path === "articles") {
-                proms.push(repo.copyAsset(asset, asset.filePath, targetBin));
+                proms.push(repo.copyAsset(asset, asset.filePath, this.targetBin));
             }
 
             if (asset.name.endsWith(".svx.json")) {
@@ -246,224 +289,249 @@ export default class MasterMigrationJob extends Model<MasterMigrationJob> implem
             throw new Error("could not find scene.svx.json in source bin");
         }
 
-        // Create and run web-thumb job
+        if (this.job.state === "cancelled") {
+            return;
+        }
 
-        this.job.step = "Preparing web-thumb recipe";
+        return this.executeWebThumb();
+    }
+
+    protected async executeWebThumb()
+    {
+        this.setStep("web-thumb");
+
+        const cookClient = Container.get(CookClient);
+        const repo = Container.get(ManagedRepository);
+
         this.cookThumbJobId = uuidv4();
-        await this.saveAll();
+        await this.save();
+
+        const documentAsset = await this.sourceScene.$get("voyagerDocument", {include: [ Bin ]}) as Asset;
+        const item = await Item.findOne({ include: [ { model: ItemBin, where: { binId: documentAsset.binId } } ]});
+        const itemName = filenamify(item.name, { replacement: "-" }).replace(/\s/gi, "-").toLowerCase();
 
         const thumbJobParams: IParameters = {
             highPolyMeshFile: this.geometryAsset.name,
-            documentFile: sceneAsset.name,
-            baseName: "",
+            documentFile: documentAsset.name,
+            baseName: itemName,
         };
 
         const cookSourceFiles = [
-            sceneAsset.getStoragePath(),
-            this.geometryAsset.getStoragePath(),
+            repo.getFilePath(documentAsset.getStoragePath()),
+            repo.getFilePath(this.geometryAsset.getStoragePath()),
         ];
 
         if (this.textureAsset) {
             thumbJobParams.highPolyDiffuseMapFile = this.textureAsset.name;
-            cookSourceFiles.push(this.textureAsset.getStoragePath());
+            cookSourceFiles.push(repo.getFilePath(this.textureAsset.getStoragePath()));
         }
 
         await cookClient.createJob(this.cookThumbJobId, "web-thumb", thumbJobParams);
         await cookClient.uploadFiles(this.cookThumbJobId, cookSourceFiles);
         await cookClient.runJob(this.cookThumbJobId);
 
-        this.job.setStep("Cooking web-thumb recipe");
-
         this.timerHandle = setInterval(() => {
-            this.monitor()
+            this.monitorWebThumb()
             .catch(error => {
-                console.log("[MasterMigrationJob] - ERROR");
+                console.log("[MasterMigrationJob] - ERROR while processing 'web-thumb' recipe");
                 console.log(error);
-                return job.setState("error", error.message);
+                return this.job.setState("error", error.message);
             });
         }, MasterMigrationJob.cookPollingInterval);
     }
 
-    async cancel()
-    {
-        await this.job.setStep("");
-    }
-
-    async delete()
-    {
-        const repo = Container.get(ManagedRepository);
-        const cookClient = Container.get(CookClient);
-
-        if (this.cookThumbJobId) {
-            await cookClient.deleteJob(this.cookThumbJobId);
-        }
-        if (this.cookMultiJobId) {
-            await cookClient.deleteJob(this.cookMultiJobId);
-        }
-        if (this.processingBinId) {
-            await repo.deleteBinFolder(this.processingBin);
-        }
-
-        await this.destroy();
-    }
-
-    protected async monitor()
+    protected async monitorWebThumb()
     {
         const job = this.job;
         console.log(`[PlayMigrationJob] - monitoring job ${job.id} (${job.state}, ${job.step}): ${job.name}`);
 
         const cookClient = Container.get(CookClient);
+
+        if (job.state === "cancelled") {
+            clearInterval(this.timerHandle);
+            return cookClient.cancelJob(this.cookThumbJobId);
+        }
+
+        const jobInfo = await cookClient.jobInfo(this.cookThumbJobId);
+
+        if (jobInfo && jobInfo.state === "done") {
+            clearInterval(this.timerHandle);
+            this.executeWebThumbPost();
+        }
+        else if (!jobInfo || jobInfo.state !== "running") {
+            clearInterval(this.timerHandle);
+            const message = jobInfo ? jobInfo.error || "Cook job not running" : "Cook job not found";
+            throw new Error(message);
+        }
+    }
+
+    protected async executeWebThumbPost()
+    {
+        this.setStep("web-thumb-post");
+
+        const cookClient = Container.get(CookClient);
         const repo = Container.get(ManagedRepository);
 
-        if (this.job.step === "Cooking web-thumb recipe") {
-            const jobInfo = await cookClient.jobInfo(this.cookThumbJobId);
-
-            if (jobInfo && jobInfo.state === "done") {
-                clearInterval(this.timerHandle);
-                const report = await cookClient.jobReport(this.cookThumbJobId);
-                const deliveryStep = report.steps["delivery"];
-                if (!deliveryStep) {
-                    throw new Error("job has no delivery step");
-                }
-
-                const fileMap = deliveryStep.result["files"];
-                if (!fileMap) {
-                    throw new Error("job delivery contains no files");
-                }
-
-                // download result files from web-thumb job to target bin
-                let sceneAsset = null;
-                await Promise.all(Object.keys(fileMap).map(fileKey => {
-
-                    const filePath = fileMap[fileKey];
-
-                    return repo.createWriteStream(filePath, this.targetBinId, true)
-                    .then(({ stream, asset }) => {
-                        const proms = [ cookClient.downloadFile(this.cookThumbJobId, filePath, stream) ];
-
-                        if (fileKey === "scene:document") {
-                            sceneAsset = asset;
-                            sceneAsset.bin = this.targetBin;
-
-                            proms.push(
-                                Scene.create({
-                                    name: this.sourceScene.name,
-                                    binId: this.targetBinId,
-                                    voyagerDocumentId: asset.id
-                                }).then(scene => {
-                                    this.targetScene = scene;
-                                    this.targetSceneId = scene.id;
-                                    return this.save();
-                                })
-                            );
-                        }
-
-                        return Promise.all(proms);
-                    });
-                }));
-
-                if (!sceneAsset) {
-                    throw new Error("web-thumb job did not return a scene document");
-                }
-
-                this.job.setStep("Preparing web-multi recipe");
-                this.cookMultiJobId = uuidv4();
-                await this.save();
-
-                const multiJobParams: IParameters = {
-                    highPolyMeshFile: this.geometryAsset.name,
-                    documentFile: sceneAsset.name,
-                    baseName: "",
-                };
-
-                const cookSourceFiles = [
-                    sceneAsset.getStoragePath(),
-                    this.geometryAsset.getStoragePath(),
-                ];
-
-                if (this.textureAsset) {
-                    multiJobParams.highPolyDiffuseMapFile = this.textureAsset.name;
-                    cookSourceFiles.push(this.textureAsset.getStoragePath());
-                }
-
-                await cookClient.createJob(this.cookMultiJobId, "web-multi", multiJobParams);
-                await cookClient.uploadFiles(this.cookMultiJobId, cookSourceFiles);
-                await cookClient.runJob(this.cookMultiJobId);
-
-                this.job.setStep("Cooking web-multi recipe");
-
-                // start monitoring timer again
-                this.timerHandle = setInterval(() => {
-                    this.monitor()
-                    .catch(error => {
-                        console.log("[MasterMigrationJob] - ERROR");
-                        console.log(error);
-                        return job.setState("error", error.message);
-                    });
-                }, MasterMigrationJob.cookPollingInterval);
-            }
-            else if (!jobInfo || jobInfo.state !== "running") {
-                clearInterval(this.timerHandle);
-                const message = jobInfo ? jobInfo.error || "Cook job not running" : "Cook job not found";
-                throw new Error(message);
-            }
+        const report = await cookClient.jobReport(this.cookThumbJobId);
+        const deliveryStep = report.steps["delivery"];
+        if (!deliveryStep) {
+            throw new Error("job has no delivery step");
         }
-        else if (this.job.step === "Cooking web-multi recipe") {
-            const jobInfo = await cookClient.jobInfo(this.cookMultiJobId);
-            if (jobInfo && jobInfo.state === "done") {
-                clearInterval(this.timerHandle);
-                const report = await cookClient.jobReport(this.cookMultiJobId);
-                const deliveryStep = report.steps["delivery"];
-                if (!deliveryStep) {
-                    throw new Error("job has no delivery step");
-                }
 
-                const fileMap = deliveryStep.result["files"];
-                if (!fileMap) {
-                    throw new Error("job delivery contains no files");
-                }
-
-                // download result files from web-multi job to target bin
-                await Promise.all(Object.keys(fileMap).map(fileKey => {
-
-                    const filePath = fileMap[fileKey];
-
-                    return repo.createWriteStream(filePath, this.targetBinId, true)
-                    .then(({ stream, asset }) => {
-                        const proms = [ cookClient.downloadFile(this.cookThumbJobId, filePath, stream) ];
-
-                        // if (fileKey === "scene:document") {
-                        //     sceneAsset = asset;
-                        //     sceneAsset.bin = this.targetBin;
-                        //
-                        //     proms.push(
-                        //         Scene.create({
-                        //             name: this.sourceScene.name,
-                        //             binId: this.targetBinId,
-                        //             voyagerDocumentId: asset.id
-                        //         }).then(scene => {
-                        //             this.targetScene = scene;
-                        //             this.targetSceneId = scene.id;
-                        //             return this.save();
-                        //         })
-                        //     );
-                        // }
-
-                        return Promise.all(proms);
-                    });
-                }));
-
-            }
-            else if (!jobInfo || jobInfo.state !== "running") {
-                clearInterval(this.timerHandle);
-                const message = jobInfo ? jobInfo.error || "Cook job not running" : "Cook job not found";
-                throw new Error(message);
-            }
+        const fileMap = deliveryStep.result["files"];
+        if (!fileMap) {
+            throw new Error("job delivery contains no files");
         }
-        else {
-            console.error("[MasterMigrationHob] Can't monitor this step");
-            throw new Error("can't monitor this step");
+
+        // download result files from web-thumb job to target bin
+        await Promise.all(Object.keys(fileMap).map(async fileKey => {
+
+            const filePath = fileMap[fileKey];
+            const binId = fileKey.startsWith("scene_") ? this.targetBinId : this.processingBinId;
+
+            const { asset, stream } = await repo.createWriteStream(filePath, binId, true);
+            const proms = [ cookClient.downloadFile(this.cookThumbJobId, filePath, stream) ];
+
+            if (fileKey === "scene_document") {
+                proms.push(
+                    Scene.create({
+                        name: this.sourceScene.name,
+                        binId: this.targetBinId,
+                        voyagerDocumentId: asset.id
+                    }).then(scene => {
+                        this.targetScene = scene;
+                        this.targetSceneId = scene.id;
+                        return this.save();
+                    })
+                );
+            }
+
+            return Promise.all(proms);
+        }));
+
+        if (!this.targetScene) {
+            throw new Error("web-thumb job did not return a scene document");
         }
+
+        this.executeWebMulti();
+    }
+
+    protected async executeWebMulti()
+    {
+        this.setStep("web-multi");
+
+        const cookClient = Container.get(CookClient);
+        const repo = Container.get(ManagedRepository);
+
+        this.cookMultiJobId = uuidv4();
+        await this.save();
+
+        const documentAsset = await this.targetScene.$get("voyagerDocument", { include: [ Bin ]}) as Asset;
+        const item = await Item.findOne({ include: [ { model: ItemBin, where: { binId: documentAsset.binId } } ]});
+        const itemName = filenamify(item.name, { replacement: "-" }).replace(/\s/gi, "-").toLowerCase();
+
+        const multiJobParams: IParameters = {
+            highPolyMeshFile: this.geometryAsset.name,
+            documentFile: documentAsset.name,
+            baseName: itemName,
+        };
+
+        const cookSourceFiles = [
+            repo.getFilePath(documentAsset.getStoragePath()),
+            repo.getFilePath(this.geometryAsset.getStoragePath()),
+        ];
+
+        if (this.textureAsset) {
+            multiJobParams.highPolyDiffuseMapFile = this.textureAsset.name;
+            cookSourceFiles.push(repo.getFilePath(this.textureAsset.getStoragePath()));
+        }
+
+        await cookClient.createJob(this.cookMultiJobId, "web-multi", multiJobParams);
+        await cookClient.uploadFiles(this.cookMultiJobId, cookSourceFiles);
+        await cookClient.runJob(this.cookMultiJobId);
+
+        this.job.setStep("Cooking web-multi recipe");
+
+        // start monitoring timer again
+        this.timerHandle = setInterval(() => {
+            this.monitorWebMulti()
+            .catch(error => {
+                console.log("[MasterMigrationJob] - ERROR while processing 'web-multi' recipe");
+                console.log(error);
+                return this.job.setState("error", error.message);
+            });
+        }, MasterMigrationJob.cookPollingInterval);
+
+    }
+
+    protected async monitorWebMulti()
+    {
+        const job = this.job;
+        console.log(`[PlayMigrationJob] - monitoring job ${job.id} (${job.state}, ${job.step}): ${job.name}`);
+
+        const cookClient = Container.get(CookClient);
+
+        if (job.state === "cancelled") {
+            clearInterval(this.timerHandle);
+            return cookClient.cancelJob(this.cookMultiJobId);
+        }
+
+        const jobInfo = await cookClient.jobInfo(this.cookMultiJobId);
+
+        if (jobInfo && jobInfo.state === "done") {
+            clearInterval(this.timerHandle);
+            this.executeWebMultiPost();
+        }
+        else if (!jobInfo || jobInfo.state !== "running") {
+            clearInterval(this.timerHandle);
+            const message = jobInfo ? jobInfo.error || "Cook job not running" : "Cook job not found";
+            throw new Error(message);
+        }
+    }
+
+    protected async executeWebMultiPost()
+    {
+        this.setStep("web-multi-post");
+
+        const cookClient = Container.get(CookClient);
+        const repo = Container.get(ManagedRepository);
+
+        const report = await cookClient.jobReport(this.cookMultiJobId);
+        const deliveryStep = report.steps["delivery"];
+        if (!deliveryStep) {
+            throw new Error("job has no delivery step");
+        }
+
+        const fileMap = deliveryStep.result["files"];
+        if (!fileMap) {
+            throw new Error("job delivery contains no files");
+        }
+
+        // download result files from web-multi job to target bin
+        await Promise.all(Object.keys(fileMap).map(async fileKey => {
+
+            const filePath = fileMap[fileKey];
+            const binId = fileKey.startsWith("scene_") ? this.targetBinId : this.processingBinId;
+
+            const { asset, stream } = await repo.createWriteStream(filePath, binId, true);
+            const proms = [ cookClient.downloadFile(this.cookMultiJobId, filePath, stream) ];
+            return Promise.all(proms);
+        }));
+
+        this.processingBinId = null;
+        this.targetBinId = null;
+        this.geometryAssetId = null;
+        this.textureAssetId = null;
+
+        await this.setStep("");
+        await this.job.setState("done");
+    }
+
+    async setStep(step: MasterMigrationJobStep)
+    {
+        this.step = step;
+        this.job.step = stepText[step] || "";
+        return this.saveAll();
     }
 
     async saveAll()

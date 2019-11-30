@@ -25,6 +25,19 @@ import Bin from "./Bin";
 @Table
 export default class Scene extends Model<Scene>
 {
+    static async findSceneByBinId(binId: number): Promise<Scene | undefined>
+    {
+        return Scene.findOne({
+            include: [ Bin, Asset ],
+            where: { binId },
+        });
+    }
+
+    static async findSceneById(sceneId: number): Promise<Scene | undefined>
+    {
+        return Scene.findByPk(sceneId, { include: [ Bin, Asset ]});
+    }
+
     @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, unique: true })
     uuid: string;
 

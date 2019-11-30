@@ -115,7 +115,7 @@ export default class Job extends Model<Job>
     {
         console.log(`[Job] - delete job ${this.id} (${this.state}): ${this.name}`);
 
-        this.getJobImplementation()
+        return this.getJobImplementation()
             .then(impl => impl.delete())
             .then(() => this.destroy());
     }

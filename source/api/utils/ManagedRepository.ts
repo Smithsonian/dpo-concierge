@@ -62,6 +62,11 @@ export default class ManagedRepository
         this.activeBins = {};
     }
 
+    getFilePath(localPath: string)
+    {
+        return this.fileStore.getStoreFilePath(localPath);
+    }
+
     get appsPath() {
         return this.fileStore.getStoreFilePath("apps/");
     }
@@ -223,10 +228,11 @@ export default class ManagedRepository
 
         const targetAsset = await Asset.create({
             filePath: targetFilePath,
-            bin: targetBin,
             binId: targetBin.id,
             byteSize: sourceAsset.byteSize,
         });
+
+        targetAsset.bin = targetBin;
 
         return this.fileStore.copyFile(sourceAsset.getStoragePath(), targetAsset.getStoragePath());
     }
@@ -290,22 +296,20 @@ export default class ManagedRepository
 
     async createWriteStream(filePath: string, binId: number, overwrite?: boolean): Promise<{ asset: Asset, stream: WriteStream }>
     {
-        let bin: Bin = undefined;
-        let asset: Asset = undefined;
+        const bin = await Bin.findByPk(binId, { include: [ Asset ]});
 
-        return Bin.findByPk(binId)
-        .then(_bin => {
-            bin = _bin;
-            return Asset.create({
-                filePath,
-                binId: bin.id
-            });
-        })
-        .then(_asset => {
-            asset = _asset;
-            asset.bin = bin;
-            return this.fileStore.createWriteStream(asset.getStoragePath());
-        })
-        .then(stream => ({ stream, asset }));
+        let asset = bin.assets.find(asset => asset.filePath === filePath);
+
+        if (!asset) {
+            asset = await Asset.create({ filePath, binId: bin.id });
+        }
+        else if (asset && !overwrite) {
+            throw new Error(`asset '${filePath}' already exists in bin`);
+        }
+
+        asset.bin = bin;
+        const stream = await this.fileStore.createWriteStream(asset.getStoragePath());
+
+        return { stream, asset };
     }
 }
