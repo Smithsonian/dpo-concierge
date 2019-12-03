@@ -28,10 +28,23 @@ if [ ! -d "dist" ]; then
 fi
 
 # mount storage drive
-if [ -z $STORAGE_DRIVE_URL ]; then
-    echo "no mount point"
-else 
+if [ $STORAGE_DRIVE_URL ]; then
     mount -t cifs -o username=${STORAGE_DRIVE_USERNAME},password="${STORAGE_DRIVE_PASSWORD}" ${STORAGE_DRIVE_URL} /storage
+    if [ $? -ne 0 ]; then
+        echo "[FATAL] Failed to mount storage drive at ${STORAGE_DRIVE_URL}"
+    fi
+else 
+    echo "[WARNING] STORAGE_DRIVE_URL not set"
+fi
+
+# mount digitization drive
+if [ $DIGITIZATION_DRIVE_URL ]; then
+    mount -t cifs -o username=${DIGITIZATION_DRIVE_USERNAME},password="${DIGITIZATION_DRIVE_PASSWORD}" ${DIGITIZATION_DRIVE_URL} /digitization
+    if [ $? -ne 0 ]; then
+        echo "[FATAL] Failed to mount digitization drive at ${DIGITIZATION_DRIVE_URL}"
+    fi
+else
+    echo "[WARNING] DIGITIZATION_DRIVE_URL not set"
 fi
 
 # start server in debug mode, watching source code changes
