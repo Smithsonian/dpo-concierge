@@ -13,7 +13,7 @@ apt-get install -y build-essential libssl-dev python
 
 # Install NVM (node version manager)
 cd ~
-curl -sL https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh -o install-nvm.sh
+curl -sL https://raw.githubusercontent.com/creationix/nvm/v0.35.1/install.sh -o install-nvm.sh
 bash install-nvm.sh
 
 # load NVM
@@ -21,9 +21,9 @@ export NVM_DIR="/root/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
 # install node.js
-nvm install 12.11.0
-nvm use 12.11.0
-nvm alias default 12.11.0
+nvm install 13.2.0
+nvm use 13.2.0
+nvm alias default 13.2.0
 
 # update npm
 npm i -g npm
