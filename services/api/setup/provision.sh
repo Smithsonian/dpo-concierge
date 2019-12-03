@@ -37,7 +37,6 @@ echo fs.inotify.max_user_watches=524288 | tee -a /etc/sysctl.conf && sysctl -p
 
 # add repository storage mount directory
 apt-get install -y cifs-utils
-mkdir -p /storage
 
 # some helpful bash aliases
 cat <<EOF >> ~/.bash_aliases

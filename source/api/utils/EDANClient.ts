@@ -19,7 +19,7 @@ import * as fs from "fs";
 import * as crypto from "crypto";
 import * as fetch from "node-fetch";
 
-import uuid from "uuidv4";
+import { uuid } from "uuidv4";
 import { Dictionary } from "./types";
 
 ////////////////////////////////////////////////////////////////////////////////

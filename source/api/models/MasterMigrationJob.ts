@@ -18,7 +18,7 @@
 import * as path from "path";
 import * as filenamify from "filenamify";
 import { Container } from "typedi";
-import uuidv4 from "uuidv4";
+import { uuid } from "uuidv4";
 
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
 
@@ -303,7 +303,7 @@ export default class MasterMigrationJob extends Model<MasterMigrationJob> implem
         const cookClient = Container.get(CookClient);
         const repo = Container.get(ManagedRepository);
 
-        this.cookThumbJobId = uuidv4();
+        this.cookThumbJobId = uuid();
         await this.save();
 
         const documentAsset = await this.sourceScene.$get("voyagerDocument", {include: [ Bin ]}) as Asset;
@@ -423,7 +423,7 @@ export default class MasterMigrationJob extends Model<MasterMigrationJob> implem
         const cookClient = Container.get(CookClient);
         const repo = Container.get(ManagedRepository);
 
-        this.cookMultiJobId = uuidv4();
+        this.cookMultiJobId = uuid();
         await this.save();
 
         const documentAsset = await this.targetScene.$get("voyagerDocument", { include: [ Bin ]}) as Asset;

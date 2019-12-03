@@ -281,7 +281,7 @@ export default class Server
         });
 
         app.get("/logout", (req, res) => {
-            const name = req.user.name;
+            const name = req.user["name"];
             req.logout();
             return res.send(`Bye, ${name}, come back soon!`);
         });

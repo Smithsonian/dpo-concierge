@@ -16,7 +16,7 @@
  */
 
 import { Container } from "typedi";
-import uuidv4 from "uuidv4";
+import { uuid } from "uuidv4";
 
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
 
@@ -169,7 +169,7 @@ export default class PlayMigrationJob extends Model<PlayMigrationJob> implements
 
         this.item = item;
         this.itemId = item.id;
-        this.cookJobId = uuidv4();
+        this.cookJobId = uuid();
         await this.save();
 
         // create and run cook job using "migrate-play" recipe

@@ -28,6 +28,7 @@ if [ ! -d "dist" ]; then
 fi
 
 # mount storage drive
+mkdir -p /storage
 if [ $STORAGE_DRIVE_URL ]; then
     mount -t cifs -o username=${STORAGE_DRIVE_USERNAME},password="${STORAGE_DRIVE_PASSWORD}" ${STORAGE_DRIVE_URL} /storage
     if [ $? -ne 0 ]; then
@@ -38,6 +39,7 @@ else
 fi
 
 # mount digitization drive
+mkdir -p /digitization
 if [ $DIGITIZATION_DRIVE_URL ]; then
     mount -t cifs -o username=${DIGITIZATION_DRIVE_USERNAME},password="${DIGITIZATION_DRIVE_PASSWORD}" ${DIGITIZATION_DRIVE_URL} /digitization
     if [ $? -ne 0 ]; then
