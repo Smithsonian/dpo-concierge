@@ -66,6 +66,13 @@ export default class Bin extends Model<Bin>
         .then(bin => bin ? bin.version : 0);
     }
 
+    static async findByUuidAndVersion(uuid: string, version: number)
+    {
+        return Bin.findOne({
+            where: { uuid, version }
+        });
+    }
+
     static async deleteBin(uuid: string)
     {
         let bin;

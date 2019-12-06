@@ -28,6 +28,9 @@ import { IFileStore, ReadStream, WriteStream } from "./FileStore";
 
 ////////////////////////////////////////////////////////////////////////////////
 
+type EventCallback = (context: webdav.RequestContext, fileSystem: webdav.FileSystem, path: webdav.Path, data?: any) => void;
+type MoveData = { pathFrom: webdav.Path, pathTo: webdav.Path, overwrite: boolean, overrided: boolean };
+
 export interface IAPISettings
 {
     uploadPath: string;
@@ -52,6 +55,75 @@ export default class ManagedRepository
 
         this.webDAVServer = new webdav.WebDAVServer(/* { port: webDAVPort } */);
 
+        this.webDAVServer.on("create", async (ctx: webdav.RequestContext, fs: webdav.PhysicalFileSystem, path: webdav.Path) => {
+
+            let filePath = path.toString();
+            if (filePath.startsWith("/")) {
+                filePath = filePath.substr(1);
+            }
+            console.log(`[WebDAV] Create: ${filePath}`);
+
+            const bin = await this.findBinFromPath(fs.rootPath);
+
+            if (bin) {
+                const asset = await Asset.findByBinId(filePath, bin.id);
+                if (!asset) {
+                    await Asset.create({
+                        filePath,
+                        binId: bin.id,
+                    });
+                }
+            }
+            else {
+                console.error(`[WebDAV] ERROR: Failed to find bin for path: ${fs.rootPath}`);
+            }
+        });
+
+        this.webDAVServer.on("move", async (ctx: webdav.RequestContext, fs: webdav.PhysicalFileSystem, path: webdav.Path, data: MoveData) => {
+
+            let filePath = path.toString();
+            if (filePath.startsWith("/")) {
+                filePath = filePath.substr(1);
+            }
+            console.log(`[WebDAV] Move: ${filePath}`);
+
+            const bin = await this.findBinFromPath(fs.rootPath);
+
+            if (bin) {
+                // TODO: Implement 'rename asset'
+            }
+            else {
+                console.error(`[WebDAV] ERROR: Failed to find bin for path: ${fs.rootPath}`);
+            }
+
+            console.log(data.pathFrom.toString());
+            console.log(data.pathTo.toString());
+        });
+
+        this.webDAVServer.on("delete", async (ctx: webdav.RequestContext, fs: webdav.PhysicalFileSystem, path: webdav.Path) => {
+
+            let filePath = path.toString();
+            if (filePath.startsWith("/")) {
+                filePath = filePath.substr(1);
+            }
+            console.log(`[WebDAV] Delete: ${filePath}`);
+
+            const bin = await this.findBinFromPath(fs.rootPath);
+
+            if (bin) {
+                const asset = await Asset.findByBinId(filePath, bin.id);
+                if (asset) {
+                    await asset.destroy();
+                }
+                else {
+                    console.error(`[WebDAV] ERROR: Failed to find asset for path: ${filePath}`);
+                }
+            }
+            else {
+                console.error(`[WebDAV] ERROR: Failed to find bin for path: ${fs.rootPath}`);
+            }
+        });
+
         // this.webDAVServer.afterRequest((req, next) => {
         //     // Display the method, the URI, the returned status code and the returned message
         //     console.log(`[Repository.WebDAV] ${req.request.method} ${req.request.url} ` +
@@ -60,6 +132,20 @@ export default class ManagedRepository
         // });
 
         this.activeBins = {};
+    }
+
+    protected async findBinFromPath(path: string): Promise<Bin | null>
+    {
+        const components = path.split("/");
+        const index = components.indexOf("bins");
+        if (index < 0) {
+            return null;
+        }
+
+        const binId = components[index + 1];
+        const version = parseInt(components[index + 2].substr(1));
+
+        return Bin.findByUuidAndVersion(binId, version);
     }
 
     getFilePath(localPath: string)
