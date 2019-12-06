@@ -195,7 +195,7 @@ export default class Server
         app.use("/apps", express.static(repository.appsPath));
 
         // repo WebDAV server
-        app.use("/edit", repository.routeWebDAV());
+        app.use(repository.routeWebDAV("/edit"));
 
         // repo file server
         app.get("/view/:bin/*", (req, res, next) => {

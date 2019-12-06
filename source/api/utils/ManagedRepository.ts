@@ -71,9 +71,9 @@ export default class ManagedRepository
         return this.fileStore.getStoreFilePath("apps/");
     }
 
-    routeWebDAV()
+    routeWebDAV(route: string)
     {
-        return webdav.extensions.express("/", this.webDAVServer)
+        return webdav.extensions.express(route, this.webDAVServer)
     }
 
     async grantWebDAVAccess(bin: Bin): Promise<void>
