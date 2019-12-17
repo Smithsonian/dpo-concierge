@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Documentation on Concierge Documentation</title>
@@ -20,11 +20,20 @@
     </item>
     
     <item>
-      <title>Getting Started</title>
-      <link>https://smithsonian.github.io/dpo-concierge/documentation/getting-started/</link>
+      <title>Voyager and Cook</title>
+      <link>https://smithsonian.github.io/dpo-concierge/documentation/voyager-cook/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://smithsonian.github.io/dpo-concierge/documentation/getting-started/</guid>
+      <guid>https://smithsonian.github.io/dpo-concierge/documentation/voyager-cook/</guid>
+      <description>How Concierge interacts with Voyager and Cook</description>
+    </item>
+    
+    <item>
+      <title>Migration</title>
+      <link>https://smithsonian.github.io/dpo-concierge/documentation/migration/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://smithsonian.github.io/dpo-concierge/documentation/migration/</guid>
       <description>Getting started with the Concierge migration tool.</description>
     </item>
     
